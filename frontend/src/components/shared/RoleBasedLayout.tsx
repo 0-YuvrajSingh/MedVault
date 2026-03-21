@@ -1,27 +1,19 @@
 /**
- * RoleBasedLayout — thin wrapper kept for backwards compatibility.
- * All layout logic now lives in DashboardLayout.tsx
+ * RoleBasedLayout — legacy compatibility shim.
+ * Dashboard routing now uses nested routes + DashboardLayout with <Outlet>.
+ * This component is no longer needed for new routes but kept so any
+ * remaining import doesn't break the build.
  */
 import React from 'react';
-import DashboardLayout from './DashboardLayout';
 
 interface RoleBasedLayoutProps {
-  children: React.ReactNode;
-  loading?: boolean;
+  children?: React.ReactNode;
 }
 
-const RoleBasedLayout: React.FC<RoleBasedLayoutProps> = ({ children, loading = false }) => {
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-10 w-10 border-2 border-blue-600 border-t-transparent" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  return <DashboardLayout>{children}</DashboardLayout>;
+const RoleBasedLayout: React.FC<RoleBasedLayoutProps> = ({ children }) => {
+  // No-op wrapper — layout is now provided by the nested route pattern
+  // in AppRoutes.tsx via DashboardLayout + Outlet.
+  return <>{children}</>;
 };
 
 export default RoleBasedLayout;

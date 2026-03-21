@@ -1,21 +1,35 @@
 import React, { useState } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, Bell } from 'lucide-react';
 import Sidebar from '@/components/shared/Sidebar';
 import { useAuth } from '@/context/AuthContext';
 import { useNotifications } from '@/hooks/useNotifications';
+import type { Role } from '@/types';
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-}
+// ─── Role accent config ───────────────────────────────────────────────────────
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+const ROLE_ACCENT: Record<Role, { gradient: string; ring: string }> = {
+  PATIENT: { gradient: 'from-emerald-500 to-emerald-700', ring: 'ring-emerald-400' },
+  DOCTOR:  { gradient: 'from-violet-500 to-violet-700',  ring: 'ring-violet-400'  },
+  ADMIN:   { gradient: 'from-orange-500 to-orange-700',  ring: 'ring-orange-400'  },
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+const DashboardLayout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user } = useAuth();
+  const { user }       = useAuth();
   const { unreadCount } = useNotifications();
+  const location        = useLocation();
+
+  const role   = (user?.role?.toUpperCase() ?? 'PATIENT') as Role;
+  const accent = ROLE_ACCENT[role] ?? ROLE_ACCENT.PATIENT;
 
   return (
     <div className="min-h-screen bg-surface dark:bg-surface-dark">
-      {/* ── Top Bar ── */}
+
+      {/* ── Top Bar ─────────────────────────────────────────────────────── */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 z-50 flex items-center px-4 gap-3">
         {/* Mobile menu toggle */}
         <button
@@ -28,15 +42,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
+          <div className={`w-7 h-7 bg-gradient-to-br ${accent.gradient} rounded-lg flex items-center justify-center shadow-sm`}>
             <span className="text-white text-xs font-bold">M</span>
           </div>
-          <span className="font-bold text-neutral-900 dark:text-white text-sm hidden sm:block">
-            MedVault
-          </span>
+          <span className="font-bold text-neutral-900 dark:text-white text-sm hidden sm:block">MedVault</span>
         </div>
 
-        {/* Spacer */}
         <div className="flex-1" />
 
         {/* Right controls */}
@@ -50,24 +61,30 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           </button>
 
           {/* Avatar */}
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold cursor-pointer">
+          <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${accent.gradient} ring-2 ${accent.ring}/30 flex items-center justify-center text-white text-xs font-bold cursor-pointer shadow-sm`}>
             {user?.name?.[0]?.toUpperCase() ?? '?'}
           </div>
         </div>
       </header>
 
-      {/* ── Sidebar ── */}
-      <Sidebar
-        mobileOpen={mobileOpen}
-        onMobileClose={() => setMobileOpen(false)}
-      />
+      {/* ── Sidebar ─────────────────────────────────────────────────────── */}
+      <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
 
-      {/* ── Main Content ── */}
-      {/* md:ml-64 matches sidebar width, pt-16 matches header height */}
+      {/* ── Page Content ────────────────────────────────────────────────── */}
+      {/* Only the content animates — sidebar/topbar stay mounted */}
       <main className="md:ml-64 pt-16 min-h-screen">
-        <div className="p-4 md:p-6 lg:p-8">
-          {children}
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="p-4 md:p-6 lg:p-8"
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </main>
     </div>
   );
