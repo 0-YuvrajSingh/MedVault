@@ -1,90 +1,101 @@
-// @ts-nocheck
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
+import { reviewAPI } from '@/api';
+import { toast } from '@/utils/toast';
+import { Star, Send, CheckCircle } from 'lucide-react';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface FeedbackState {
+  doctorId: string;
+  message:  string;
+  rating:   number;
+}
+
+const DEFAULT: FeedbackState = { doctorId: '', message: '', rating: 5 };
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function FeedbackForm() {
-  const { token, user } = useAuth();
-  const [message, setMessage] = useState('');
-  const [rating, setRating] = useState(5);
-  const [doctorId, setDoctorId] = useState('');
-  const [status, setStatus] = useState(null);
+  const { user }   = useAuth();
+  const [form,     setForm]       = useState<FeedbackState>(DEFAULT);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted,  setSubmitted]  = useState(false);
 
-  const submitFeedback = async (e) => {
+  const inputCls = 'w-full border border-neutral-200 dark:border-neutral-700 rounded-xl px-3 py-2.5 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.doctorId.trim() || !form.message.trim()) {
+      toast.error('Please fill in all fields.');
+      return;
+    }
     setSubmitting(true);
-    setStatus(null);
     try {
-      const res = await fetch('/api/feedback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({
-          patientId: user?.patientId || user?.id,
-          doctorId,
-          message,
-          rating
-        })
+      await reviewAPI.create({
+        patientId: (user as any)?.patientId ?? user?.id,
+        doctorId:  Number(form.doctorId),
+        comment:   form.message,
+        rating:    form.rating,
       });
-      if (!res.ok) throw new Error('Failed to submit');
-      const data = await res.json();
-      setStatus({ ok: true, msg: 'Feedback submitted', data });
-      setMessage('');
-    } catch (err) {
-      setStatus({ ok: false, msg: err.message });
+      toast.success('Feedback submitted!');
+      setSubmitted(true);
+      setForm(DEFAULT);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message ?? 'Failed to submit feedback.');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-4">Submit Feedback</h1>
-      <form onSubmit={submitFeedback} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Doctor ID</label>
-          <input
-            type="text"
-            required
-            value={doctorId}
-            onChange={(e) => setDoctorId(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-            placeholder="UUID of doctor"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Message</label>
-          <textarea
-            required
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            className="w-full border rounded px-3 py-2 h-32"
-            placeholder="Write your feedback"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Rating</label>
-          <select
-            value={rating}
-            onChange={(e) => setRating(parseInt(e.target.value))}
-            className="border rounded px-3 py-2"
-          >
-            {[1,2,3,4,5].map(r => <option key={r} value={r}>{r}</option>)}
-          </select>
-        </div>
-        <button
-          type="submit"
-          disabled={submitting}
-          className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-        >
-          {submitting ? 'Submitting...' : 'Submit Feedback'}
-        </button>
-      </form>
-      {status && (
-        <div className={`mt-4 p-3 rounded ${status.ok ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{status.msg}</div>
-      )}
+    <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 p-4">
+      <div className="w-full max-w-xl bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm p-7">
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">Submit Feedback</h1>
+        <p className="text-sm text-neutral-500 mb-6">Share your experience with your doctor</p>
+
+        {submitted && (
+          <div className="flex items-center gap-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-5">
+            <CheckCircle className="text-green-600 flex-shrink-0" size={20} />
+            <p className="text-sm text-green-700 dark:text-green-400 font-medium">Feedback submitted successfully!</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1.5">Doctor ID</label>
+            <input type="text" required value={form.doctorId}
+              onChange={e => setForm(p => ({ ...p, doctorId: e.target.value }))}
+              className={inputCls} placeholder="Enter doctor's ID" />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1.5">Rating</label>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map(s => (
+                <button key={s} type="button" onClick={() => setForm(p => ({ ...p, rating: s }))}
+                  className="transition-transform hover:scale-110">
+                  <Star size={28} className={s <= form.rating ? 'fill-yellow-400 text-yellow-400' : 'text-neutral-300'} />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1.5">Message</label>
+            <textarea required value={form.message}
+              onChange={e => setForm(p => ({ ...p, message: e.target.value }))}
+              className={`${inputCls} min-h-28 resize-none`}
+              placeholder="Describe your experience…" />
+          </div>
+
+          <button type="submit" disabled={submitting}
+            className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50">
+            <Send size={15} />
+            {submitting ? 'Submitting…' : 'Submit Feedback'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
