@@ -1,4 +1,5 @@
-
-// This file is now a pass-through to the consistent AdminDashboard component
+import RoleBasedLayout from '../components/shared/RoleBasedLayout';
 import AdminDashboard from '../components/admin/AdminDashboard';
-export default AdminDashboard;
+export default function AdminDashboardPage() {
+  return <RoleBasedLayout><AdminDashboard /></RoleBasedLayout>;
+}
