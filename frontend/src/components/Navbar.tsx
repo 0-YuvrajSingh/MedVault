@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Menu, X, Bell, LogOut, Settings, 
+import {
+  Menu, X, Bell, LogOut, Settings,
   Activity, Home, LogIn, UserPlus, ChevronDown
 } from 'lucide-react';
 import { useNotifications } from '../hooks/useNotifications';
@@ -78,7 +78,7 @@ const Navbar = () => {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        scrolled ? 'glass border-b border-white/10' : 'bg-transparent'
+        scrolled ? 'glass border-b border-white/10' : 'bg-surface dark:bg-surface-dark'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -218,10 +218,10 @@ const Navbar = () => {
                     onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                     className="flex items-center space-x-3 p-1 pr-3 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all border border-transparent hover:border-neutral-200 dark:hover:border-neutral-700"
                   >
-                    <Avatar 
-                      src={user.avatar} 
-                      alt={user.name} 
-                      role={user.role?.toLowerCase()} 
+                    <Avatar
+                      src={user.avatar}
+                      alt={user.name}
+                      role={user.role?.toLowerCase()}
                       size="sm"
                       status="online"
                     />
@@ -247,7 +247,7 @@ const Navbar = () => {
                           <p className="font-semibold text-neutral-900 dark:text-white">{user.name}</p>
                           <p className="text-xs text-neutral-500 truncate">{user.email}</p>
                         </div>
-                        <Link 
+                        <Link
                           to={`/${user.role?.toLowerCase()}/profile`}
                           className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-sm text-neutral-700 dark:text-neutral-300 transition-colors"
                           onClick={() => setIsProfileMenuOpen(false)}
@@ -436,10 +436,10 @@ const Navbar = () => {
                         onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                         className="flex items-center space-x-3 p-1 pr-3 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all border border-transparent hover:border-neutral-200 dark:hover:border-neutral-700"
                       >
-                        <Avatar 
-                          src={user.avatar} 
-                          alt={user.name} 
-                          role={user.role?.toLowerCase()} 
+                        <Avatar
+                          src={user.avatar}
+                          alt={user.name}
+                          role={user.role?.toLowerCase()}
                           size="sm"
                           status="online"
                         />
@@ -465,7 +465,7 @@ const Navbar = () => {
                               <p className="font-semibold text-neutral-900 dark:text-white">{user.name}</p>
                               <p className="text-xs text-neutral-500 truncate">{user.email}</p>
                             </div>
-                            <Link 
+                            <Link
                               to={`/${user.role?.toLowerCase()}/profile`}
                               className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-sm text-neutral-700 dark:text-neutral-300 transition-colors"
                               onClick={() => setIsProfileMenuOpen(false)}
