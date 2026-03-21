@@ -1,277 +1,162 @@
-// @ts-nocheck
-import { motion } from "framer-motion";
-import { Activity, ArrowLeft, Calendar, Download, FileText, TrendingUp, Users } from "lucide-react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { adminAPI } from "../../api";
-import logger from "../../utils/logger";
-import { showToast } from "../../utils/toast";
-import Navbar from '../Navbar';
-import AdminSidebar from './AdminSidebar';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Activity, Calendar, Download, FileText, TrendingUp, Users, CheckCircle } from 'lucide-react';
+import { adminAPI } from '@/api';
+import logger from '@/utils/logger';
+import { toast } from '@/utils/toast';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type ReportId = 'user-analytics' | 'appointment-stats' | 'system-health' | 'revenue-report';
+
+interface ReportType {
+  id:          ReportId;
+  title:       string;
+  description: string;
+  icon:        React.ComponentType<{ className?: string }>;
+  color:       string;
+  bg:          string;
+}
+
+const REPORT_TYPES: ReportType[] = [
+  { id: 'user-analytics',    title: 'User Analytics',          description: 'Detailed user registration and activity metrics',     icon: Users,      color: 'text-blue-600',   bg: 'bg-blue-50 dark:bg-blue-950/30' },
+  { id: 'appointment-stats', title: 'Appointment Statistics',  description: 'Comprehensive appointment booking and completion data', icon: Calendar,   color: 'text-green-600',  bg: 'bg-green-50 dark:bg-green-950/30' },
+  { id: 'system-health',     title: 'System Health Report',    description: 'Platform performance and health metrics',              icon: Activity,   color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/30' },
+  { id: 'revenue-report',    title: 'Revenue Report',          description: 'Financial transactions and revenue analytics',         icon: TrendingUp, color: 'text-teal-600',   bg: 'bg-teal-50 dark:bg-teal-950/30' },
+];
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function SystemReports() {
-  const navigate = useNavigate();
-  const [selectedReport, setSelectedReport] = useState("");
-  const [dateRange, setDateRange] = useState({ start: "", end: "" });
-  const [loading, setLoading] = useState(false);
+  const [selected,  setSelected]  = useState<ReportId | ''>('');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [loading,   setLoading]   = useState(false);
 
-  const colorMap = {
-    blue: { bg: 'bg-blue-50', text: 'text-blue-600' },
-    green: { bg: 'bg-green-50', text: 'text-green-600' },
-    purple: { bg: 'bg-purple-50', text: 'text-purple-600' },
-    teal: { bg: 'bg-teal-50', text: 'text-teal-600' }
-  };
-
-  const reportTypes = [
-    {
-      id: "user-analytics",
-      title: "User Analytics",
-      description: "Detailed user registration and activity metrics",
-      icon: Users,
-      color: "blue"
-    },
-    {
-      id: "appointment-stats",
-      title: "Appointment Statistics",
-      description: "Comprehensive appointment booking and completion data",
-      icon: Calendar,
-      color: "green"
-    },
-    {
-      id: "system-health",
-      title: "System Health Report",
-      description: "Platform performance and health metrics",
-      icon: Activity,
-      color: "purple"
-    },
-    {
-      id: "revenue-report",
-      title: "Revenue Report",
-      description: "Financial transactions and revenue analytics",
-      icon: TrendingUp,
-      color: "teal"
-    }
-  ];
-
-  const handleGenerateReport = async () => {
-    if (!selectedReport) {
-      showToast.error("Please select a report type");
-      return;
-    }
-    if (!dateRange.start || !dateRange.end) {
-      showToast.error("Please select date range");
-      return;
-    }
+  const handleGenerate = async () => {
+    if (!selected)             { toast.error('Please select a report type'); return; }
+    if (!dateRange.start || !dateRange.end) { toast.error('Please select a date range'); return; }
 
     try {
       setLoading(true);
+      let reportData: Record<string, unknown> = {};
 
-      // Generate report data based on type
-      let reportData = {};
-
-      switch (selectedReport) {
-        case "user-analytics":
-          // Pass date range as query params
-          const usersResponse = await adminAPI.getUsers({
-            startDate: dateRange.start,
-            endDate: dateRange.end
-          });
-          reportData = {
-            totalUsers: usersResponse.data?.length || 0,
-            dateRange: dateRange,
-            reportType: "User Analytics",
-            generatedAt: new Date().toISOString()
-          };
+      switch (selected) {
+        case 'user-analytics': {
+          const res = await adminAPI.getUsers({ startDate: dateRange.start, endDate: dateRange.end });
+          reportData = { totalUsers: res.data?.length ?? 0, dateRange, reportType: 'User Analytics', generatedAt: new Date().toISOString() };
           break;
-
-        case "appointment-stats":
-          const statsResponse = await adminAPI.getDashboardStats();
-          reportData = {
-            stats: statsResponse.data || {},
-            dateRange: dateRange,
-            reportType: "Appointment Statistics",
-            generatedAt: new Date().toISOString()
-          };
+        }
+        case 'appointment-stats':
+        case 'system-health': {
+          const res = await adminAPI.getDashboardStats();
+          reportData = { data: res.data ?? {}, dateRange, reportType: selected, generatedAt: new Date().toISOString() };
           break;
-
-        case "system-health":
-          const healthResponse = await adminAPI.getDashboardStats();
-          reportData = {
-            systemHealth: healthResponse.data || {},
-            dateRange: dateRange,
-            reportType: "System Health",
-            generatedAt: new Date().toISOString()
-          };
-          break;
-
-        case "revenue-report":
-          showToast.info("Revenue reporting coming soon");
-          return;
-
-        default:
-          showToast.error("Invalid report type");
+        }
+        case 'revenue-report':
+          toast.error('Revenue reporting coming soon');
           return;
       }
 
-      // Download report as JSON
       const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${selectedReport}-${Date.now()}.json`;
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `${selected}-${Date.now()}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      showToast.success("Report generated and downloaded successfully");
-    } catch (error) {
-      logger.error("Report generation error:", error);
-      showToast.error("Failed to generate report");
+      URL.revokeObjectURL(url);
+      toast.success('Report downloaded');
+    } catch (err) {
+      logger.error('Report error:', err);
+      toast.error('Failed to generate report');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <>
-      <Navbar />
-      <AdminSidebar />
-      <div className="ml-64 pt-16 min-h-screen bg-slate-50 p-6">
-        <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <button
-            onClick={() => navigate("/admin/dashboard")}
-            className="flex items-center gap-2 text-slate-600 hover:text-purple-600 mb-4 transition-colors"
-          >
-            <ArrowLeft className="size-5" />
-            Back to Dashboard
-          </button>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
-                System Reports
-              </h1>
-              <p className="text-slate-600">Generate comprehensive analytics and reports</p>
-            </div>
-            <div className="size-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <FileText className="size-8 text-white" />
-            </div>
-          </div>
-        </motion.div>
+    <div className="space-y-6">
+      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+          <FileText className="text-purple-600" size={24} /> System Reports
+        </h1>
+        <p className="text-sm text-neutral-500 mt-0.5">Generate comprehensive analytics and reports</p>
+      </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Report Type Selection */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="lg:col-span-2 space-y-4"
-          >
-            <h2 className="text-xl font-semibold text-slate-900 mb-4">Select Report Type</h2>
-            {reportTypes.map((report, index) => (
-              <motion.div
-                key={report.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + index * 0.05 }}
-                onClick={() => setSelectedReport(report.id)}
-                className={`bg-white rounded-2xl p-6 cursor-pointer transition-all ${
-                  selectedReport === report.id
-                    ? "ring-2 ring-purple-500 shadow-lg"
-                    : "hover:shadow-md"
-                }`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className={`size-14 rounded-xl ${colorMap[report.color]?.bg || 'bg-slate-50'} flex items-center justify-center flex-shrink-0`}>
-                    <report.icon className={`size-7 ${colorMap[report.color]?.text || 'text-slate-600'}`} />
+      <div className="grid lg:grid-cols-3 gap-5">
+        {/* Report type selection */}
+        <div className="lg:col-span-2 space-y-3">
+          <h2 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Select Report Type</h2>
+          {REPORT_TYPES.map((r, i) => {
+            const Icon = r.icon;
+            return (
+              <motion.div key={r.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                onClick={() => setSelected(r.id)}
+                className={`bg-white dark:bg-neutral-900 rounded-2xl border p-5 cursor-pointer transition-all ${
+                  selected === r.id
+                    ? 'border-purple-400 dark:border-purple-600 shadow-md ring-1 ring-purple-300 dark:ring-purple-700'
+                    : 'border-neutral-200 dark:border-neutral-800 hover:shadow-md'
+                }`}>
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-xl ${r.bg} flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`w-6 h-6 ${r.color}`} />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-1">
-                      {report.title}
-                    </h3>
-                    <p className="text-sm text-slate-600">{report.description}</p>
+                    <p className="font-semibold text-neutral-900 dark:text-white text-sm">{r.title}</p>
+                    <p className="text-xs text-neutral-500 mt-0.5">{r.description}</p>
                   </div>
-                  {selectedReport === report.id && (
-                    <div className="size-6 rounded-full bg-purple-500 flex items-center justify-center">
-                      <svg className="size-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
+                  {selected === r.id && (
+                    <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="w-4 h-4 text-white" />
                     </div>
                   )}
                 </div>
               </motion.div>
-            ))}
-          </motion.div>
+            );
+          })}
+        </div>
 
-          {/* Report Configuration */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-6"
-          >
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-slate-900 mb-4">Report Configuration</h2>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    value={dateRange.start}
-                    onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                    className="w-full h-12 px-4 rounded-xl border border-slate-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
-                  />
+        {/* Config panel */}
+        <div className="space-y-4">
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Report Configuration</h2>
+            <div className="space-y-4">
+              {([
+                { label: 'Start Date', key: 'start' as const },
+                { label: 'End Date',   key: 'end' as const },
+              ]).map(f => (
+                <div key={f.key}>
+                  <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1.5">{f.label}</label>
+                  <input type="date" value={dateRange[f.key]} onChange={e => setDateRange(prev => ({ ...prev, [f.key]: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    value={dateRange.end}
-                    onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                    className="w-full h-12 px-4 rounded-xl border border-slate-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
-                  />
-                </div>
-
-                <button
-                  onClick={handleGenerateReport}
-                  className="w-full h-12 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 font-medium"
-                >
-                  <Download className="size-5" />
-                  Generate Report
-                </button>
-              </div>
+              ))}
+              <button onClick={handleGenerate} disabled={loading}
+                className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl text-sm font-semibold hover:shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                <Download size={16} />
+                {loading ? 'Generating…' : 'Generate Report'}
+              </button>
             </div>
+          </div>
 
-            {/* Quick Stats */}
-            <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl p-6 text-white">
-              <h3 className="text-lg font-semibold mb-4">Quick Stats</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/80">Reports Generated</span>
-                  <span className="font-bold">0</span>
+          {/* Quick stats */}
+          <div className="bg-gradient-to-br from-purple-600 to-pink-500 rounded-2xl p-5 text-white">
+            <h3 className="font-semibold mb-3 text-sm">Quick Stats</h3>
+            <div className="space-y-2.5">
+              {[
+                { label: 'Reports Generated', value: '0' },
+                { label: 'Last Generated',    value: 'Never' },
+              ].map(i => (
+                <div key={i.label} className="flex justify-between items-center">
+                  <span className="text-xs text-white/80">{i.label}</span>
+                  <span className="text-sm font-bold">{i.value}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/80">Last Generated</span>
-                  <span className="font-bold text-sm">Never</span>
-                </div>
-              </div>
+              ))}
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </div>
-    </>
   );
 }

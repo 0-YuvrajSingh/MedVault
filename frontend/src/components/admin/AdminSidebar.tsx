@@ -1,31 +1,24 @@
-// @ts-nocheck
-import React from "react";
-import { useAuth } from "../../context/AuthContext";
-import { Link, useLocation } from "react-router-dom";
+import React from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  Users,
-  UserCog,
-  FileCheck,
-  ShieldAlert,
-  BarChart3,
-  Stethoscope,
-  Settings
-} from "lucide-react";
+  LayoutDashboard, Users, UserCog, FileCheck,
+  ShieldAlert, BarChart3, Stethoscope, LogOut,
+} from 'lucide-react';
+
+const MENU_ITEMS = [
+  { path: '/admin/dashboard',     icon: LayoutDashboard, label: 'Dashboard'           },
+  { path: '/admin/users',         icon: UserCog,         label: 'Manage Users'        },
+  { path: '/admin/doctors',       icon: Stethoscope,     label: 'Manage Doctors'      },
+  { path: '/admin/patients',      icon: Users,           label: 'Manage Patients'     },
+  { path: '/admin/verifications', icon: ShieldAlert,     label: 'Doctor Verifications'},
+  { path: '/admin/documents',     icon: FileCheck,       label: 'Document Verification'},
+  { path: '/admin/reports',       icon: BarChart3,       label: 'System Reports'      },
+];
 
 const AdminSidebar = React.memo(() => {
   const location = useLocation();
   const { logout } = useAuth();
-
-  const menuItems = [
-    { path: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { path: "/admin/users", icon: UserCog, label: "Manage Users" },
-    { path: "/admin/doctors", icon: Stethoscope, label: "Manage Doctors" },
-    { path: "/admin/patients", icon: Users, label: "Manage Patients" },
-    { path: "/admin/verifications", icon: ShieldAlert, label: "Doctor Verifications" },
-    { path: "/admin/documents", icon: FileCheck, label: "Document Verification" },
-    { path: "/admin/reports", icon: BarChart3, label: "System Reports" },
-  ];
 
   return (
     <div className="w-64 min-h-screen fixed left-0 top-20 overflow-y-auto glass border-r border-white/20 z-40 pb-20">
@@ -36,27 +29,31 @@ const AdminSidebar = React.memo(() => {
         </div>
 
         <nav className="space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
+          {MENU_ITEMS.map(item => {
+            const Icon     = item.icon;
             const isActive = location.pathname === item.path;
             return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`
-                  flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
-                  ${isActive 
-                    ? "bg-admin-50 dark:bg-admin-900/20 text-admin-700 dark:text-admin-400 shadow-sm border border-admin-200 dark:border-admin-800" 
-                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white"
-                  }
-                `}
-              >
-                <Icon size={20} className={isActive ? "text-admin-600 dark:text-admin-500" : "opacity-70"} />
+              <Link key={item.path} to={item.path}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  isActive
+                    ? 'bg-admin-50 dark:bg-admin-900/20 text-admin-700 dark:text-admin-400 shadow-sm border border-admin-200 dark:border-admin-800'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white'
+                }`}>
+                <Icon size={18} className={isActive ? 'text-admin-600 dark:text-admin-500' : 'opacity-70'} />
                 <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
+
+        {/* Logout */}
+        <div className="mt-4 pt-4 border-t border-neutral-200/50 dark:border-neutral-700/50">
+          <button onClick={logout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all duration-200">
+            <LogOut size={18} className="opacity-80" />
+            <span>Logout</span>
+          </button>
+        </div>
       </div>
     </div>
   );

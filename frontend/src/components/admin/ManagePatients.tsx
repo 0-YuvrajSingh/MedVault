@@ -1,350 +1,220 @@
-// @ts-nocheck
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { patientAPI, adminAPI } from '../../api';
-import { toast } from '../../utils/toast';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { patientAPI, adminAPI } from '@/api';
+import { toast } from '@/utils/toast';
+import logger from '@/utils/logger';
 import { Search, Users, Eye, Trash2, UserCheck, Calendar, User } from 'lucide-react';
-import logger from '../../utils/logger';
-import { formatDate } from '../../utils/dateUtils';
-import AdminLayout from './AdminLayout';
-import { TableSkeleton, StatCardSkeleton } from '../ui/Skeleton';
+import { formatDate } from '@/utils/dateUtils';
+import { StatCardSkeleton, TableSkeleton } from '@/components/ui/Skeleton';
+import type { Patient } from '@/types';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface PatientRecord extends Patient {
+  phoneNumber?: string;
+  bloodGroup?:  string;
+  gender?:      string;
+  address?:     string;
+  medicalHistory?: string;
+  allergies?:   string;
+  createdAt?:   string;
+  isActive?:    boolean;
+}
+
+interface ModalProps { onClose: () => void; children: React.ReactNode; title: string }
+function Modal({ onClose, children, title }: ModalProps) {
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+        <div className="flex items-center justify-between p-5 border-b border-neutral-200 dark:border-neutral-800">
+          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">{title}</h2>
+          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600 text-2xl leading-none">&times;</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function ManagePatients() {
-  const { user } = useAuth();
-  const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPatient, setSelectedPatient] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [patientToDelete, setPatientToDelete] = useState(null);
+  const [patients,       setPatients]      = useState<PatientRecord[]>([]);
+  const [loading,        setLoading]       = useState(true);
+  const [search,         setSearch]        = useState('');
+  const [selected,       setSelected]      = useState<PatientRecord | null>(null);
+  const [toDelete,       setToDelete]      = useState<PatientRecord | null>(null);
+  const [showDetails,    setShowDetails]   = useState(false);
+  const [showDeleteModal,setShowDelete]    = useState(false);
 
-  useEffect(() => {
-    fetchPatients();
-  }, []);
-
-  const fetchPatients = async () => {
+  const fetchPatients = useCallback(async () => {
     try {
       setLoading(true);
       const res = await patientAPI.getAll();
-      if (res.data.success) {
-        setPatients(res.data.data || []);
-      }
+      if (res.data.success) setPatients(res.data.data ?? []);
     } catch (err) {
       logger.error('Error fetching patients:', err);
       toast.error('Failed to load patients');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleDeletePatient = async () => {
-    if (!patientToDelete) return;
+  useEffect(() => { fetchPatients(); }, [fetchPatients]);
+
+  const handleDelete = async () => {
+    if (!toDelete) return;
     try {
-      const res = await adminAPI.deleteUser(patientToDelete.userId);
-      if (res.data.success) {
-        toast.success('Patient deleted successfully');
-        setShowDeleteModal(false);
-        setPatientToDelete(null);
-        fetchPatients();
-      }
-    } catch (err) {
-      logger.error('Error deleting patient:', err);
-      toast.error(err.response?.data?.message || 'Failed to delete patient');
+      const res = await adminAPI.deleteUser(toDelete.userId);
+      if (res.data.success) { toast.success('Patient deleted'); setShowDelete(false); setToDelete(null); fetchPatients(); }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message ?? 'Failed to delete patient');
     }
   };
 
-  const openDeleteModal = (patient) => {
-    setPatientToDelete(patient);
-    setShowDeleteModal(true);
-  };
+  const calcAge = (dob?: string) => dob
+    ? Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 3600 * 1000))
+    : null;
 
-  const openDetailsModal = (patient) => {
-    setSelectedPatient(patient);
-    setShowDetailsModal(true);
-  };
+  const now = new Date();
+  const thisMonth = patients.filter(p => {
+    if (!p.createdAt) return false;
+    const d = new Date(p.createdAt);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
 
-  const filteredPatients = patients.filter(patient =>
-    patient.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filtered = patients.filter(p => {
+    const q = search.toLowerCase();
+    return !q || p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q) || p.phoneNumber?.includes(q);
+  });
+
+  if (loading) return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Manage Patients</h1>
+      <StatCardSkeleton count={3} />
+      <TableSkeleton rows={5} columns={6} />
+    </div>
   );
 
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="pt-16 min-h-screen bg-slate-50">
-          <div className="max-w-7xl mx-auto p-6">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                <Users className="text-purple-600" size={36} />
-                Manage Patients
-              </h1>
-              <p className="text-gray-600 mt-2">View and manage patient accounts</p>
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+        <Users className="text-purple-600" size={24} /> Manage Patients
+      </h1>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {([
+          { label: 'Total',    value: patients.length,                              icon: Users,     color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/30' },
+          { label: 'Active',   value: patients.filter(p => p.isActive !== false).length, icon: UserCheck, color: 'text-green-600',  bg: 'bg-green-50 dark:bg-green-950/30' },
+          { label: 'New This Month', value: thisMonth,                              icon: Calendar,  color: 'text-blue-600',   bg: 'bg-blue-50 dark:bg-blue-950/30' },
+        ] as const).map(s => {
+          const Icon = s.icon;
+          return (
+            <div key={s.label} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div><p className="text-xs text-neutral-500 mb-1">{s.label}</p><p className={`text-2xl font-bold ${s.color}`}>{s.value}</p></div>
+                <div className={`p-2.5 rounded-xl ${s.bg}`}><Icon className={s.color} size={20} /></div>
+              </div>
             </div>
-            <div className="mb-8">
-              <StatCardSkeleton count={3} />
-            </div>
-            {/* Skeleton for Search Bar */}
-            <div className="bg-white rounded-t-lg shadow-md p-6 border-b h-24 animate-pulse"></div>
-            <div className="bg-white rounded-b-lg shadow-md p-6">
-               <TableSkeleton rows={5} columns={6} />
-            </div>
+          );
+        })}
+      </div>
+
+      {/* Table Card */}
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-neutral-200 dark:border-neutral-800">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={16} />
+            <input type="text" placeholder="Search by name, email, or phone…" value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-neutral-200 dark:border-neutral-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
           </div>
         </div>
-      </AdminLayout>
-    );
-  }
-
-  return (
-    <AdminLayout>
-      <div className="pt-16 min-h-screen bg-slate-50">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-              <Users className="text-purple-600" size={36} />
-              Manage Patients
-            </h1>
-            <p className="text-gray-600 mt-2">View and manage patient accounts</p>
-          </div>
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium">Total Patients</p>
-                  <p className="text-3xl font-bold text-purple-600 mt-2">{patients.length}</p>
-                </div>
-                <Users className="text-purple-600" size={40} />
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium">Active Patients</p>
-                  <p className="text-3xl font-bold text-green-600 mt-2">
-                    {patients.filter(p => p.isActive !== false).length}
-                  </p>
-                </div>
-                <UserCheck className="text-green-600" size={40} />
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium">New This Month</p>
-                  <p className="text-3xl font-bold text-blue-600 mt-2">
-                    {patients.filter(p => {
-                      const createdDate = new Date(p.createdAt);
-                      const now = new Date();
-                      return createdDate.getMonth() === now.getMonth() && 
-                             createdDate.getFullYear() === now.getFullYear();
-                    }).length}
-                  </p>
-                </div>
-                <Calendar className="text-blue-600" size={40} />
-              </div>
-            </div>
-          </div>
-          {/* Patients Table */}
-          <div className="bg-white rounded-lg shadow-md">
-            {/* Search Bar */}
-            <div className="p-6 border-b">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  placeholder="Search by name, email, or phone number..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Blood Group</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredPatients.length > 0 ? (
-                    filteredPatients.map(patient => (
-                      <tr key={patient.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            <User className="text-purple-500 bg-purple-100 rounded-full p-1" size={32} />
-                            <div>
-                              <p className="font-semibold text-gray-900">{patient.name}</p>
-                              <p className="text-sm text-gray-500">{patient.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-900">{patient.phoneNumber || 'N/A'}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-900">
-                            {patient.dateOfBirth ? 
-                              Math.floor((new Date() - new Date(patient.dateOfBirth)) / (365.25 * 24 * 60 * 60 * 1000)) 
-                              : 'N/A'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-gray-900">{patient.bloodGroup || 'N/A'}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-900">
-                            {patient.createdAt ? formatDate(patient.createdAt) : 'N/A'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => openDetailsModal(patient)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="View Details"
-                            >
-                              <Eye size={18} />
-                            </button>
-                            <button
-                              onClick={() => openDeleteModal(patient)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Delete Patient"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="6" className="px-6 py-12 text-center">
-                        <Users className="mx-auto text-gray-300 mb-3" size={48} />
-                        <p className="text-gray-500">No patients found</p>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          {/* Details Modal */}
-          {showDetailsModal && selectedPatient && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-gray-800">Patient Details</h2>
-                    <button
-                      onClick={() => setShowDetailsModal(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-                <div className="p-6 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Name</label>
-                      <p className="text-lg text-gray-900">{selectedPatient.name}</p>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-neutral-50 dark:bg-neutral-800/50">
+              <tr>{['Patient', 'Contact', 'Age', 'Blood Group', 'Registered', 'Actions'].map(h => (
+                <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-neutral-500 uppercase tracking-wider">{h}</th>
+              ))}</tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              {filtered.length > 0 ? filtered.map(p => (
+                <tr key={p.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-purple-100 dark:bg-purple-950/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <User className="text-purple-600" size={15} />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-neutral-900 dark:text-white text-sm">{p.name}</p>
+                        <p className="text-xs text-neutral-400">{p.email}</p>
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Email</label>
-                      <p className="text-lg text-gray-900">{selectedPatient.email}</p>
+                  </td>
+                  <td className="px-5 py-4 text-sm text-neutral-600 dark:text-neutral-400">{p.phoneNumber ?? 'N/A'}</td>
+                  <td className="px-5 py-4 text-sm text-neutral-600 dark:text-neutral-400">{calcAge(p.dateOfBirth) ?? 'N/A'}</td>
+                  <td className="px-5 py-4 text-sm font-medium text-neutral-700 dark:text-neutral-300">{p.bloodGroup ?? 'N/A'}</td>
+                  <td className="px-5 py-4 text-sm text-neutral-500">{p.createdAt ? formatDate(p.createdAt) : 'N/A'}</td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => { setSelected(p); setShowDetails(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg transition-colors" title="View"><Eye size={16} /></button>
+                      <button onClick={() => { setToDelete(p); setShowDelete(true); }} className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors" title="Delete"><Trash2 size={16} /></button>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Phone Number</label>
-                      <p className="text-lg text-gray-900">{selectedPatient.phoneNumber || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Date of Birth</label>
-                      <p className="text-lg text-gray-900">
-                        {selectedPatient.dateOfBirth ? formatDate(selectedPatient.dateOfBirth) : 'N/A'}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Blood Group</label>
-                      <p className="text-lg text-gray-900">{selectedPatient.bloodGroup || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Gender</label>
-                      <p className="text-lg text-gray-900">{selectedPatient.gender || 'N/A'}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Address</label>
-                    <p className="text-lg text-gray-900">{selectedPatient.address || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Medical History</label>
-                    <p className="text-lg text-gray-900">{selectedPatient.medicalHistory || 'No medical history available'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Allergies</label>
-                    <p className="text-lg text-gray-900">{selectedPatient.allergies || 'No known allergies'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Registered On</label>
-                    <p className="text-lg text-gray-900">
-                      {selectedPatient.createdAt ? formatDate(selectedPatient.createdAt) : 'N/A'}
-                    </p>
-                  </div>
-                </div>
-                <div className="p-6 border-t bg-gray-50 flex justify-end">
-                  <button
-                    onClick={() => setShowDetailsModal(false)}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          {/* Delete Confirmation Modal */}
-          {showDeleteModal && patientToDelete && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg max-w-md w-full">
-                <div className="p-6">
-                  <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-                    <Trash2 className="text-red-600" size={24} />
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-800 text-center mb-2">Delete Patient</h2>
-                  <p className="text-gray-600 text-center mb-6">
-                    Are you sure you want to delete <strong>{patientToDelete.name}</strong>? This will permanently remove all their records. This action cannot be undone.
-                  </p>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => {
-                        setShowDeleteModal(false);
-                        setPatientToDelete(null);
-                      }}
-                      className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleDeletePatient}
-                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+                  </td>
+                </tr>
+              )) : (
+                <tr><td colSpan={6} className="px-5 py-12 text-center">
+                  <Users className="mx-auto text-neutral-300 mb-3" size={40} />
+                  <p className="text-neutral-500 text-sm">No patients found</p>
+                </td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-    </AdminLayout>
+
+      {/* Details Modal */}
+      {showDetails && selected && (
+        <Modal title="Patient Details" onClose={() => setShowDetails(false)}>
+          <div className="p-5 grid grid-cols-2 gap-4">
+            {[
+              { label: 'Name',          value: selected.name },
+              { label: 'Email',         value: selected.email },
+              { label: 'Phone',         value: selected.phoneNumber ?? 'N/A' },
+              { label: 'Date of Birth', value: selected.dateOfBirth ? formatDate(selected.dateOfBirth) : 'N/A' },
+              { label: 'Blood Group',   value: selected.bloodGroup ?? 'N/A' },
+              { label: 'Gender',        value: selected.gender ?? 'N/A' },
+              { label: 'Address',       value: selected.address ?? 'N/A' },
+              { label: 'Medical History', value: selected.medicalHistory ?? 'None' },
+              { label: 'Allergies',     value: selected.allergies ?? 'None' },
+              { label: 'Registered',    value: selected.createdAt ? formatDate(selected.createdAt) : 'N/A' },
+            ].map(f => (
+              <div key={f.label} className={f.label === 'Medical History' || f.label === 'Allergies' || f.label === 'Address' ? 'col-span-2' : ''}>
+                <p className="text-xs font-medium text-neutral-500 mb-0.5">{f.label}</p>
+                <p className="text-sm text-neutral-900 dark:text-white">{f.value}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end p-5 border-t border-neutral-200 dark:border-neutral-800">
+            <button onClick={() => setShowDetails(false)} className="px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 rounded-xl text-sm font-semibold hover:bg-neutral-300 transition-colors">Close</button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Delete Modal */}
+      {showDeleteModal && toDelete && (
+        <Modal title="Delete Patient" onClose={() => { setShowDelete(false); setToDelete(null); }}>
+          <div className="p-5 text-center">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3"><Trash2 className="text-red-600" size={24} /></div>
+            <p className="text-neutral-600 dark:text-neutral-400 mb-5">Delete <strong className="text-neutral-900 dark:text-white">{toDelete.name}</strong>? All their records will be permanently removed.</p>
+            <div className="flex gap-3">
+              <button onClick={() => { setShowDelete(false); setToDelete(null); }} className="flex-1 px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 rounded-xl text-sm font-semibold hover:bg-neutral-300 transition-colors">Cancel</button>
+              <button onClick={handleDelete} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors">Delete</button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
   );
 }
