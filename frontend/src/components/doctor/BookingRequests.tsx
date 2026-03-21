@@ -1,153 +1,122 @@
-// @ts-nocheck
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { appointmentAPI } from '../../api';
-import { toast } from '../../utils/toast';
-import { formatDate, formatTime } from '../../utils/dateUtils';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { appointmentAPI } from '@/api';
+import { toast } from '@/utils/toast';
+import { formatDate } from '@/utils/dateUtils';
 import { Calendar, Clock, CheckCircle, XCircle, User } from 'lucide-react';
-import Navbar from '../Navbar';
-import DoctorSidebar from './DoctorSidebar';
-import { AppointmentListSkeleton } from '../ui/Skeleton';
+import { AppointmentListSkeleton } from '@/components/ui/Skeleton';
+import type { Appointment } from '@/types';
 
 export default function BookingRequests() {
   const { user } = useAuth();
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [requests, setRequests] = useState<Appointment[]>([]);
+  const [loading, setLoading]   = useState(true);
 
-  useEffect(() => {
-    fetchBookingRequests();
-  }, [user]);
-
-  const fetchBookingRequests = async () => {
+  const fetchRequests = useCallback(async () => {
+    if (!user?.id) return;
     try {
       setLoading(true);
-      const response = await appointmentAPI.getPendingByDoctor(user.id);
-      if (response.data.success) {
-        const pendingRequests = response.data.data || [];
-        // Sort by date
-        pendingRequests.sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate));
-        setRequests(pendingRequests);
+      const res = await appointmentAPI.getPendingByDoctor(user.id);
+      if (res.data.success) {
+        const pending: Appointment[] = (res.data.data ?? []).sort(
+          (a: Appointment, b: Appointment) =>
+            new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+        setRequests(pending);
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to load booking requests');
     } finally {
       setLoading(false);
     }
+  }, [user?.id]);
+
+  useEffect(() => { fetchRequests(); }, [fetchRequests]);
+
+  const handleConfirm = async (id: number) => {
+    try {
+      const res = await appointmentAPI.updateStatus(id, 'CONFIRMED');
+      if (res.data.success) { toast.success('Appointment confirmed'); fetchRequests(); }
+    } catch { toast.error('Failed to confirm appointment'); }
   };
 
-  const handleConfirm = async (appointmentId) => {
+  const handleReject = async (id: number) => {
+    if (!window.confirm('Reject this appointment?')) return;
     try {
-      const response = await appointmentAPI.updateStatus(appointmentId, 'CONFIRMED');
-      if (response.data.success) {
-        toast.success('Appointment confirmed successfully');
-        fetchBookingRequests();
-      }
-    } catch (err) {
-      toast.error('Failed to confirm appointment');
-    }
-  };
-
-  const handleReject = async (appointmentId) => {
-    if (!window.confirm('Are you sure you want to reject this appointment?')) return;
-    
-    try {
-      const response = await appointmentAPI.updateStatus(appointmentId, 'CANCELLED');
-      if (response.data.success) {
-        toast.success('Appointment cancelled');
-        fetchBookingRequests();
-      }
-    } catch (err) {
-      toast.error('Failed to cancel appointment');
-    }
+      const res = await appointmentAPI.updateStatus(id, 'CANCELLED');
+      if (res.data.success) { toast.success('Appointment rejected'); fetchRequests(); }
+    } catch { toast.error('Failed to reject appointment'); }
   };
 
   if (loading) return (
-    <>
-      <Navbar />
-      <DoctorSidebar />
-      <div className="ml-64 pt-16 min-h-screen bg-slate-50">
-        <div className="max-w-6xl mx-auto p-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-6">Booking Requests</h1>
-          <AppointmentListSkeleton />
-        </div>
-      </div>
-    </>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Booking Requests</h1>
+      <AppointmentListSkeleton />
+    </div>
   );
 
   return (
-    <>
-      <Navbar />
-      <DoctorSidebar />
-      <div className="ml-64 pt-16 min-h-screen bg-slate-50">
-        <div className="max-w-6xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Booking Requests</h1>
-        <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg font-semibold">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Booking Requests</h1>
+        <span className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 px-4 py-1.5 rounded-full text-sm font-semibold">
           {requests.length} Pending
-        </div>
+        </span>
       </div>
 
-      <div className="space-y-4">
-        {requests.map(request => (
-          <div key={request.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
+      <div className="space-y-3">
+        {requests.map(req => (
+          <div key={req.id} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center">
-                    <User className="text-blue-600" size={28} />
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-950/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <User className="text-blue-600" size={24} />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-xl text-gray-800">{request.patientName}</h3>
-                    <p className="text-sm text-gray-600">Patient ID: {request.patientId}</p>
+                    <p className="font-semibold text-lg text-neutral-900 dark:text-white">{req.patientName}</p>
+                    <p className="text-xs text-neutral-500">Patient ID: {req.patientId}</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="flex items-center gap-3 bg-blue-50 p-3 rounded-lg">
-                    <Calendar size={20} className="text-blue-600" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  <div className="flex items-center gap-3 bg-blue-50 dark:bg-blue-950/20 p-3 rounded-xl">
+                    <Calendar size={18} className="text-blue-600" />
                     <div>
-                      <p className="text-xs text-gray-600">Date</p>
-                      <p className="font-semibold text-gray-800">{formatDate(request.appointmentDate)}</p>
+                      <p className="text-xs text-neutral-500">Date</p>
+                      <p className="font-semibold text-neutral-900 dark:text-white text-sm">{formatDate(req.date)}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 bg-blue-50 p-3 rounded-lg">
-                    <Clock size={20} className="text-blue-600" />
-                    <div>
-                      <p className="text-xs text-gray-600">Time</p>
-                      <p className="font-semibold text-gray-800">{request.appointmentTime}</p>
+                  {req.time && (
+                    <div className="flex items-center gap-3 bg-blue-50 dark:bg-blue-950/20 p-3 rounded-xl">
+                      <Clock size={18} className="text-blue-600" />
+                      <div>
+                        <p className="text-xs text-neutral-500">Time</p>
+                        <p className="font-semibold text-neutral-900 dark:text-white text-sm">{req.time}</p>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
-                {request.reason && (
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Reason for Visit:</p>
-                    <p className="text-gray-600">{request.reason}</p>
-                  </div>
-                )}
-
-                {request.notes && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Additional Notes:</p>
-                    <p className="text-gray-600">{request.notes}</p>
+                {req.notes && (
+                  <div className="bg-neutral-50 dark:bg-neutral-800 rounded-xl p-3 text-sm text-neutral-600 dark:text-neutral-400">
+                    <span className="font-medium text-neutral-700 dark:text-neutral-300">Reason: </span>{req.notes}
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-col gap-3 ml-6">
+              <div className="flex flex-col gap-2 flex-shrink-0">
                 <button
-                  onClick={() => handleConfirm(request.id)}
-                  className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                  onClick={() => handleConfirm(req.id)}
+                  className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors"
                 >
-                  <CheckCircle size={20} />
-                  Confirm
+                  <CheckCircle size={16} /> Confirm
                 </button>
                 <button
-                  onClick={() => handleReject(request.id)}
-                  className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-semibold"
+                  onClick={() => handleReject(req.id)}
+                  className="flex items-center gap-1.5 bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors"
                 >
-                  <XCircle size={20} />
-                  Reject
+                  <XCircle size={16} /> Reject
                 </button>
               </div>
             </div>
@@ -155,15 +124,13 @@ export default function BookingRequests() {
         ))}
 
         {requests.length === 0 && (
-          <div className="text-center py-16 bg-white rounded-lg shadow">
-            <Calendar size={64} className="mx-auto mb-4 text-gray-400" />
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">No Pending Requests</h3>
-            <p className="text-gray-500">All booking requests have been processed</p>
+          <div className="text-center py-16 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800">
+            <Calendar size={40} className="mx-auto mb-3 text-neutral-300" />
+            <p className="font-semibold text-neutral-700 dark:text-neutral-300 mb-1">No Pending Requests</p>
+            <p className="text-sm text-neutral-500">All booking requests have been processed</p>
           </div>
         )}
       </div>
-        </div>
-      </div>
-    </>
+    </div>
   );
 }

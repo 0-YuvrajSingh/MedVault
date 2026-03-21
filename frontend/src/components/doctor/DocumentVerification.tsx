@@ -1,261 +1,223 @@
-// @ts-nocheck
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { documentAPI } from '../../api';
-import { toast } from '../../utils/toast';
-import { formatDate } from '../../utils/dateUtils';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { documentAPI } from '@/api';
+import { toast } from '@/utils/toast';
+import { formatDate } from '@/utils/dateUtils';
 import { FileText, Calendar, CheckCircle, XCircle, Eye } from 'lucide-react';
-import Navbar from '../Navbar';
-import DoctorSidebar from './DoctorSidebar';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type DocFilter = 'ALL' | 'VERIFIED' | 'UNVERIFIED';
+
+interface Doc {
+  id:           number;
+  patientId:    number;
+  patientName?: string;
+  fileName?:    string;
+  documentType?: string;
+  uploadDate?:  string;
+  filePath?:    string;
+  description?: string;
+  verified:     boolean;
+}
+
+const DOC_TYPE_STYLES: Record<string, string> = {
+  LAB_REPORT:          'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+  PRESCRIPTION:        'bg-green-100  text-green-800  dark:bg-green-900/30  dark:text-green-400',
+  MEDICAL_CERTIFICATE: 'bg-blue-100   text-blue-800   dark:bg-blue-900/30   dark:text-blue-400',
+  IMAGING:             'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+  OTHER:               'bg-neutral-100 text-neutral-600',
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function DocumentVerification() {
   const { user } = useAuth();
-  const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('ALL');
+  const [documents, setDocuments] = useState<Doc[]>([]);
+  const [loading,   setLoading]   = useState(true);
+  const [filter,    setFilter]    = useState<DocFilter>('ALL');
 
-  useEffect(() => {
-    fetchDocuments();
-  }, [user]);
-
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
+    if (!user?.id) return;
     try {
       setLoading(true);
-      const response = await documentAPI.getByDoctor(user.id);
-      if (response.data.success) {
-        const docs = response.data.data || [];
-        docs.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+      const res = await documentAPI.getByDoctor(user.id);
+      if (res.data.success) {
+        const docs: Doc[] = (res.data.data ?? []).sort(
+          (a: Doc, b: Doc) =>
+            new Date(b.uploadDate ?? '').getTime() - new Date(a.uploadDate ?? '').getTime()
+        );
         setDocuments(docs);
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to load documents');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  const handleVerify = async (documentId) => {
+  useEffect(() => { fetchDocuments(); }, [fetchDocuments]);
+
+  const handleVerify = async (id: number) => {
     if (!window.confirm('Verify this document?')) return;
-    
     try {
-      const response = await documentAPI.verify(documentId);
-      if (response.data.success) {
-        toast.success('Document verified successfully');
-        fetchDocuments();
-      }
-    } catch (err) {
+      const res = await documentAPI.verify(id);
+      if (res.data.success) { toast.success('Document verified'); fetchDocuments(); }
+    } catch {
       toast.error('Failed to verify document');
     }
   };
 
-  const getFilteredDocuments = () => {
-    if (filter === 'VERIFIED') {
-      return documents.filter(doc => doc.verified);
-    } else if (filter === 'UNVERIFIED') {
-      return documents.filter(doc => !doc.verified);
-    }
-    return documents;
-  };
+  const filtered = documents.filter(d =>
+    filter === 'ALL'        ? true :
+    filter === 'VERIFIED'   ? d.verified :
+                              !d.verified
+  );
 
-  const getDocumentTypeColor = (type) => {
-    const colors = {
-      LAB_REPORT: 'bg-purple-100 text-purple-800',
-      PRESCRIPTION: 'bg-green-100 text-green-800',
-      MEDICAL_CERTIFICATE: 'bg-blue-100 text-blue-800',
-      IMAGING: 'bg-orange-100 text-orange-800',
-      OTHER: 'bg-gray-100 text-gray-800'
-    };
-    return colors[type] || 'bg-gray-100 text-gray-800';
-  };
+  const verifiedCount   = documents.filter(d => d.verified).length;
+  const unverifiedCount = documents.length - verifiedCount;
 
-  const filteredDocs = getFilteredDocuments();
-
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-surface dark:bg-neutral-900">
-        <Navbar />
-        <DoctorSidebar />
-        <main className="pl-64 pt-24 p-8 flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </main>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="flex justify-center py-16">
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-neutral-900">
-      <Navbar />
-      <DoctorSidebar />
-      <main className="pl-64 pt-24 p-8 transition-all duration-300">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-800 mb-6">Document Verification</h1>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Document Verification</h1>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="bg-white rounded-lg shadow p-6">
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {([
+          { label: 'Total',    value: documents.length, icon: FileText,    color: 'text-blue-600',   bg: 'bg-blue-50 dark:bg-blue-950/30' },
+          { label: 'Pending',  value: unverifiedCount,  icon: XCircle,     color: 'text-yellow-600', bg: 'bg-yellow-50 dark:bg-yellow-950/30' },
+          { label: 'Verified', value: verifiedCount,    icon: CheckCircle, color: 'text-green-600',  bg: 'bg-green-50 dark:bg-green-950/30' },
+        ] as const).map(s => {
+          const Icon = s.icon;
+          return (
+            <div key={s.label} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm">Total Documents</p>
-                  <p className="text-3xl font-bold text-blue-600">{documents.length}</p>
+                  <p className="text-xs text-neutral-500 mb-1">{s.label}</p>
+                  <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
                 </div>
-                <FileText className="text-blue-600" size={40} />
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm">Pending Verification</p>
-                  <p className="text-3xl font-bold text-yellow-600">
-                    {documents.filter(d => !d.verified).length}
-                  </p>
-                </div>
-                <XCircle className="text-yellow-600" size={40} />
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm">Verified</p>
-                  <p className="text-3xl font-bold text-green-600">
-                    {documents.filter(d => d.verified).length}
-                  </p>
-                </div>
-                <CheckCircle className="text-green-600" size={40} />
-              </div>
-            </div>
-          </div>
-
-          {/* Filter Tabs */}
-          <div className="bg-white rounded-lg shadow mb-6">
-            <div className="flex border-b">
-              <button
-                onClick={() => setFilter('ALL')}
-                className={`flex-1 px-6 py-3 font-semibold transition-colors ${
-                  filter === 'ALL' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                All Documents ({documents.length})
-              </button>
-              <button
-                onClick={() => setFilter('UNVERIFIED')}
-                className={`flex-1 px-6 py-3 font-semibold transition-colors ${
-                  filter === 'UNVERIFIED' 
-                    ? 'text-yellow-600 border-b-2 border-yellow-600' 
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                Unverified ({documents.filter(d => !d.verified).length})
-              </button>
-              <button
-                onClick={() => setFilter('VERIFIED')}
-                className={`flex-1 px-6 py-3 font-semibold transition-colors ${
-                  filter === 'VERIFIED' 
-                    ? 'text-green-600 border-b-2 border-green-600' 
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                Verified ({documents.filter(d => d.verified).length})
-              </button>
-            </div>
-          </div>
-
-          {/* Documents List */}
-          <div className="space-y-4">
-            {filteredDocs.map(document => (
-              <div key={document.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <FileText className="text-blue-600" size={24} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-lg text-gray-800">{document.fileName || 'Document'}</h3>
-                        <p className="text-sm text-gray-600">Patient: {document.patientName}</p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                      <div>
-                        <p className="text-xs text-gray-600 mb-1">Document Type</p>
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getDocumentTypeColor(document.documentType)}`}>
-                          {document.documentType?.replace(/_/g, ' ')}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-600 mb-1">Upload Date</p>
-                        <div className="flex items-center gap-2">
-                          <Calendar size={16} className="text-gray-500" />
-                          <span className="text-sm text-gray-800">{formatDate(document.uploadDate)}</span>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-600 mb-1">Status</p>
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                          document.verified 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {document.verified ? 'Verified' : 'Pending'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {document.description && (
-                      <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                        <p className="text-sm font-medium text-gray-700 mb-1">Description:</p>
-                        <p className="text-gray-600">{document.description}</p>
-                      </div>
-                    )}
-
-                    {document.filePath && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Eye size={16} />
-                        <span className="font-mono text-xs">{document.filePath}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-2 ml-4">
-                    {!document.verified && (
-                      <button
-                        onClick={() => handleVerify(document.id)}
-                        className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                      >
-                        <CheckCircle size={18} />
-                        Verify
-                      </button>
-                    )}
-                    {document.verified && (
-                      <div className="flex items-center gap-2 text-green-600 font-semibold">
-                        <CheckCircle size={18} />
-                        Verified
-                      </div>
-                    )}
-                  </div>
+                <div className={`p-2.5 rounded-xl ${s.bg}`}>
+                  <Icon className={s.color} size={22} />
                 </div>
               </div>
-            ))}
+            </div>
+          );
+        })}
+      </div>
 
-            {filteredDocs.length === 0 && (
-              <div className="text-center py-16 bg-white rounded-lg shadow">
-                <FileText size={64} className="mx-auto mb-4 text-gray-400" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">No Documents Found</h3>
-                <p className="text-gray-500">
-                  {filter === 'UNVERIFIED' 
-                    ? 'All documents have been verified' 
-                    : filter === 'VERIFIED'
-                    ? 'No verified documents yet'
-                    : 'No documents available for verification'}
-                </p>
-              </div>
-            )}
-          </div>
+      {/* Filter Tabs */}
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden shadow-sm">
+        <div className="flex border-b border-neutral-200 dark:border-neutral-800">
+          {([
+            { key: 'ALL',        label: `All (${documents.length})`,        active: 'text-blue-600 border-blue-600' },
+            { key: 'UNVERIFIED', label: `Pending (${unverifiedCount})`,      active: 'text-yellow-600 border-yellow-600' },
+            { key: 'VERIFIED',   label: `Verified (${verifiedCount})`,       active: 'text-green-600 border-green-600' },
+          ] as const).map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setFilter(tab.key)}
+              className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors border-b-2 ${
+                filter === tab.key
+                  ? tab.active
+                  : 'text-neutral-500 border-transparent hover:text-neutral-800 dark:hover:text-neutral-200'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
-      </main>
+      </div>
+
+      {/* Document List */}
+      <div className="space-y-3">
+        {filtered.map(doc => (
+          <div key={doc.id} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-950/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <FileText className="text-blue-600" size={20} />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-neutral-900 dark:text-white">{doc.fileName ?? 'Document'}</p>
+                    <p className="text-xs text-neutral-500">Patient: {doc.patientName}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                  <div>
+                    <p className="text-xs text-neutral-500 mb-1">Type</p>
+                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                      DOC_TYPE_STYLES[doc.documentType ?? 'OTHER'] ?? DOC_TYPE_STYLES.OTHER
+                    }`}>
+                      {doc.documentType?.replace(/_/g, ' ') ?? 'OTHER'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-500 mb-1">Upload Date</p>
+                    <span className="text-sm text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
+                      <Calendar size={13} /> {doc.uploadDate ? formatDate(doc.uploadDate) : '—'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-500 mb-1">Status</p>
+                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                      doc.verified
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                    }`}>
+                      {doc.verified ? 'Verified' : 'Pending'}
+                    </span>
+                  </div>
+                </div>
+
+                {doc.description && (
+                  <div className="bg-neutral-50 dark:bg-neutral-800 rounded-xl p-3 mb-2 text-sm text-neutral-600 dark:text-neutral-400">
+                    {doc.description}
+                  </div>
+                )}
+                {doc.filePath && (
+                  <p className="text-xs text-neutral-400 font-mono flex items-center gap-1">
+                    <Eye size={12} /> {doc.filePath}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex-shrink-0">
+                {doc.verified
+                  ? <span className="flex items-center gap-1 text-green-600 text-sm font-semibold"><CheckCircle size={16} /> Verified</span>
+                  : (
+                    <button
+                      onClick={() => handleVerify(doc.id)}
+                      className="flex items-center gap-1.5 bg-green-600 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors"
+                    >
+                      <CheckCircle size={15} /> Verify
+                    </button>
+                  )
+                }
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {filtered.length === 0 && (
+          <div className="text-center py-16 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800">
+            <FileText size={40} className="mx-auto mb-3 text-neutral-300" />
+            <p className="font-semibold text-neutral-700 dark:text-neutral-300 mb-1">No Documents Found</p>
+            <p className="text-sm text-neutral-500">
+              {filter === 'UNVERIFIED' ? 'All documents have been verified'
+               : filter === 'VERIFIED' ? 'No verified documents yet'
+               : 'No documents available'}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,128 +1,131 @@
-// @ts-nocheck
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { appointmentAPI } from '../../api';
-import { toast } from '../../utils/toast';
-import { formatDate, formatTime, formatDateTime } from '../../utils/dateUtils';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { appointmentAPI } from '@/api';
+import { toast } from '@/utils/toast';
+import { formatDate } from '@/utils/dateUtils';
 import { Calendar, Clock, CheckCircle, XCircle, Filter, User, Search } from 'lucide-react';
-import Navbar from '../Navbar';
-import DoctorSidebar from './DoctorSidebar';
-import { AppointmentListSkeleton } from '../ui/Skeleton';
+import { AppointmentListSkeleton } from '@/components/ui/Skeleton';
+import type { Appointment, AppointmentStatus } from '@/types';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type StatusFilter = AppointmentStatus | 'ALL';
+
+const STATUS_STYLES: Record<AppointmentStatus, string> = {
+  PENDING:   'bg-yellow-100 text-yellow-800',
+  CONFIRMED: 'bg-blue-100   text-blue-800',
+  COMPLETED: 'bg-green-100  text-green-800',
+  CANCELLED: 'bg-red-100    text-red-800',
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function AppointmentManagement() {
   const { user } = useAuth();
-  const [appointments, setAppointments] = useState([]);
-  const [filteredAppointments, setFilteredAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [appointments, setAppointments]           = useState<Appointment[]>([]);
+  const [filteredAppointments, setFiltered]       = useState<Appointment[]>([]);
+  const [loading, setLoading]                     = useState(true);
+  const [statusFilter, setStatusFilter]           = useState<StatusFilter>('ALL');
+  const [searchTerm, setSearchTerm]               = useState('');
 
-  useEffect(() => {
-    fetchAppointments();
-  }, [user]);
-
-  useEffect(() => {
-    filterAppointments();
-  }, [appointments, statusFilter, searchTerm]);
-
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
+    if (!user?.id) return;
     try {
       setLoading(true);
-      const response = await appointmentAPI.getByDoctor(user.id);
-      if (response.data.success) {
-        const appts = response.data.data || [];
-        // Sort by date descending
-        appts.sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
+      const res = await appointmentAPI.getByDoctor(user.id);
+      if (res.data.success) {
+        const appts: Appointment[] = (res.data.data ?? []).sort(
+          (a: Appointment, b: Appointment) =>
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
         setAppointments(appts);
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to load appointments');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  const filterAppointments = () => {
-    let filtered = [...appointments];
-    
-    if (statusFilter !== 'ALL') {
-      filtered = filtered.filter(apt => apt.status === statusFilter);
-    }
-    
+  useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
+
+  useEffect(() => {
+    let list = [...appointments];
+    if (statusFilter !== 'ALL') list = list.filter(a => a.status === statusFilter);
     if (searchTerm) {
-      filtered = filtered.filter(apt => 
-        apt.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        apt.appointmentDate?.includes(searchTerm)
+      const q = searchTerm.toLowerCase();
+      list = list.filter(a =>
+        a.patientName?.toLowerCase().includes(q) || a.date?.includes(searchTerm)
       );
     }
-    
-    setFilteredAppointments(filtered);
-  };
+    setFiltered(list);
+  }, [appointments, statusFilter, searchTerm]);
 
-  const handleUpdateStatus = async (appointmentId, newStatus) => {
+  const handleUpdateStatus = async (id: number, newStatus: AppointmentStatus) => {
     if (!window.confirm(`Update status to ${newStatus}?`)) return;
-    
     try {
-      const response = await appointmentAPI.updateStatus(appointmentId, newStatus);
-      if (response.data.success) {
+      const res = await appointmentAPI.updateStatus(id, newStatus);
+      if (res.data.success) {
         toast.success(`Appointment ${newStatus.toLowerCase()}`);
         fetchAppointments();
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to update status');
     }
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      CONFIRMED: 'bg-blue-100 text-blue-800',
-      COMPLETED: 'bg-green-100 text-green-800',
-      CANCELLED: 'bg-red-100 text-red-800'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
-  };
-
   if (loading) return (
-    <>
-      <Navbar />
-      <DoctorSidebar />
-      <div className="ml-64 pt-16 min-h-screen bg-slate-50">
-        <div className="max-w-7xl mx-auto p-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-6">Appointment Management</h1>
-          <AppointmentListSkeleton />
-        </div>
-      </div>
-    </>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Appointment Management</h1>
+      <AppointmentListSkeleton />
+    </div>
   );
 
+  const counts: Record<AppointmentStatus, number> = {
+    PENDING:   appointments.filter(a => a.status === 'PENDING').length,
+    CONFIRMED: appointments.filter(a => a.status === 'CONFIRMED').length,
+    COMPLETED: appointments.filter(a => a.status === 'COMPLETED').length,
+    CANCELLED: appointments.filter(a => a.status === 'CANCELLED').length,
+  };
+
   return (
-    <>
-      <Navbar />
-      <DoctorSidebar />
-      <div className="ml-64 pt-16 min-h-screen bg-slate-50">
-        <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Appointment Management</h1>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Appointment Management</h1>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {([
+          { label: 'Total',     value: appointments.length, color: 'text-neutral-900 dark:text-white' },
+          { label: 'Pending',   value: counts.PENDING,      color: 'text-yellow-600' },
+          { label: 'Confirmed', value: counts.CONFIRMED,    color: 'text-blue-600' },
+          { label: 'Completed', value: counts.COMPLETED,    color: 'text-green-600' },
+        ] as const).map(s => (
+          <div key={s.label} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 shadow-sm">
+            <p className="text-xs text-neutral-500 mb-1">{s.label}</p>
+            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+          </div>
+        ))}
+      </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
             <input
               type="text"
-              placeholder="Search by patient name or date..."
+              placeholder="Search by patient name or date…"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-neutral-200 dark:border-neutral-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div className="flex items-center gap-2">
-            <Filter size={20} className="text-gray-600" />
+            <Filter size={18} className="text-neutral-500" />
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={e => setStatusFilter(e.target.value as StatusFilter)}
+              className="flex-1 px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="ALL">All Status</option>
               <option value="PENDING">Pending</option>
@@ -134,93 +137,61 @@ export default function AppointmentManagement() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Total</p>
-          <p className="text-2xl font-bold text-gray-800">{appointments.length}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Pending</p>
-          <p className="text-2xl font-bold text-yellow-600">{appointments.filter(a => a.status === 'PENDING').length}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Confirmed</p>
-          <p className="text-2xl font-bold text-blue-600">{appointments.filter(a => a.status === 'CONFIRMED').length}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Completed</p>
-          <p className="text-2xl font-bold text-green-600">{appointments.filter(a => a.status === 'COMPLETED').length}</p>
-        </div>
-      </div>
-
-      {/* Appointments List */}
-      <div className="space-y-4">
-        {filteredAppointments.map(appointment => (
-          <div key={appointment.id} className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
+      {/* List */}
+      <div className="space-y-3">
+        {filteredAppointments.map(appt => (
+          <div key={appt.id} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <User className="text-blue-600" size={24} />
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-950/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <User className="text-blue-600" size={20} />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg text-gray-800">{appointment.patientName}</h3>
-                    <p className="text-sm text-gray-600">Patient ID: {appointment.patientId}</p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Calendar size={18} className="text-blue-600" />
-                    <span>{formatDate(appointment.appointmentDate)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Clock size={18} className="text-blue-600" />
-                    <span>{appointment.appointmentTime}</span>
-                  </div>
-                  <div>
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(appointment.status)}`}>
-                      {appointment.status}
-                    </span>
+                    <p className="font-semibold text-neutral-900 dark:text-white">{appt.patientName}</p>
+                    <p className="text-xs text-neutral-500">ID: {appt.patientId}</p>
                   </div>
                 </div>
 
-                {appointment.reason && (
-                  <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                    <p className="text-sm font-medium text-gray-700 mb-1">Reason:</p>
-                    <p className="text-gray-600">{appointment.reason}</p>
+                <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-600 dark:text-neutral-400">
+                  <span className="flex items-center gap-1.5"><Calendar size={14} className="text-blue-500" />{formatDate(appt.date)}</span>
+                  {appt.time && <span className="flex items-center gap-1.5"><Clock size={14} className="text-blue-500" />{appt.time}</span>}
+                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLES[appt.status]}`}>
+                    {appt.status}
+                  </span>
+                </div>
+
+                {appt.notes && (
+                  <div className="mt-3 bg-neutral-50 dark:bg-neutral-800 rounded-xl p-3 text-sm text-neutral-600 dark:text-neutral-400">
+                    <span className="font-medium text-neutral-700 dark:text-neutral-300">Notes: </span>{appt.notes}
                   </div>
                 )}
               </div>
 
-              {appointment.status !== 'COMPLETED' && appointment.status !== 'CANCELLED' && (
-                <div className="flex flex-col gap-2 ml-4">
-                  {appointment.status === 'PENDING' && (
+              {appt.status !== 'COMPLETED' && appt.status !== 'CANCELLED' && (
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                  {appt.status === 'PENDING' && (
                     <>
                       <button
-                        onClick={() => handleUpdateStatus(appointment.id, 'CONFIRMED')}
-                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                        onClick={() => handleUpdateStatus(appt.id, 'CONFIRMED')}
+                        className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-700 transition-colors"
                       >
-                        <CheckCircle size={18} />
-                        Confirm
+                        <CheckCircle size={15} /> Confirm
                       </button>
                       <button
-                        onClick={() => handleUpdateStatus(appointment.id, 'CANCELLED')}
-                        className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                        onClick={() => handleUpdateStatus(appt.id, 'CANCELLED')}
+                        className="flex items-center gap-1.5 bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-700 transition-colors"
                       >
-                        <XCircle size={18} />
-                        Cancel
+                        <XCircle size={15} /> Cancel
                       </button>
                     </>
                   )}
-                  {appointment.status === 'CONFIRMED' && (
+                  {appt.status === 'CONFIRMED' && (
                     <button
-                      onClick={() => handleUpdateStatus(appointment.id, 'COMPLETED')}
-                      className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                      onClick={() => handleUpdateStatus(appt.id, 'COMPLETED')}
+                      className="flex items-center gap-1.5 bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-700 transition-colors"
                     >
-                      <CheckCircle size={18} />
-                      Complete
+                      <CheckCircle size={15} /> Complete
                     </button>
                   )}
                 </div>
@@ -230,14 +201,12 @@ export default function AppointmentManagement() {
         ))}
 
         {filteredAppointments.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-lg shadow">
-            <Calendar size={48} className="mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-500">No appointments found</p>
+          <div className="text-center py-16 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800">
+            <Calendar size={40} className="mx-auto mb-3 text-neutral-300" />
+            <p className="text-neutral-500">No appointments found</p>
           </div>
         )}
       </div>
     </div>
-      </div>
-    </>
   );
 }
