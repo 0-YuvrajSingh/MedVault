@@ -41,6 +41,10 @@
     "postcss": "^8.5.6",
     "rollup-plugin-visualizer": "^5.12.0",
     "tailwindcss": "^3.4.18",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "typescript": "^5.4.5",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/react-router-dom": "^5.3.3"
   }
 }
