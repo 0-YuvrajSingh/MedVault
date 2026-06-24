@@ -1,6 +1,7 @@
 package com.medvault.controller;
 
 import com.medvault.dto.AssignDoctorRequest;
+import com.medvault.dto.AssignmentResponse;
 import com.medvault.dto.UserResponse;
 import com.medvault.service.AdminService;
 import org.springframework.http.ResponseEntity;
@@ -40,5 +41,10 @@ public class AdminController {
     public ResponseEntity<Void> assignDoctor(@RequestBody AssignDoctorRequest request) {
         adminService.assignDoctorToPatient(request);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/assignments")
+    public ResponseEntity<List<AssignmentResponse>> getActiveAssignments() {
+        return ResponseEntity.ok(adminService.getAllActiveAssignments());
     }
 }

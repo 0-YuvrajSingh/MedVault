@@ -62,7 +62,7 @@ public class AdminService {
             throw new IllegalStateException("Cannot assign an inactive doctor to a patient");
         }
 
-        boolean assignmentExists = assignmentRepository.existsByPatientAndDoctor(patient, doctor);
+        boolean assignmentExists = assignmentRepository.existsByPatientAndDoctorAndActiveTrue(patient, doctor);
         if (assignmentExists) {
             throw new IllegalStateException("An assignment already exists between this patient and doctor");
         }
@@ -82,6 +82,25 @@ public class AdminService {
                 user.getEmail(),
                 user.getRole(),
                 user.isActive()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.medvault.dto.AssignmentResponse> getAllActiveAssignments() {
+        return assignmentRepository.findAllByActiveTrue().stream()
+                .map(this::mapToAssignmentResponse)
+                .collect(Collectors.toList());
+    }
+
+    private com.medvault.dto.AssignmentResponse mapToAssignmentResponse(PatientDoctorAssignment assignment) {
+        return new com.medvault.dto.AssignmentResponse(
+                assignment.getId(),
+                assignment.getPatient().getId(),
+                assignment.getPatient().getFullName(),
+                assignment.getDoctor().getId(),
+                assignment.getDoctor().getFullName(),
+                assignment.getAssignedAt(),
+                assignment.isActive()
         );
     }
 }
