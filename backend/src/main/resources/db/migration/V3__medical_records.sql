@@ -1,7 +1,7 @@
 CREATE TABLE medical_records (
-    id BIGSERIAL PRIMARY KEY,
-    patient_id BIGINT NOT NULL,
-    doctor_id BIGINT NOT NULL,
+    id UUID PRIMARY KEY,
+    patient_id UUID NOT NULL,
+    doctor_id UUID NOT NULL,
     diagnosis TEXT,
     prescription TEXT,
     notes TEXT,

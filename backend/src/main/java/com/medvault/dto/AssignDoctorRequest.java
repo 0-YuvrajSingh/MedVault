@@ -1,14 +1,10 @@
 package com.medvault.dto;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import java.util.UUID;
 
 @Data
 public class AssignDoctorRequest {
-    
-    @NotNull(message = "Patient ID is required")
-    private Long patientId;
-
-    @NotNull(message = "Doctor ID is required")
-    private Long doctorId;
+    private UUID patientId;
+    private UUID doctorId;
 }

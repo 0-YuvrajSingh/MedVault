@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "patient_doctor_assignments")
@@ -16,8 +17,8 @@ import java.time.LocalDateTime;
 public class PatientDoctorAssignment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id", nullable = false)
@@ -33,5 +34,5 @@ public class PatientDoctorAssignment {
 
     @Builder.Default
     @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
+    private boolean active = true;
 }

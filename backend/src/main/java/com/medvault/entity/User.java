@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -16,8 +17,8 @@ import java.time.LocalDateTime;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(name = "full_name", nullable = false)
     private String fullName;
@@ -28,13 +29,12 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserRole role;
+    private String role;
 
     @Builder.Default
     @Column(name = "is_active", nullable = false)
-    private Boolean isActive = false;
+    private boolean active = false;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

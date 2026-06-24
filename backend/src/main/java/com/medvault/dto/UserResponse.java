@@ -1,20 +1,15 @@
 package com.medvault.dto;
 
-import com.medvault.entity.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 public class UserResponse {
-    private Long id;
+    private UUID id;
     private String fullName;
     private String email;
-    private UserRole role;
-    private Boolean isActive;
-    private LocalDateTime createdAt;
+    private String role;
+    private boolean isActive;
 }
