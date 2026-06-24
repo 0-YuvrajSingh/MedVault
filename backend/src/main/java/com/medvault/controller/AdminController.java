@@ -47,4 +47,9 @@ public class AdminController {
     public ResponseEntity<List<AssignmentResponse>> getActiveAssignments() {
         return ResponseEntity.ok(adminService.getAllActiveAssignments());
     }
+
+    @GetMapping("/records/{recordId}/audit")
+    public ResponseEntity<List<com.medvault.dto.AuditLogResponse>> getAuditLog(@PathVariable UUID recordId) {
+        return ResponseEntity.ok(adminService.getAuditLog(recordId));
+    }
 }

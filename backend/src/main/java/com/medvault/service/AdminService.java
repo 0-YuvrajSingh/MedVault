@@ -18,10 +18,12 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final PatientDoctorAssignmentRepository assignmentRepository;
+    private final com.medvault.repository.AuditLogRepository auditLogRepository;
 
-    public AdminService(UserRepository userRepository, PatientDoctorAssignmentRepository assignmentRepository) {
+    public AdminService(UserRepository userRepository, PatientDoctorAssignmentRepository assignmentRepository, com.medvault.repository.AuditLogRepository auditLogRepository) {
         this.userRepository = userRepository;
         this.assignmentRepository = assignmentRepository;
+        this.auditLogRepository = auditLogRepository;
     }
 
     @Transactional(readOnly = true)
@@ -102,5 +104,20 @@ public class AdminService {
                 assignment.getAssignedAt(),
                 assignment.isActive()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.medvault.dto.AuditLogResponse> getAuditLog(UUID recordId) {
+        return auditLogRepository.findByRecordIdOrderByPerformedAtDesc(recordId)
+                .stream()
+                .map(log -> new com.medvault.dto.AuditLogResponse(
+                        log.getId(),
+                        log.getRecord().getId(),
+                        log.getAction(),
+                        log.getPerformedBy().getFullName(),
+                        log.getPerformedAt(),
+                        log.getDetailSnapshot()
+                ))
+                .collect(Collectors.toList());
     }
 }
