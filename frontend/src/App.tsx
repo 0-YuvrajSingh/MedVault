@@ -5,6 +5,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import DoctorDashboard from './pages/doctor/DoctorDashboard'; // ADDED
+import PatientDashboard from './pages/patient/PatientDashboard'; // ADDED
 
 const Home = () => {
   const { role } = useAuth();
@@ -26,6 +28,17 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={['ROLE_ADMIN']} />}>
             <Route path="/admin" element={<AdminDashboard />} />
           </Route>
+
+          {/* ADDED DOCTOR ROUTE */}
+          <Route element={<ProtectedRoute allowedRoles={['ROLE_DOCTOR']} />}>
+            <Route path="/doctor" element={<DoctorDashboard />} />
+          </Route>
+
+          {/* ADDED PATIENT ROUTE */}
+          <Route element={<ProtectedRoute allowedRoles={['ROLE_PATIENT']} />}>
+            <Route path="/patient" element={<PatientDashboard />} />
+          </Route>
+
         </Routes>
       </Router>
     </AuthProvider>

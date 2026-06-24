@@ -3,7 +3,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
-    allowedRoles?: string[];
+    allowedRoles: string[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
@@ -13,8 +13,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
         return <Navigate to="/login" replace />;
     }
 
-    if (allowedRoles && role && !allowedRoles.includes(role)) {
-        return <Navigate to="/unauthorized" replace />; // could make an unauthorized component
+    if (role && !allowedRoles.includes(role)) {
+        // Fallback redirection if a logged-in user tries to access a route they shouldn't
+        return <Navigate to="/" replace />; 
     }
 
     return <Outlet />;
