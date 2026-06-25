@@ -1,0 +1,2 @@
+- Engineered a full-stack healthcare records platform using Spring Boot and React, implementing a stateless JWT authentication system with strict IDOR protections and role-based access control (RBAC) across three distinct user roles.
+- Designed a transactional, append-only medical record and audit logging architecture in PostgreSQL using Hibernate and Spring Data JPA, ensuring guaranteed data consistency and traceability.

@@ -102,13 +102,13 @@ All endpoints beneath `/api` (excluding `/auth/**`) strictly require a valid Bea
 *(Replace placeholders with actual UI screenshots before release)*
 
 ### Patient Dashboard
-> `![Patient Dashboard Placeholder](./assets/screenshots/patient-dashboard.png)`
+![Patient Dashboard](./assets/screenshots/patient-dashboard.png)
 
 ### Doctor Dashboard
-> `![Doctor Dashboard Placeholder](./assets/screenshots/doctor-dashboard.png)`
+![Doctor Dashboard](./assets/screenshots/doctor-dashboard.png)
 
 ### Admin Management
-> `![Admin View Placeholder](./assets/screenshots/admin-dashboard.png)`
+![Admin View](./assets/screenshots/admin-dashboard.png)
 
 ---
 
