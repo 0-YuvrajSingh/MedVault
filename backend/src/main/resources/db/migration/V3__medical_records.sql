@@ -5,7 +5,6 @@ CREATE TABLE medical_records (
     diagnosis TEXT,
     prescription TEXT,
     notes TEXT,
-    record_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_record_patient FOREIGN KEY (patient_id) REFERENCES users(id),

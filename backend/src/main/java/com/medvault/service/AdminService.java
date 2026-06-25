@@ -27,8 +27,8 @@ public class AdminService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserResponse> getUsersByRole(String role) {
-        return userRepository.findByRole(role).stream()
+    public List<UserResponse> getUsers() {
+        return userRepository.findAll().stream()
                 .map(this::mapToUserResponse)
                 .collect(Collectors.toList());
     }
@@ -36,7 +36,7 @@ public class AdminService {
     @Transactional
     public UserResponse toggleAccountStatus(UUID userId, boolean activate) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new com.medvault.exception.ResourceNotFoundException("User not found with id: " + userId));
 
         user.setActive(activate);
         User savedUser = userRepository.save(user);
@@ -47,26 +47,24 @@ public class AdminService {
     @Transactional
     public void assignDoctorToPatient(AssignDoctorRequest request) {
         User patient = userRepository.findById(request.getPatientId())
-                .orElseThrow(() -> new RuntimeException("Patient not found with id: " + request.getPatientId()));
+                .orElseThrow(() -> new com.medvault.exception.ResourceNotFoundException("Patient not found with id: " + request.getPatientId()));
 
         User doctor = userRepository.findById(request.getDoctorId())
-                .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + request.getDoctorId()));
+                .orElseThrow(() -> new com.medvault.exception.ResourceNotFoundException("Doctor not found with id: " + request.getDoctorId()));
 
         if (!"ROLE_PATIENT".equals(patient.getRole())) {
             throw new IllegalArgumentException("User mapped to patientId is not a PATIENT");
         }
-
         if (!"ROLE_DOCTOR".equals(doctor.getRole())) {
             throw new IllegalArgumentException("User mapped to doctorId is not a DOCTOR");
         }
-
         if (!doctor.isActive()) {
-            throw new IllegalStateException("Cannot assign an inactive doctor to a patient");
+            throw new com.medvault.exception.AccessDeniedException("Cannot assign an inactive doctor to a patient");
         }
 
-        boolean assignmentExists = assignmentRepository.existsByPatientAndDoctorAndActiveTrue(patient, doctor);
+        boolean assignmentExists = assignmentRepository.existsByPatientAndDoctor(patient, doctor);
         if (assignmentExists) {
-            throw new IllegalStateException("An assignment already exists between this patient and doctor");
+            throw new com.medvault.exception.ConflictException("An assignment already exists between this patient and doctor");
         }
 
         PatientDoctorAssignment assignment = PatientDoctorAssignment.builder()
@@ -89,7 +87,7 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public List<com.medvault.dto.AssignmentResponse> getAllActiveAssignments() {
-        return assignmentRepository.findAllByActiveTrue().stream()
+        return assignmentRepository.findAll().stream()
                 .map(this::mapToAssignmentResponse)
                 .collect(Collectors.toList());
     }
@@ -102,7 +100,7 @@ public class AdminService {
                 assignment.getDoctor().getId(),
                 assignment.getDoctor().getFullName(),
                 assignment.getAssignedAt(),
-                assignment.isActive()
+                true
         );
     }
 

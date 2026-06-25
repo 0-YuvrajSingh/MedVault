@@ -8,8 +8,7 @@ import java.util.UUID;
 
 @Repository
 public interface PatientDoctorAssignmentRepository extends JpaRepository<PatientDoctorAssignment, UUID> {
-    boolean existsByPatientAndDoctorAndActiveTrue(User patient, User doctor);
-    java.util.List<PatientDoctorAssignment> findAllByActiveTrue();
-    java.util.List<PatientDoctorAssignment> findAllByDoctorIdAndActiveTrue(UUID doctorId);
-    java.util.Optional<PatientDoctorAssignment> findByPatientIdAndDoctorIdAndActiveTrue(UUID patientId, UUID doctorId);
+    boolean existsByPatientAndDoctor(User patient, User doctor);
+    java.util.List<PatientDoctorAssignment> findAllByDoctorId(UUID doctorId);
+    java.util.Optional<PatientDoctorAssignment> findByPatientIdAndDoctorId(UUID patientId, UUID doctorId);
 }

@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
-@import './styles/micro-interactions.css';
+
 
 @tailwind base;
 @tailwind components;
@@ -21,28 +21,47 @@
     overflow-x: hidden;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-heading tracking-tight;
   }
-  
-  h1 { @apply text-4xl font-bold lg:text-5xl; }
-  h2 { @apply text-3xl font-bold lg:text-4xl; }
-  h3 { @apply text-2xl font-semibold lg:text-3xl; }
-  h4 { @apply text-xl font-semibold lg:text-2xl; }
-  
-  p { @apply text-base leading-relaxed text-neutral-600 dark:text-neutral-400; }
+
+  h1 {
+    @apply text-4xl font-bold lg:text-5xl;
+  }
+
+  h2 {
+    @apply text-3xl font-bold lg:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl font-semibold lg:text-3xl;
+  }
+
+  h4 {
+    @apply text-xl font-semibold lg:text-2xl;
+  }
+
+  p {
+    @apply text-base leading-relaxed text-neutral-600 dark:text-neutral-400;
+  }
 }
 
 @layer components {
+
   /* Glassmorphism Utilities */
   .glass {
     @apply backdrop-blur-md bg-white/70 dark:bg-neutral-900/70 border border-white/20 dark:border-white/10 shadow-glass;
   }
-  
+
   .glass-card {
     @apply backdrop-blur-xl bg-white/80 dark:bg-neutral-950/80 border border-neutral-200/50 dark:border-neutral-800/50 shadow-xl rounded-2xl;
   }
-  
+
   .glass-panel {
     @apply backdrop-blur-2xl bg-white/40 dark:bg-black/40 border border-white/10 shadow-2xl;
   }
@@ -57,15 +76,15 @@
   .btn {
     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-medium transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  
+
   .btn-primary {
     @apply btn bg-gradient-to-r from-admin-600 to-admin-500 text-white shadow-lg shadow-admin-500/25 hover:shadow-admin-500/40 hover:to-admin-400;
   }
-  
+
   .btn-secondary {
     @apply btn bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-700;
   }
-  
+
   .btn-ghost {
     @apply btn hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400;
   }
@@ -81,11 +100,11 @@
   .custom-scrollbar::-webkit-scrollbar {
     @apply w-1.5 h-1.5;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-track {
     @apply bg-transparent;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
     @apply bg-neutral-300 dark:bg-neutral-700 rounded-full hover:bg-neutral-400 dark:hover:bg-neutral-600 transition-colors;
   }
@@ -95,12 +114,12 @@
   .text-gradient-admin {
     @apply bg-gradient-to-r from-admin-600 to-admin-400 bg-clip-text text-transparent;
   }
-  
+
   /* Accessibility - Focus Indicators (WCAG 2.1 AA compliant) */
   *:focus-visible {
     @apply outline-2 outline-blue-500 outline-offset-2 rounded;
   }
-  
+
   /* High Contrast Mode Support */
   @media (prefers-contrast: high) {
     *:focus-visible {
@@ -120,6 +139,7 @@
 
 /* Reduce motion for users with vestibular disorders */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -132,7 +152,15 @@
 
 /* Animations */
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }

@@ -1,110 +1,119 @@
 # MedVault
 
-MedVault is a full-stack patient record management and appointment scheduling platform with secure role-based access control.
+MedVault is a secure patient record management platform with strict role-based access control and comprehensive audit logging. It enforces hardened domain rules to ensure patient privacy, robust assignment logic, and immutable audit trails.
 
 ![Java](https://img.shields.io/badge/Java-17-007396?logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-6DB33F?logo=springboot&logoColor=white)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
-![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
 
-## Features
+---
 
-- Authentication with JWT and role-based access control (PATIENT, DOCTOR, ADMIN)
-- Appointment booking and slot management
-- Medical record upload and management
-- Document permission sharing between patients and doctors
-- Audit logging via AOP
-- Database-backed notifications
-- Doctor profile verification workflow
-- Admin panel for users, doctors, patients, and reports
-
-## Project Structure
+## 🏛 Architecture Diagram
 
 ```text
-medvault/
-├── backend/        # Spring Boot (Java 17)
-│   ├── src/main/java/com/medvault
-│   ├── src/main/resources
-│   └── pom.xml
-├── frontend/       # React 18 + Vite
-│   ├── src/
-│   └── package.json
-├── .gitignore
-└── README.md
+                  +--------------------------------+
+                  |         React Frontend         |
+                  |  (Vite, Axios, Tailwind CSS)   |
+                  +---------------+----------------+
+                                  |
+                                  | Stateless JWT
+                                  | (Authorization Header)
+                                  v
+                  +---------------+----------------+
+                  |    Spring Boot Backend         |
+                  |--------------------------------|
+                  |  - Spring Security (Filters)   |
+                  |  - Controllers & DTOs          |
+                  |  - Services (@Transactional)   |
+                  |  - Spring Data JPA             |
+                  +---------------+----------------+
+                                  |
+                                  | JDBC / Hibernate
+                                  v
+                  +---------------+----------------+
+                  |    PostgreSQL Database         |
+                  |--------------------------------|
+                  |  - users                       |
+                  |  - medical_records             |
+                  |  - patient_doctor_assignments  |
+                  |  - audit_log                   |
+                  +--------------------------------+
 ```
 
-## Getting Started
+## 🔐 Role-Based Access Control (RBAC)
 
-### Backend Setup
+The system leverages JWT-derived roles and identity context. Path parameters are strictly untrusted for authorization (preventing IDOR).
 
-1. Go to backend folder.
-2. Configure environment variables (see table below).
-3. Run the Spring Boot app:
-
-```bash
-cd backend
-./mvnw spring-boot:run
-```
-
-Windows PowerShell:
-
-```powershell
-cd backend
-.\mvnw.cmd spring-boot:run
-```
-
-### Frontend Setup
-
-1. Go to frontend folder.
-2. Install dependencies.
-3. Start development server.
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-## Environment Variables
-
-| Variable | Description |
+| Role | Access Level & Permissions |
 |---|---|
-| `DB_URL` | MySQL JDBC URL |
-| `DB_USERNAME` | MySQL username |
-| `DB_PASSWORD` | MySQL password |
-| `JWT_SECRET` | JWT signing secret |
-| `JWT_EXPIRATION` | JWT expiration time in milliseconds |
-| `MAIL_HOST` | SMTP host |
-| `MAIL_PORT` | SMTP port |
-| `MAIL_USERNAME` | SMTP username/email |
-| `MAIL_PASSWORD` | SMTP password/app password |
-| `FILE_UPLOAD_DIR` | Base upload directory |
-| `MEDICAL_RECORDS_DIR` | Medical records upload directory |
-| `DOCUMENTS_DIR` | General documents upload directory |
-| `PROFILE_IMAGES_DIR` | Profile image upload directory |
-| `MAX_FILE_SIZE` | Max single upload size |
-| `MAX_REQUEST_SIZE` | Max multipart request size |
-| `JPA_DDL_AUTO` | Hibernate schema mode (`update` recommended for local dev) |
-| `JPA_SHOW_SQL` | Toggle SQL logging |
-| `HIBERNATE_FORMAT_SQL` | Toggle SQL formatting |
-| `LOG_LEVEL_ROOT` | Root logging level |
-| `LOG_LEVEL_APP` | Application package logging level |
-| `LOG_FILE` | Log output file path |
-| `LOG_PATTERN_CONSOLE` | Console log pattern |
+| **PATIENT** | Read-only access exclusively to their *own* medical records. Identity is securely extracted from the JWT token. |
+| **DOCTOR** | Can list assigned patients and append records to assigned patients. *Must be activated by an admin before login is permitted.* |
+| **ADMIN** | Can view all system users, manually activate/deactivate DOCTOR accounts, map DOCTOR <-> PATIENT assignments, and view immutable audit trails. |
 
-## API Overview
+## 🚀 Getting Started (Cold Start)
 
-- `/api/auth` - authentication and token workflows
-- `/api/patients` - patient profile and patient domain actions
-- `/api/doctors` - doctor profile and doctor domain actions
-- `/api/appointments` - appointment lifecycle management
-- `/api/slots` - doctor availability slots
-- `/api/records` - medical records operations
-- `/api/documents` - document upload and verification workflows
-- `/api/notifications` - user notifications
-- `/api/audit` - audit trail endpoints
-- `/api/admin` - admin-only management operations
+The easiest way to boot the entire stack is via Docker. 
 
-## Author
+### Prerequisites
+- Docker & Docker Compose installed.
+- Ports `8080`, `5173`, and `5432` available.
 
-Built by Yuvraj Singh.
+### Setup Flow
+
+1. **Clone & Boot Stack**
+```bash
+docker-compose up --build -d
+```
+*Note: The backend service will automatically wait for the PostgreSQL `pg_isready` healthcheck before booting.*
+
+2. **Access the Services**
+- **Frontend Dashboard**: [http://localhost:5173](http://localhost:5173)
+- **Backend API**: [http://localhost:8080/api](http://localhost:8080/api)
+- **Swagger Documentation**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+
+3. **Stop the Stack**
+```bash
+docker-compose down
+```
+
+## 📡 API Endpoints
+
+All endpoints beneath `/api` (excluding `/auth/**`) strictly require a valid Bearer token.
+
+| Domain | Method | Endpoint | Description | Role Required |
+|---|---|---|---|---|
+| **Auth** | POST | `/api/auth/register` | Register a new PATIENT or DOCTOR. | *Public* |
+| **Auth** | POST | `/api/auth/login` | Authenticate and retrieve JWT. | *Public* |
+| **Patient** | GET | `/api/patient/records` | Fetch all records for the caller. | `PATIENT` |
+| **Patient** | GET | `/api/patient/records/{id}` | Fetch a specific record for the caller. | `PATIENT` |
+| **Doctor** | GET | `/api/doctor/patients` | List all patients assigned to caller. | `DOCTOR` |
+| **Doctor** | GET | `/api/doctor/patients/{id}/records` | View records of assigned patient. | `DOCTOR` |
+| **Doctor** | POST | `/api/doctor/patients/{id}/records` | Create record for assigned patient. | `DOCTOR` |
+| **Admin** | GET | `/api/admin/users` | List all users in the system. | `ADMIN` |
+| **Admin** | PATCH | `/api/admin/doctors/{id}/activate` | Approve an inactive doctor. | `ADMIN` |
+| **Admin** | PATCH | `/api/admin/doctors/{id}/deactivate`| Suspend a doctor. | `ADMIN` |
+| **Admin** | POST | `/api/admin/assignments` | Assign a DOCTOR to a PATIENT. | `ADMIN` |
+| **Admin** | GET | `/api/admin/records/{id}/audit` | View audit trail for a record. | `ADMIN` |
+
+## 📸 Screenshots
+
+*(Replace placeholders with actual UI screenshots before release)*
+
+### Patient Dashboard
+> `![Patient Dashboard Placeholder](./assets/screenshots/patient-dashboard.png)`
+
+### Doctor Dashboard
+> `![Doctor Dashboard Placeholder](./assets/screenshots/doctor-dashboard.png)`
+
+### Admin Management
+> `![Admin View Placeholder](./assets/screenshots/admin-dashboard.png)`
+
+---
+
+## 💻 Local Development (Without Docker)
+
+1. Ensure a local PostgreSQL instance is running on `5432` with user `medvault_user` / `medvault_password` and DB `medvault_db`.
+2. Boot Backend: `cd backend && ./mvnw spring-boot:run`
+3. Boot Frontend: `cd frontend && npm install && npm run dev`

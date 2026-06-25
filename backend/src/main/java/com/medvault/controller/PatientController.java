@@ -26,13 +26,11 @@ public class PatientController {
 
     @GetMapping("/records")
     public ResponseEntity<List<MedicalRecordResponse>> getMyRecords(Authentication authentication) {
-        UUID patientId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(patientService.getRecords(patientId));
+        return ResponseEntity.ok(patientService.getRecords(UUID.fromString(authentication.getName())));
     }
 
     @GetMapping("/records/{recordId}")
     public ResponseEntity<MedicalRecordResponse> getRecord(@PathVariable UUID recordId, Authentication authentication) {
-        UUID patientId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(patientService.getRecord(recordId, patientId));
+        return ResponseEntity.ok(patientService.getRecord(recordId, UUID.fromString(authentication.getName())));
     }
 }

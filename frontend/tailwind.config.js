@@ -20,7 +20,7 @@ module.exports = {
           dark: '#0f0f0f', // Deep Black
           accent: '#FF6B00', // Vibrant Orange Accent
         },
-        
+
         // Doctor Theme - Wisdom & Luxury (Deep Violet & Lavender)
         doctor: {
           50: '#f5f3ff',
@@ -36,7 +36,7 @@ module.exports = {
           dark: '#1e1b4b', // Deep Indigo
           accent: '#d8b4fe', // Lavender Accent
         },
-        
+
         // Patient Theme - Health & Vitality (Emerald & Gold)
         patient: {
           50: '#ecfdf5',
@@ -52,7 +52,7 @@ module.exports = {
           dark: '#022c22', // Deep Green
           accent: '#fbbf24', // Gold Accent
         },
-        
+
         // Global Surface Colors
         surface: {
           light: '#ffffff',
@@ -61,7 +61,7 @@ module.exports = {
           card: 'rgba(255, 255, 255, 0.8)',
           'card-dark': 'rgba(9, 9, 11, 0.8)',
         },
-        
+
         // Neutral Palette (Zinc)
         neutral: {
           50: '#fafafa',
@@ -76,20 +76,20 @@ module.exports = {
           900: '#18181b',
           950: '#09090b',
         },
-        
+
         // Semantic Colors
         success: '#10b981',
         error: '#ef4444',
         warning: '#f59e0b',
         info: '#3b82f6',
-        border: '#e4e4e7', 
+        border: '#e4e4e7',
       },
-      
+
       fontFamily: {
         sans: ['Inter', 'Poppins', 'system-ui', 'sans-serif'],
         heading: ['Poppins', 'Inter', 'sans-serif'],
       },
-      
+
       fontSize: {
         'xs': ['0.75rem', { lineHeight: '1rem' }],
         'sm': ['0.875rem', { lineHeight: '1.25rem' }],
@@ -101,7 +101,7 @@ module.exports = {
         '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
         '5xl': ['3rem', { lineHeight: '1' }],
       },
-      
+
       borderRadius: {
         'none': '0',
         'sm': '0.375rem',
@@ -113,7 +113,7 @@ module.exports = {
         '3xl': '3rem',
         'full': '9999px',
       },
-      
+
       boxShadow: {
         'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
         'DEFAULT': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
@@ -126,7 +126,7 @@ module.exports = {
         'glow-doctor': '0 0 20px rgba(139, 92, 246, 0.4)',
         'glow-patient': '0 0 20px rgba(16, 185, 129, 0.4)',
       },
-      
+
       backdropBlur: {
         xs: '2px',
         sm: '4px',
@@ -135,7 +135,7 @@ module.exports = {
         lg: '16px',
         xl: '24px',
       },
-      
+
       animation: {
         'fade-in': 'fadeIn 0.4s ease-out',
         'fade-up': 'fadeUp 0.5s ease-out',
@@ -147,7 +147,7 @@ module.exports = {
         'shimmer': 'shimmer 2.5s linear infinite',
         'blob': 'blob 7s infinite',
       },
-      
+
       keyframes: {
         blob: {
           "0%": {

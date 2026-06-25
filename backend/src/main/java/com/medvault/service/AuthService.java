@@ -6,6 +6,7 @@ import com.medvault.dto.RegisterRequest;
 import com.medvault.entity.User;
 import com.medvault.repository.UserRepository;
 import com.medvault.security.JwtUtil;
+import com.medvault.exception.AccountNotActiveException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -57,7 +58,7 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
 
         if (!user.isActive()) {
-            throw new IllegalStateException("Account is not active");
+            throw new AccountNotActiveException("Account is not active");
         }
 
         authenticationManager.authenticate(

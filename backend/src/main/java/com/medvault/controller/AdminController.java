@@ -23,8 +23,8 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getUsersByRole(@RequestParam String role) {
-        return ResponseEntity.ok(adminService.getUsersByRole(role));
+    public ResponseEntity<List<UserResponse>> getUsers() {
+        return ResponseEntity.ok(adminService.getUsers());
     }
 
     @PatchMapping("/doctors/{id}/activate")

@@ -16,6 +16,5 @@ public class MedicalRecordResponse {
     private String diagnosis;
     private String prescription;
     private String notes;
-    private LocalDate recordDate;
     private LocalDateTime createdAt;
 }

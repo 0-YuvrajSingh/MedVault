@@ -15,8 +15,7 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    // Default secret for dev profile, overridden by env var in prod
-    @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
+    @Value("${jwt.secret}")
     private String secretKey;
 
     @Value("${jwt.expiration:1800000}") // 30 minutes in milliseconds
@@ -29,7 +28,6 @@ public class JwtUtil {
     public String generateToken(User user) {
         return Jwts.builder()
                 .setSubject(user.getId().toString())
-                .claim("email", user.getEmail())
                 .claim("role", user.getRole())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
@@ -39,10 +37,6 @@ public class JwtUtil {
 
     public String extractUserId(String token) {
         return extractClaim(token, Claims::getSubject);
-    }
-
-    public String extractEmail(String token) {
-        return extractClaim(token, claims -> claims.get("email", String.class));
     }
 
     public String extractRole(String token) {

@@ -3,7 +3,8 @@ package com.medvault.service;
 import com.medvault.dto.MedicalRecordResponse;
 import com.medvault.entity.MedicalRecord;
 import com.medvault.repository.MedicalRecordRepository;
-import org.springframework.security.access.AccessDeniedException;
+import com.medvault.exception.AccessDeniedException;
+import com.medvault.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +23,7 @@ public class PatientService {
 
     @Transactional(readOnly = true)
     public List<MedicalRecordResponse> getRecords(UUID patientId) {
-        return medicalRecordRepository.findByPatientIdOrderByCreatedAtDesc(patientId)
+        return medicalRecordRepository.findByPatientId(patientId)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -31,7 +32,7 @@ public class PatientService {
     @Transactional(readOnly = true)
     public MedicalRecordResponse getRecord(UUID recordId, UUID requesterId) {
         MedicalRecord record = medicalRecordRepository.findById(recordId)
-                .orElseThrow(() -> new RuntimeException("Record not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Record not found"));
 
         if (!record.getPatient().getId().equals(requesterId)) {
             throw new AccessDeniedException("You do not have permission to view this record");
@@ -48,7 +49,6 @@ public class PatientService {
                 record.getDiagnosis(),
                 record.getPrescription(),
                 record.getNotes(),
-                record.getRecordDate(),
                 record.getCreatedAt()
         );
     }

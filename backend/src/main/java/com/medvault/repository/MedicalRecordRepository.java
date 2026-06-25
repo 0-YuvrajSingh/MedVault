@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, UUID> {
     List<MedicalRecord> findByPatientIdOrderByCreatedAtDesc(UUID patientId);
+    List<MedicalRecord> findByPatientId(UUID patientId);
 }

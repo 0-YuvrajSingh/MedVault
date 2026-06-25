@@ -1,146 +1,100 @@
 import React, { useEffect, useState } from 'react';
-import api from '../../api/axios';
+import { adminAPI } from '../../api/admin';
+import type { UserResponse, AssignmentResponse } from '../../types';
 
-interface User {
-    id: string;
-    fullName: string;
-    email: string;
-    role: string;
-    active: boolean;
-}
+const AdminDashboard: React.FC = () => {
+  const [users, setUsers] = useState<UserResponse[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentResponse[]>([]);
+  const [loading, setLoading] = useState(true);
 
-const AdminDashboard = () => {
-    const [doctors, setDoctors] = useState<User[]>([]);
-    const [patients, setPatients] = useState<User[]>([]);
-    const [selectedDoctorId, setSelectedDoctorId] = useState('');
-    const [selectedPatientId, setSelectedPatientId] = useState('');
-
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-
-    const fetchUsers = async () => {
-        try {
-            const docRes = await api.get('/admin/users?role=ROLE_DOCTOR');
-            const patRes = await api.get('/admin/users?role=ROLE_PATIENT');
-            setDoctors(docRes.data);
-            setPatients(patRes.data);
-        } catch (err) {
-            console.error("Error fetching users", err);
-        }
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [usersRes, assignRes] = await Promise.all([adminAPI.getUsers(), adminAPI.getAssignments()]);
+        setUsers(usersRes.data);
+        setAssignments(assignRes.data);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
     };
+    load();
+  }, []);
 
-    const handleActivate = async (id: string) => {
-        try {
-            await api.patch(`/admin/doctors/${id}/activate`);
-            fetchUsers();
-        } catch (err) {
-            console.error("Failed to activate", err);
-        }
-    };
+  const doctors = users.filter(u => u.role === 'ROLE_DOCTOR');
+  const patients = users.filter(u => u.role === 'ROLE_PATIENT');
+  const pendingDoctors = doctors.filter(d => !d.active);
 
-    const handleAssign = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await api.post('/admin/assignments', {
-                doctorId: selectedDoctorId,
-                patientId: selectedPatientId
-            });
-            alert('Assignment successful');
-            setSelectedDoctorId('');
-            setSelectedPatientId('');
-        } catch (err) {
-            console.error("Failed to assign", err);
-            alert('Assignment failed');
-        }
-    };
+  const stats = [
+    { label: 'Total Users', value: users.length, color: 'bg-primary-500' },
+    { label: 'Doctors', value: doctors.length, color: 'bg-indigo-500' },
+    { label: 'Patients', value: patients.length, color: 'bg-success-500' },
+    { label: 'Assignments', value: assignments.length, color: 'bg-warning-500' },
+  ];
 
-    const pendingDoctors = doctors.filter(doc => !doc.active);
+  if (loading) return <div className="flex items-center justify-center h-64 text-text-muted">Loading dashboard...</div>;
 
-    return (
-        <div className="min-h-screen bg-gray-50 p-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-8">Admin Dashboard</h1>
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h1 className="text-2xl font-bold text-text-primary">Admin Dashboard</h1>
+        <p className="text-sm text-text-muted mt-1">System overview and management</p>
+      </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Pending Doctors Section */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-800">Pending Doctors</h2>
-                    {pendingDoctors.length === 0 ? (
-                        <p className="text-gray-500">No pending doctors.</p>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead>
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {pendingDoctors.map(doc => (
-                                        <tr key={doc.id}>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{doc.fullName}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{doc.email}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                                                <button
-                                                    onClick={() => handleActivate(doc.id)}
-                                                    className="text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded-md transition-colors"
-                                                >
-                                                    Activate
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-
-                {/* Assignment Form Section */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-800">Assign Doctor to Patient</h2>
-                    <form onSubmit={handleAssign} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Patient</label>
-                            <select
-                                required
-                                value={selectedPatientId}
-                                onChange={(e) => setSelectedPatientId(e.target.value)}
-                                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border"
-                            >
-                                <option value="">Select a patient...</option>
-                                {patients.map(p => (
-                                    <option key={p.id} value={p.id}>{p.fullName} ({p.email})</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Doctor</label>
-                            <select
-                                required
-                                value={selectedDoctorId}
-                                onChange={(e) => setSelectedDoctorId(e.target.value)}
-                                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border"
-                            >
-                                <option value="">Select an active doctor...</option>
-                                {doctors.filter(d => d.active).map(d => (
-                                    <option key={d.id} value={d.id}>{d.fullName}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <button
-                            type="submit"
-                            className="w-full bg-blue-600 text-white py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                        >
-                            Assign Doctor
-                        </button>
-                    </form>
-                </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((s) => (
+          <div key={s.label} className="card p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-text-muted">{s.label}</p>
+                <p className="text-2xl font-bold text-text-primary mt-1">{s.value}</p>
+              </div>
+              <div className={`w-10 h-10 ${s.color} rounded-lg flex items-center justify-center`}>
+                <span className="text-white text-lg font-bold">{s.value}</span>
+              </div>
             </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Pending doctors alert */}
+      {pendingDoctors.length > 0 && (
+        <div className="p-4 bg-warning-50 border border-warning-400 rounded-lg">
+          <div className="flex items-center gap-2">
+            <span className="text-warning-600 font-semibold text-sm">⚠️ {pendingDoctors.length} doctor(s) pending approval</span>
+          </div>
+          <div className="mt-2 space-y-1">
+            {pendingDoctors.slice(0, 5).map(d => (
+              <p key={d.id} className="text-sm text-text-secondary">{d.fullName} — {d.email}</p>
+            ))}
+          </div>
         </div>
-    );
+      )}
+
+      {/* Recent users */}
+      <div className="card">
+        <div className="p-5 border-b border-border">
+          <h2 className="text-lg font-semibold text-text-primary">Recent Users</h2>
+        </div>
+        <div className="table-container border-0">
+          <table className="table">
+            <thead>
+              <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {users.slice(0, 8).map(u => (
+                <tr key={u.id}>
+                  <td className="font-medium">{u.fullName}</td>
+                  <td>{u.email}</td>
+                  <td><span className="badge-gray">{u.role.replace('ROLE_', '')}</span></td>
+                  <td>{u.active ? <span className="badge-success">Active</span> : <span className="badge-danger">Inactive</span>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default AdminDashboard;
