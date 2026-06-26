@@ -34,10 +34,11 @@ public class AuthService {
             throw new IllegalArgumentException("Email is already registered");
         }
 
-        boolean isActive = false;
-        if ("ROLE_PATIENT".equals(request.getRole())) {
-            isActive = true;
+        if ("ROLE_ADMIN".equals(request.getRole())) {
+            throw new IllegalArgumentException("Admin registration is not allowed via public endpoint");
         }
+
+        boolean isActive = "ROLE_PATIENT".equals(request.getRole());
 
         User user = User.builder()
                 .fullName(request.getFullName())
