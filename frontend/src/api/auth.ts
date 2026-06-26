@@ -14,6 +14,7 @@ export interface RegisterData {
 
 export interface AuthResponse {
   token: string;
+  fullName?: string;
   message?: string;
 }
 

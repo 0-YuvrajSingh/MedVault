@@ -8,7 +8,7 @@ interface AuthContextType {
   role: string | null;
   userId: string | null;
   fullName: string | null;
-  login: (token: string) => void;
+  login: (token: string, fullName?: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -34,9 +34,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [token]);
 
-  const login = useCallback((newToken: string) => {
+  const login = useCallback((newToken: string, name?: string) => {
     setToken(newToken);
     setApiToken(newToken);
+    if (name) setFullName(name);
     try {
       const decoded: DecodedToken = jwtDecode(newToken);
       setRole(decoded.role);

@@ -17,7 +17,7 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     try {
       const res = await authAPI.login({ email, password });
-      login(res.data.token);
+      login(res.data.token, res.data.fullName);
       // Navigate based on role after decode
       setTimeout(() => {
         const r = (window as any).__MEDVAULT_ROLE__ || role;
