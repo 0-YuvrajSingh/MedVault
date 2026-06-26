@@ -34,7 +34,7 @@ const PatientsPage: React.FC = () => {
                     <td className="font-medium">{p.fullName}</td>
                     <td className="text-text-secondary">{p.email}</td>
                     <td>
-                      <button onClick={() => navigate(`/doctor/records?patientId=${p.id}&patientName=${encodeURIComponent(p.fullName)}`)} className="btn-primary btn-sm">
+                      <button onClick={() => navigate(`/doctor/patients/${p.id}/records`)} className="btn-primary btn-sm">
                         View Records
                       </button>
                     </td>

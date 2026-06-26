@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 import { doctorAPI } from '../../api/doctor';
 import type { UserResponse, MedicalRecord } from '../../types';
 
 const RecordsPage: React.FC = () => {
+  const { patientId } = useParams<{ patientId: string }>();
   const [searchParams] = useSearchParams();
-  const preselectedPatientId = searchParams.get('patientId') || '';
+  const preselectedPatientId = patientId || searchParams.get('patientId') || '';
   const preselectedName = searchParams.get('patientName') || '';
 
   const [patients, setPatients] = useState<UserResponse[]>([]);
