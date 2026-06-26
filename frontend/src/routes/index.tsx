@@ -8,10 +8,6 @@ import RoleRedirect from './RoleRedirect';
 
 // Public pages
 import HomePage from '../pages/public/HomePage';
-import FeaturesPage from '../pages/public/FeaturesPage';
-import SecurityPage from '../pages/public/SecurityPage';
-import AboutPage from '../pages/public/AboutPage';
-import ContactPage from '../pages/public/ContactPage';
 
 // Auth pages
 import LoginPage from '../pages/auth/LoginPage';
@@ -39,10 +35,6 @@ const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { path: '/', element: <HomePage /> },
-      { path: '/features', element: <FeaturesPage /> },
-      { path: '/security', element: <SecurityPage /> },
-      { path: '/about', element: <AboutPage /> },
-      { path: '/contact', element: <ContactPage /> },
     ],
   },
   // Auth routes
@@ -83,6 +75,7 @@ const router = createBrowserRouter([
         children: [
           { path: '/doctor', element: <DoctorDashboard /> },
           { path: '/doctor/patients', element: <PatientsPage /> },
+          { path: '/doctor/records', element: <RecordsPage /> },
           { path: '/doctor/patients/:patientId/records', element: <RecordsPage /> },
         ],
       },

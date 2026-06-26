@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../api/auth';
 import { Mail, Lock, ArrowRight, ShieldCheck, CheckCircle2, Loader2 } from 'lucide-react';
+import Logo from '../../components/common/Logo';
+import { jwtDecode } from 'jwt-decode';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -20,13 +22,11 @@ const LoginPage: React.FC = () => {
       const res = await authAPI.login({ email, password });
       login(res.data.token, res.data.fullName);
 
-      // Navigate based on role after decode
-      setTimeout(() => {
-        const r = (window as any).__MEDVAULT_ROLE__ || role;
-        if (r === 'ROLE_ADMIN') navigate('/admin');
-        else if (r === 'ROLE_DOCTOR') navigate('/doctor');
-        else navigate('/patient');
-      }, 100);
+      const decoded: any = jwtDecode(res.data.token);
+      const r = decoded.role;
+      if (r === 'ROLE_ADMIN') navigate('/admin');
+      else if (r === 'ROLE_DOCTOR') navigate('/doctor');
+      else navigate('/patient');
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Login failed. Please verify your credentials.');
     } finally {
@@ -45,10 +45,9 @@ const LoginPage: React.FC = () => {
         </div>
 
         <div className="relative z-10">
-          <div className="w-14 h-14 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center mb-6 border border-white/20 shadow-sm">
-            <ShieldCheck className="w-8 h-8 text-blue-100" />
+          <div className="mb-8 scale-125 origin-left">
+            <Logo variant="dark" />
           </div>
-          <h2 className="text-3xl font-bold mb-3 tracking-tight">MedVault</h2>
           <p className="text-blue-200 text-sm leading-relaxed mb-10 font-medium">
             Secure healthcare records management.
           </p>

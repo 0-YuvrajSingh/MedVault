@@ -128,17 +128,8 @@
     background-color: var(--role-tint);
     color: var(--role-text);
     font-weight: 600;
-  }
-  .nav-item--active::before {
-    content: '';
-    position: absolute;
-    left: -8px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: var(--role-color);
+    border-left: 3px solid var(--role-color);
+    border-radius: 0 8px 8px 0;
   }
 
   /* Badges */
@@ -227,13 +218,18 @@
 
   /* Components */
   .page-header {
-    @apply mb-6;
+    @apply mb-6 p-6 sm:p-8 rounded-2xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4;
+    background-color: var(--role-tint);
+    border: 1px solid var(--role-color);
   }
   .page-header h1 {
-    @apply text-page-title mb-1;
+    @apply text-2xl sm:text-3xl font-extrabold tracking-tight mb-1.5;
+    color: var(--role-text);
   }
   .page-header p {
-    @apply text-body;
+    @apply text-sm sm:text-base font-semibold;
+    color: var(--role-text);
+    opacity: 0.85;
   }
 
   .alert {

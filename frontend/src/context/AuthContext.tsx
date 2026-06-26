@@ -16,10 +16,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
   const [role, setRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [fullName, setFullName] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string | null>(() => localStorage.getItem('fullName'));
 
   const logout = useCallback(() => {
     setToken(null);
@@ -27,12 +27,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserId(null);
     setFullName(null);
     setApiToken(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('fullName');
   }, []);
 
   const login = useCallback((newToken: string, name?: string) => {
     setToken(newToken);
     setApiToken(newToken);
-    if (name) setFullName(name);
+    localStorage.setItem('token', newToken);
+    if (name) {
+      setFullName(name);
+      localStorage.setItem('fullName', name);
+    }
     try {
       const decoded: DecodedToken = jwtDecode(newToken);
       setRole(decoded.role);

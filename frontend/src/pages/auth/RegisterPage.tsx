@@ -2,8 +2,12 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../../api/auth';
 import { Mail, Lock, User, ArrowRight, ShieldCheck, CheckCircle2, Loader2, Stethoscope } from 'lucide-react';
+import Logo from '../../components/common/Logo';
+import { useAuth } from '../../context/AuthContext';
+import { jwtDecode } from 'jwt-decode';
 
 const RegisterPage: React.FC = () => {
+  const { login } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,12 +30,23 @@ const RegisterPage: React.FC = () => {
 
     setLoading(true);
     try {
-      await authAPI.register({ fullName, email, password, role });
+      const res = await authAPI.register({ fullName, email, password, role });
       if (role === 'ROLE_DOCTOR') {
         setSuccess('Registration successful! Your account requires admin approval before you can log in.');
       } else {
-        setSuccess('Registration successful! Redirecting to login...');
-        setTimeout(() => navigate('/login'), 2000);
+        // Auto-login since they are active immediately
+        const token = res.data.token;
+        if (token) {
+          login(token, res.data.fullName);
+          const decoded: any = jwtDecode(token);
+          const r = decoded.role;
+          if (r === 'ROLE_ADMIN') navigate('/admin');
+          else if (r === 'ROLE_DOCTOR') navigate('/doctor');
+          else navigate('/patient');
+        } else {
+          setSuccess('Registration successful! Redirecting to login...');
+          setTimeout(() => navigate('/login'), 2000);
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Registration failed');
@@ -51,10 +66,9 @@ const RegisterPage: React.FC = () => {
         </div>
 
         <div className="relative z-10">
-          <div className="w-14 h-14 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center mb-6 border border-white/20 shadow-sm">
-            <ShieldCheck className="w-8 h-8 text-blue-100" />
+          <div className="mb-8 scale-125 origin-left">
+            <Logo variant="dark" />
           </div>
-          <h2 className="text-3xl font-bold mb-3 tracking-tight">Join MedVault</h2>
           <p className="text-blue-200 text-sm leading-relaxed mb-10 font-medium">
             Create your account to access secure healthcare management tools.
           </p>

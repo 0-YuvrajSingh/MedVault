@@ -50,7 +50,14 @@ module.exports = {
           800: '#065f46',
           900: '#064e3b',
           dark: '#022c22',
-          accent: '#fbbf24',
+          accent: '#fcd34d',
+        },
+
+        // Dynamic Role Tokens
+        role: {
+          DEFAULT: 'var(--role-color)',
+          tint: 'var(--role-tint)',
+          text: 'var(--role-text)',
         },
 
         // Medical Category Colors for Stat Cards
