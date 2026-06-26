@@ -16,9 +16,9 @@ const PatientsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Patients</h1>
-        <p className="text-sm text-text-muted mt-1">{patients.length} assigned patients</p>
+      <div className="page-header">
+        <h1>Patients</h1>
+        <p>{patients.length} assigned patients</p>
       </div>
 
       <div className="card">

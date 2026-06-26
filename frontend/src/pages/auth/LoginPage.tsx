@@ -33,17 +33,17 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 rounded-xl overflow-hidden shadow-elevated">
+    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 rounded-xl overflow-hidden shadow-md">
       {/* Left — branding */}
-      <div className="hidden md:flex flex-col justify-center bg-gradient-to-br from-primary-500 to-primary-700 p-10 text-white">
+      <div className="hidden md:flex flex-col justify-center bg-gradient-to-br from-admin-500 to-admin-700 p-10 text-white">
         <h2 className="text-3xl font-bold mb-3">Welcome Back</h2>
-        <p className="text-primary-100 text-sm leading-relaxed">
+        <p className="text-admin-100 text-sm leading-relaxed">
           Access your secure healthcare dashboard. Your medical records, assignments, and audit trails are protected by industry-standard authentication.
         </p>
         <div className="mt-8 space-y-3">
           {['JWT-secured sessions', 'Role-based dashboards', 'HIPAA-inspired access control'].map((item) => (
-            <div key={item} className="flex items-center gap-2 text-sm text-primary-100">
-              <svg className="w-4 h-4 text-primary-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            <div key={item} className="flex items-center gap-2 text-sm text-admin-100">
+              <svg className="w-4 h-4 text-admin-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
               {item}
             </div>
           ))}
@@ -56,7 +56,7 @@ const LoginPage: React.FC = () => {
         <p className="text-sm text-text-muted mb-8">Enter your credentials to continue</p>
 
         {error && (
-          <div className="mb-4 p-3 bg-danger-50 border border-danger-200 text-danger-700 text-sm rounded-md">{error}</div>
+          <div className="mb-4 alert alert--danger">{error}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -70,7 +70,7 @@ const LoginPage: React.FC = () => {
           </div>
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
-              <input type="checkbox" className="rounded border-border text-primary-500 focus:ring-primary-500" />
+              <input type="checkbox" className="rounded border-border text-admin-500 focus:ring-admin-500" />
               Remember me
             </label>
             <span className="text-sm text-text-muted cursor-not-allowed">Forgot password?</span>
@@ -82,7 +82,7 @@ const LoginPage: React.FC = () => {
 
         <p className="mt-6 text-center text-sm text-text-muted">
           Don't have an account?{' '}
-          <Link to="/register" className="text-primary-500 font-medium hover:underline">Register</Link>
+          <Link to="/register" className="text-admin-500 font-medium hover:underline">Register</Link>
         </p>
       </div>
     </div>

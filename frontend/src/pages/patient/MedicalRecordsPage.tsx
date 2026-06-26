@@ -24,9 +24,9 @@ const MedicalRecordsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Medical Records</h1>
-        <p className="text-sm text-text-muted mt-1">{records.length} total records</p>
+      <div className="page-header">
+        <h1>Medical Records</h1>
+        <p>{records.length} total records</p>
       </div>
 
       {records.length === 0 ? (
@@ -42,7 +42,7 @@ const MedicalRecordsPage: React.FC = () => {
             {Object.entries(grouped).map(([month, items]) => (
               <div key={month}>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-3 h-3 bg-primary-500 rounded-full" />
+                  <div className="status-dot" />
                   <h2 className="text-lg font-semibold text-text-primary">{month}</h2>
                   <span className="badge-gray">{items.length}</span>
                 </div>
@@ -68,7 +68,7 @@ const MedicalRecordsPage: React.FC = () => {
       {selectedRecord && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <div className="fixed inset-0 bg-black/50" onClick={() => setSelectedRecord(null)} />
-          <div className="relative w-full max-w-md bg-white shadow-modal animate-slide-in-right overflow-y-auto">
+          <div className="relative w-full max-w-md bg-white shadow-md animate-slide-in-right overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-border p-5 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-text-primary">Record Details</h2>
               <button onClick={() => setSelectedRecord(null)} className="p-1 text-text-muted hover:text-text-primary">

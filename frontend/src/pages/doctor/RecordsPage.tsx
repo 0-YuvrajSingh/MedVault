@@ -47,9 +47,9 @@ const RecordsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Medical Records</h1>
-        <p className="text-sm text-text-muted mt-1">View and create records for assigned patients</p>
+      <div className="page-header">
+        <h1>Medical Records</h1>
+        <p>View and create records for assigned patients</p>
       </div>
 
       {/* Patient selector */}
@@ -66,8 +66,8 @@ const RecordsPage: React.FC = () => {
           {/* Create form */}
           <div className="card p-6">
             <h2 className="text-lg font-semibold text-text-primary mb-4">New Record</h2>
-            {error && <div className="mb-3 p-3 bg-danger-50 text-danger-700 text-sm rounded-md">{error}</div>}
-            {success && <div className="mb-3 p-3 bg-success-50 text-success-700 text-sm rounded-md">{success}</div>}
+            {error && <div className="mb-3 alert alert--danger">{error}</div>}
+            {success && <div className="mb-3 alert alert--success">{success}</div>}
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-1">Diagnosis</label>
@@ -99,7 +99,7 @@ const RecordsPage: React.FC = () => {
             ) : (
               <div className="p-5 space-y-4">
                 {records.map(r => (
-                  <div key={r.id} className="border-l-4 border-primary-500 pl-4 py-3">
+                  <div key={r.id} className="status-line border-l-4 pl-4 py-3">
                     <div className="flex items-center justify-between mb-1">
                       <h3 className="font-semibold text-text-primary">{r.diagnosis}</h3>
                       <span className="text-xs text-text-muted">{new Date(r.createdAt).toLocaleDateString()}</span>

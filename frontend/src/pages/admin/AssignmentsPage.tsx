@@ -45,16 +45,16 @@ const AssignmentsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Assignments</h1>
-        <p className="text-sm text-text-muted mt-1">Assign doctors to patients</p>
+      <div className="page-header">
+        <h1>Assignments</h1>
+        <p>Assign doctors to patients</p>
       </div>
 
       {/* Assign form */}
       <div className="card p-6">
         <h2 className="text-lg font-semibold text-text-primary mb-4">Create Assignment</h2>
-        {error && <div className="mb-4 p-3 bg-danger-50 border border-danger-200 text-danger-700 text-sm rounded-md">{error}</div>}
-        {success && <div className="mb-4 p-3 bg-success-50 border border-success-400 text-success-700 text-sm rounded-md">{success}</div>}
+        {error && <div className="mb-4 alert alert--danger">{error}</div>}
+        {success && <div className="mb-4 alert alert--success">{success}</div>}
         <form onSubmit={handleAssign} className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1.5">Patient</label>

@@ -35,47 +35,10 @@ function getSidebarItems(role: string | null): SidebarItem[] {
   return [];
 }
 
-function getRoleLabel(role: string | null): string {
-  if (role === 'ROLE_ADMIN') return 'Admin';
-  if (role === 'ROLE_DOCTOR') return 'Doctor';
-  if (role === 'ROLE_PATIENT') return 'Patient';
-  return '';
-}
-
-const roleConfig = {
-  ROLE_ADMIN: {
-    accent:    'bg-admin-500',
-    accentHov: 'hover:bg-admin-600',
-    accentSoft:'bg-admin-50',
-    accentText:'text-admin-600',
-    sidebarBg: 'bg-admin-dark',
-    avatarBg:  'bg-admin-500 text-white',
-    borderAcc: 'border-admin-500',
-    label:     'Admin Portal',
-    gradient:  'from-admin-600 to-admin-400',
-  },
-  ROLE_DOCTOR: {
-    accent:    'bg-doctor-500',
-    accentHov: 'hover:bg-doctor-600',
-    accentSoft:'bg-doctor-50',
-    accentText:'text-doctor-600',
-    sidebarBg: 'bg-white',
-    avatarBg:  'bg-doctor-100 text-doctor-700',
-    borderAcc: 'border-doctor-500',
-    label:     'Doctor Portal',
-    gradient:  'from-doctor-600 to-doctor-400',
-  },
-  ROLE_PATIENT: {
-    accent:    'bg-patient-500',
-    accentHov: 'hover:bg-patient-600',
-    accentSoft:'bg-patient-50',
-    accentText:'text-patient-600',
-    sidebarBg: 'bg-white',
-    avatarBg:  'bg-patient-100 text-patient-700',
-    borderAcc: 'border-patient-500',
-    label:     'Patient Portal',
-    gradient:  'from-patient-600 to-patient-400',
-  },
+const roleTokens = {
+  ROLE_ADMIN:   { color: '#f97316', tint: '#fff7ed', text: '#ea580c', label: 'Admin Portal' },
+  ROLE_DOCTOR:  { color: '#8b5cf6', tint: '#f5f3ff', text: '#7c3aed', label: 'Doctor Portal' },
+  ROLE_PATIENT: { color: '#10b981', tint: '#ecfdf5', text: '#059669', label: 'Patient Portal' },
 };
 
 const DashboardLayout: React.FC = () => {
@@ -84,7 +47,8 @@ const DashboardLayout: React.FC = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const items = getSidebarItems(role);
-  const theme = roleConfig[role as keyof typeof roleConfig] ?? roleConfig.ROLE_PATIENT;
+  
+  const tokens = roleTokens[role as keyof typeof roleTokens] ?? roleTokens.ROLE_PATIENT;
 
   const handleLogout = () => {
     logout();
@@ -92,16 +56,21 @@ const DashboardLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-surface">
+    <div className="min-h-screen flex bg-surface" style={{
+      '--role-color': tokens.color,
+      '--role-tint': tokens.tint,
+      '--role-text': tokens.text,
+    } as React.CSSProperties}>
+      
       {/* Sidebar - Desktop */}
       <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-white border-r border-border">
         <div className="h-16 flex items-center px-6 border-b border-border">
           <Logo />
         </div>
-        <div className={`h-1 w-full ${theme.accent}`} />
+        <div className="h-1 w-full" style={{ backgroundColor: 'var(--role-color)' }} />
         <div className="flex-1 py-4 px-3">
           <div className="mb-4 px-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">{getRoleLabel(role)} Portal</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">{tokens.label}</span>
           </div>
           <nav className="space-y-1">
             {items.map((item) => {
@@ -110,11 +79,7 @@ const DashboardLayout: React.FC = () => {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                    isActive
-                      ? `${theme.accentSoft} ${theme.accentText} font-semibold`
-                      : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
-                  }`}
+                  className={`nav-item ${isActive ? 'nav-item--active' : ''}`}
                 >
                   {item.icon}
                   {item.label}
@@ -146,15 +111,19 @@ const DashboardLayout: React.FC = () => {
               {items.map((item) => {
                 const isActive = location.pathname === item.to;
                 return (
-                  <Link key={item.to} to={item.to} onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${isActive ? `${theme.accentSoft} ${theme.accentText} font-semibold` : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'}`}>
+                  <Link 
+                    key={item.to} 
+                    to={item.to} 
+                    onClick={() => setSidebarOpen(false)}
+                    className={`nav-item ${isActive ? 'nav-item--active' : ''}`}
+                  >
                     {item.icon}{item.label}
                   </Link>
                 );
               })}
             </nav>
             <div className="p-3 border-t border-border">
-              <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-danger-500 hover:bg-danger-50 rounded-lg">
+              <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-danger-500 hover:bg-danger-50 rounded-lg transition-colors">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                 Log out
               </button>
@@ -172,10 +141,10 @@ const DashboardLayout: React.FC = () => {
           </button>
           <div className="hidden lg:block" />
           <div className="flex items-center gap-4">
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${theme.accentSoft} ${theme.accentText}`}>
-              {theme.label}
+            <span className="badge-role">
+              {tokens.label}
             </span>
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${theme.avatarBg}`}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold avatar-accent">
               {fullName?.[0] ?? role?.[5] ?? 'U'}
             </div>
           </div>

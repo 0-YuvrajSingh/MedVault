@@ -27,7 +27,7 @@ const PublicLayout: React.FC = () => {
                 to={link.to}
                 className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                   location.pathname === link.to
-                    ? 'text-primary-500 bg-primary-50'
+                    ? 'text-admin-500 bg-admin-50'
                     : 'text-text-secondary hover:text-text-primary hover:bg-gray-50'
                 }`}
               >

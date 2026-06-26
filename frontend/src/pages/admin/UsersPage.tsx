@@ -19,10 +19,10 @@ const UsersPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Users</h1>
-          <p className="text-sm text-text-muted mt-1">{users.length} total users</p>
+          <h1>Users</h1>
+          <p>{users.length} total users</p>
         </div>
         <input type="text" className="input max-w-xs" placeholder="Search users..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
@@ -35,7 +35,7 @@ const UsersPage: React.FC = () => {
                 <tr key={u.id}>
                   <td className="font-medium">{u.fullName}</td>
                   <td className="text-text-secondary">{u.email}</td>
-                  <td><span className="badge-gray">{u.role.replace('ROLE_', '')}</span></td>
+                  <td><span className="badge-role">{u.role.replace('ROLE_', '')}</span></td>
                   <td>{u.active ? <span className="badge-success">Active</span> : <span className="badge-danger">Inactive</span>}</td>
                 </tr>
               ))}

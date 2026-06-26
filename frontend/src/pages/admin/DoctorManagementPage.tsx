@@ -31,16 +31,16 @@ const DoctorManagementPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Doctor Management</h1>
-        <p className="text-sm text-text-muted mt-1">{doctors.length} doctors total, {pending.length} pending approval</p>
+      <div className="page-header">
+        <h1>Doctor Management</h1>
+        <p>{doctors.length} doctors total, {pending.length} pending approval</p>
       </div>
 
       {/* Pending */}
       {pending.length > 0 && (
-        <div className="card">
-          <div className="p-5 border-b border-border bg-warning-50">
-            <h2 className="text-lg font-semibold text-warning-700">Pending Approval ({pending.length})</h2>
+        <div className="card overflow-hidden">
+          <div className="alert alert--warning rounded-none border-x-0 border-t-0">
+            <h2 className="text-lg font-semibold">Pending Approval ({pending.length})</h2>
           </div>
           <div className="table-container border-0">
             <table className="table">

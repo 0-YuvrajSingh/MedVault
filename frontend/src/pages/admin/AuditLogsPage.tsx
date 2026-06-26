@@ -23,9 +23,9 @@ const AuditLogsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Audit Logs</h1>
-        <p className="text-sm text-text-muted mt-1">View the immutable audit trail for any medical record</p>
+      <div className="page-header">
+        <h1>Audit Logs</h1>
+        <p>View the immutable audit trail for any medical record</p>
       </div>
 
       {/* Search */}
@@ -41,7 +41,7 @@ const AuditLogsPage: React.FC = () => {
             </button>
           </div>
         </form>
-        {error && <div className="mt-3 p-3 bg-danger-50 border border-danger-200 text-danger-700 text-sm rounded-md">{error}</div>}
+        {error && <div className="mt-3 alert alert--danger">{error}</div>}
       </div>
 
       {/* Results */}
