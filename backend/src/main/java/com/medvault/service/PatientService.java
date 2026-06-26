@@ -49,6 +49,7 @@ public class PatientService {
                 record.getDiagnosis(),
                 record.getPrescription(),
                 record.getNotes(),
+                record.getRecordDate(),
                 record.getCreatedAt()
         );
     }

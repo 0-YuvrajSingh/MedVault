@@ -39,6 +39,9 @@ public class MedicalRecord {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @Column(name = "record_date", nullable = false)
+    private LocalDate recordDate;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

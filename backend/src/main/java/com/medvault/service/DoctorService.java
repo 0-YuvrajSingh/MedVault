@@ -75,6 +75,7 @@ public class DoctorService {
                 .diagnosis(request.getDiagnosis())
                 .prescription(request.getPrescription())
                 .notes(request.getNotes())
+                .recordDate(request.getRecordDate())
                 .build();
 
         MedicalRecord savedRecord = medicalRecordRepository.save(record);
@@ -93,6 +94,7 @@ public class DoctorService {
                 record.getDiagnosis(),
                 record.getPrescription(),
                 record.getNotes(),
+                record.getRecordDate(),
                 record.getCreatedAt()
         );
     }
