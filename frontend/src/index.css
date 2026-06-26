@@ -53,6 +53,66 @@
 
 @layer components {
 
+  .container-wide {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .card {
+    @apply bg-white rounded-xl border border-neutral-200 shadow-sm;
+  }
+
+  .table-container {
+    @apply overflow-x-auto rounded-b-xl;
+  }
+
+  .table {
+    @apply w-full text-sm text-left;
+  }
+
+  .table thead tr {
+    @apply bg-neutral-50 border-b border-neutral-200;
+  }
+
+  .table thead th {
+    @apply px-4 py-3 font-semibold text-neutral-600 uppercase tracking-wider text-xs;
+  }
+
+  .table tbody tr {
+    @apply border-b border-neutral-100 hover:bg-neutral-50 transition-colors;
+  }
+
+  .table tbody td {
+    @apply px-4 py-3 text-neutral-700;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-success-50 text-success-700;
+  }
+
+  .badge-danger {
+    @apply badge bg-danger-50 text-danger-700;
+  }
+
+  .badge-gray {
+    @apply badge bg-neutral-100 text-neutral-600;
+  }
+
+  .badge-warning {
+    @apply badge bg-warning-50 text-warning-700;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs rounded-lg font-medium;
+  }
+
+  .btn-xs {
+    @apply px-2.5 py-1 text-xs rounded-md font-medium;
+  }
+
   /* Glassmorphism Utilities */
   .glass {
     @apply backdrop-blur-md bg-white/70 dark:bg-neutral-900/70 border border-white/20 dark:border-white/10 shadow-glass;

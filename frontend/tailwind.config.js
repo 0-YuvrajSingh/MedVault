@@ -5,6 +5,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Primary alias (defaults to admin orange for shared components)
+        primary: {
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#f97316',
+          600: '#ea580c',
+          700: '#c2410c',
+        },
+
         // Admin Theme - Power & Authority (Black & Orange)
         admin: {
           50: '#fff7ed',
@@ -78,11 +90,25 @@ module.exports = {
         },
 
         // Semantic Colors
-        success: '#10b981',
-        error: '#ef4444',
-        warning: '#f59e0b',
+        success: {
+          50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0',
+          400: '#34d399', 500: '#10b981', 600: '#059669', 700: '#047857',
+        },
+        warning: {
+          50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a',
+          400: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 700: '#b45309',
+        },
+        danger: {
+          50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca',
+          400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c',
+        },
         info: '#3b82f6',
         border: '#e4e4e7',
+
+        // Text semantic tokens
+        'text-primary': '#111827',
+        'text-secondary': '#374151',
+        'text-muted': '#6B7280',
       },
 
       fontFamily: {

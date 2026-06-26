@@ -42,12 +42,49 @@ function getRoleLabel(role: string | null): string {
   return '';
 }
 
+const roleConfig = {
+  ROLE_ADMIN: {
+    accent:    'bg-admin-500',
+    accentHov: 'hover:bg-admin-600',
+    accentSoft:'bg-admin-50',
+    accentText:'text-admin-600',
+    sidebarBg: 'bg-admin-dark',
+    avatarBg:  'bg-admin-500 text-white',
+    borderAcc: 'border-admin-500',
+    label:     'Admin Portal',
+    gradient:  'from-admin-600 to-admin-400',
+  },
+  ROLE_DOCTOR: {
+    accent:    'bg-doctor-500',
+    accentHov: 'hover:bg-doctor-600',
+    accentSoft:'bg-doctor-50',
+    accentText:'text-doctor-600',
+    sidebarBg: 'bg-white',
+    avatarBg:  'bg-doctor-100 text-doctor-700',
+    borderAcc: 'border-doctor-500',
+    label:     'Doctor Portal',
+    gradient:  'from-doctor-600 to-doctor-400',
+  },
+  ROLE_PATIENT: {
+    accent:    'bg-patient-500',
+    accentHov: 'hover:bg-patient-600',
+    accentSoft:'bg-patient-50',
+    accentText:'text-patient-600',
+    sidebarBg: 'bg-white',
+    avatarBg:  'bg-patient-100 text-patient-700',
+    borderAcc: 'border-patient-500',
+    label:     'Patient Portal',
+    gradient:  'from-patient-600 to-patient-400',
+  },
+};
+
 const DashboardLayout: React.FC = () => {
-  const { role, logout, userId } = useAuth();
+  const { role, logout, userId, fullName } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const items = getSidebarItems(role);
+  const theme = roleConfig[role as keyof typeof roleConfig] ?? roleConfig.ROLE_PATIENT;
 
   const handleLogout = () => {
     logout();
@@ -61,6 +98,7 @@ const DashboardLayout: React.FC = () => {
         <div className="h-16 flex items-center px-6 border-b border-border">
           <Logo />
         </div>
+        <div className={`h-1 w-full ${theme.accent}`} />
         <div className="flex-1 py-4 px-3">
           <div className="mb-4 px-3">
             <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">{getRoleLabel(role)} Portal</span>
@@ -74,8 +112,8 @@ const DashboardLayout: React.FC = () => {
                   to={item.to}
                   className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-primary-50 text-primary-500'
-                      : 'text-text-secondary hover:bg-gray-50 hover:text-text-primary'
+                      ? `${theme.accentSoft} ${theme.accentText} font-semibold`
+                      : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
                   }`}
                 >
                   {item.icon}
@@ -109,7 +147,7 @@ const DashboardLayout: React.FC = () => {
                 const isActive = location.pathname === item.to;
                 return (
                   <Link key={item.to} to={item.to} onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${isActive ? 'bg-primary-50 text-primary-500' : 'text-text-secondary hover:bg-gray-50'}`}>
+                    className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${isActive ? `${theme.accentSoft} ${theme.accentText} font-semibold` : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'}`}>
                     {item.icon}{item.label}
                   </Link>
                 );
@@ -134,9 +172,11 @@ const DashboardLayout: React.FC = () => {
           </button>
           <div className="hidden lg:block" />
           <div className="flex items-center gap-4">
-            <span className="text-sm text-text-muted">{getRoleLabel(role)}</span>
-            <div className="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-semibold">
-              {getRoleLabel(role)?.[0] || 'U'}
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${theme.accentSoft} ${theme.accentText}`}>
+              {theme.label}
+            </span>
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${theme.avatarBg}`}>
+              {fullName?.[0] ?? role?.[5] ?? 'U'}
             </div>
           </div>
         </header>
