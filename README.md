@@ -1,119 +1,59 @@
 # MedVault
 
-MedVault is a secure patient record management platform with strict role-based access control and comprehensive audit logging. It enforces hardened domain rules to ensure patient privacy, robust assignment logic, and immutable audit trails.
+A secure, role-based healthcare management system built with Spring Boot and React.
 
-![Java](https://img.shields.io/badge/Java-17-007396?logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-6DB33F?logo=springboot&logoColor=white)
-![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
+## Features
+- **Role-Based Dashboards**: Distinct experiences for Admins, Doctors, and Patients.
+- **Secure Authentication**: JWT-based session management and stateless authentication.
+- **Immutable Audit Logs**: Healthcare compliance through append-only audit trails.
+- **Patient Management**: Doctors can view and create medical records for assigned patients.
+- **Responsive UI**: Built with modern Tailwind CSS and glassmorphism elements.
 
----
+## Architecture
+MedVault follows a classic client-server architecture with strict separation of concerns. The backend exposes a RESTful API protected by Spring Security, and the frontend consumes these APIs using Axios. Data persistence is handled via PostgreSQL, and database schema migrations are managed automatically through Flyway.
 
-## 🏛 Architecture Diagram
+## Tech Stack
+**Frontend**: React, TypeScript, Vite, Tailwind CSS, React Router, Axios, NGINX
+**Backend**: Java 17, Spring Boot (Web, Security, Data JPA), PostgreSQL, Flyway, JJWT, SpringDoc OpenAPI (Swagger)
+**Infrastructure**: Docker, Docker Compose, GitHub Actions
 
-```text
-                  +--------------------------------+
-                  |         React Frontend         |
-                  |  (Vite, Axios, Tailwind CSS)   |
-                  +---------------+----------------+
-                                  |
-                                  | Stateless JWT
-                                  | (Authorization Header)
-                                  v
-                  +---------------+----------------+
-                  |    Spring Boot Backend         |
-                  |--------------------------------|
-                  |  - Spring Security (Filters)   |
-                  |  - Controllers & DTOs          |
-                  |  - Services (@Transactional)   |
-                  |  - Spring Data JPA             |
-                  +---------------+----------------+
-                                  |
-                                  | JDBC / Hibernate
-                                  v
-                  +---------------+----------------+
-                  |    PostgreSQL Database         |
-                  |--------------------------------|
-                  |  - users                       |
-                  |  - medical_records             |
-                  |  - patient_doctor_assignments  |
-                  |  - audit_log                   |
-                  +--------------------------------+
-```
+## Screenshots
+*(Add screenshots of the application here)*
+- Homepage (`screenshots/homepage.png`)
+- Login Page (`screenshots/login.png`)
+- Admin Dashboard (`screenshots/admin.png`)
+- Doctor Portal (`screenshots/doctor.png`)
+- Patient Portal (`screenshots/patient.png`)
+- Swagger UI (`screenshots/swagger.png`)
 
-## 🔐 Role-Based Access Control (RBAC)
+## API
+Interactive API documentation is available via Swagger UI. Once the backend is running, navigate to:
+`http://localhost:8080/swagger-ui.html`
 
-The system leverages JWT-derived roles and identity context. Path parameters are strictly untrusted for authorization (preventing IDOR).
+## Running
+### Using Docker (Recommended)
+1. Copy the `.env.example` file to `.env.docker` and configure your `JWT_SECRET`.
+2. Start the services:
+   ```bash
+   docker compose up --build -d
+   ```
+3. The frontend is accessible at `http://localhost:3000` and the backend at `http://localhost:8080`.
 
-| Role | Access Level & Permissions |
-|---|---|
-| **PATIENT** | Read-only access exclusively to their *own* medical records. Identity is securely extracted from the JWT token. |
-| **DOCTOR** | Can list assigned patients and append records to assigned patients. *Must be activated by an admin before login is permitted.* |
-| **ADMIN** | Can view all system users, manually activate/deactivate DOCTOR accounts, map DOCTOR <-> PATIENT assignments, and view immutable audit trails. |
+### Local Development
+1. Ensure PostgreSQL is running and a database named `medvault` is created.
+2. Start the backend: `cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev`
+3. Start the frontend: `cd frontend && npm install && npm run dev`
 
-## 🚀 Getting Started (Cold Start)
-
-The easiest way to boot the entire stack is via Docker. 
-
-### Prerequisites
-- Docker & Docker Compose installed.
-- Ports `8080`, `5173`, and `5432` available.
-
-### Setup Flow
-
-1. **Clone & Boot Stack**
+## Testing
+Run backend unit and integration tests (uses an in-memory H2 database):
 ```bash
-docker-compose up --build -d
-```
-*Note: The backend service will automatically wait for the PostgreSQL `pg_isready` healthcheck before booting.*
-
-2. **Access the Services**
-- **Frontend Dashboard**: [http://localhost:5173](http://localhost:5173)
-- **Backend API**: [http://localhost:8080/api](http://localhost:8080/api)
-- **Swagger Documentation**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-
-3. **Stop the Stack**
-```bash
-docker-compose down
+cd backend
+mvn test
 ```
 
-## 📡 API Endpoints
-
-All endpoints beneath `/api` (excluding `/auth/**`) strictly require a valid Bearer token.
-
-| Domain | Method | Endpoint | Description | Role Required |
-|---|---|---|---|---|
-| **Auth** | POST | `/api/auth/register` | Register a new PATIENT or DOCTOR. | *Public* |
-| **Auth** | POST | `/api/auth/login` | Authenticate and retrieve JWT. | *Public* |
-| **Patient** | GET | `/api/patient/records` | Fetch all records for the caller. | `PATIENT` |
-| **Patient** | GET | `/api/patient/records/{id}` | Fetch a specific record for the caller. | `PATIENT` |
-| **Doctor** | GET | `/api/doctor/patients` | List all patients assigned to caller. | `DOCTOR` |
-| **Doctor** | GET | `/api/doctor/patients/{id}/records` | View records of assigned patient. | `DOCTOR` |
-| **Doctor** | POST | `/api/doctor/patients/{id}/records` | Create record for assigned patient. | `DOCTOR` |
-| **Admin** | GET | `/api/admin/users` | List all users in the system. | `ADMIN` |
-| **Admin** | PATCH | `/api/admin/doctors/{id}/activate` | Approve an inactive doctor. | `ADMIN` |
-| **Admin** | PATCH | `/api/admin/doctors/{id}/deactivate`| Suspend a doctor. | `ADMIN` |
-| **Admin** | POST | `/api/admin/assignments` | Assign a DOCTOR to a PATIENT. | `ADMIN` |
-| **Admin** | GET | `/api/admin/records/{id}/audit` | View audit trail for a record. | `ADMIN` |
-
-## 📸 Screenshots
-
-*(Replace placeholders with actual UI screenshots before release)*
-
-### Patient Dashboard
-![Patient Dashboard](./assets/screenshots/patient-dashboard.png)
-
-### Doctor Dashboard
-![Doctor Dashboard](./assets/screenshots/doctor-dashboard.png)
-
-### Admin Management
-![Admin View](./assets/screenshots/admin-dashboard.png)
-
----
-
-## 💻 Local Development (Without Docker)
-
-1. Ensure a local PostgreSQL instance is running on `5432` with user `medvault_user` / `medvault_password` and DB `medvault_db`.
-2. Boot Backend: `cd backend && ./mvnw spring-boot:run`
-3. Boot Frontend: `cd frontend && npm install && npm run dev`
+## Future Improvements
+- Email verification during registration
+- Refresh tokens for extended session management
+- Real-time notifications and alerts
+- Appointment scheduling module
+- File uploads for medical documents and lab results
