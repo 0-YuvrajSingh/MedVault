@@ -7,7 +7,6 @@ const RecordsPage: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
   const [searchParams] = useSearchParams();
   const preselectedPatientId = patientId || searchParams.get('patientId') || '';
-  const preselectedName = searchParams.get('patientName') || '';
 
   const [patients, setPatients] = useState<UserResponse[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState(preselectedPatientId);

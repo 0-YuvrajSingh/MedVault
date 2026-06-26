@@ -21,18 +21,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userId, setUserId] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (token) {
-      try {
-        const decoded: DecodedToken = jwtDecode(token);
-        setRole(decoded.role);
-        setUserId(decoded.userId || decoded.sub);
-        setApiToken(token);
-      } catch {
-        logout();
-      }
-    }
-  }, [token]);
+  const logout = useCallback(() => {
+    setToken(null);
+    setRole(null);
+    setUserId(null);
+    setFullName(null);
+    setApiToken(null);
+  }, []);
 
   const login = useCallback((newToken: string, name?: string) => {
     setToken(newToken);
@@ -47,13 +42,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const logout = useCallback(() => {
-    setToken(null);
-    setRole(null);
-    setUserId(null);
-    setFullName(null);
-    setApiToken(null);
-  }, []);
+  useEffect(() => {
+    if (token) {
+      try {
+        const decoded: DecodedToken = jwtDecode(token);
+        setRole(decoded.role);
+        setUserId(decoded.userId || decoded.sub);
+        setApiToken(token);
+      } catch {
+        logout();
+      }
+    }
+  }, [token, logout]);
 
   return (
     <AuthContext.Provider value={{ token, role, userId, fullName, login, logout, isAuthenticated: !!token }}>

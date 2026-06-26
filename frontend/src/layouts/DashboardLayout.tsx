@@ -79,7 +79,7 @@ const roleConfig = {
 };
 
 const DashboardLayout: React.FC = () => {
-  const { role, logout, userId, fullName } = useAuth();
+  const { role, logout, fullName } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
