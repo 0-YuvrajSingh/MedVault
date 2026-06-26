@@ -1,64 +1,82 @@
 import React from 'react';
-
-const timelineSteps = [
-  { title: 'Patient Registers', desc: 'Account is created and immediately active. Identity is stored with bcrypt-hashed password.' },
-  { title: 'Admin Assigns Doctor', desc: 'Admin creates a patient-doctor assignment. Duplicate assignments return 409 Conflict.' },
-  { title: 'Doctor Creates Record', desc: 'Doctor can only write records for assigned patients. Assignment is verified server-side.' },
-  { title: 'Audit Trail Logged', desc: 'Record creation and audit entry are committed in a single transaction. Failure rolls back both.' },
-  { title: 'Patient Retrieves Record', desc: 'Patient identity is derived from JWT claims in SecurityContext. Path parameters are never trusted for ownership.' },
-];
+import { ShieldAlert, CheckCircle2, Lock, FileKey2 } from 'lucide-react';
 
 const securitySections = [
-  { title: 'JWT Token Security', items: ['Token contains only userId and role claims', 'Secret sourced from environment variable, never hardcoded', 'Expiry enforced on every request via JwtAuthenticationFilter', 'Token stored in memory only — no localStorage'] },
-  { title: 'Role-Based Access Control', items: ['Three roles: ROLE_PATIENT, ROLE_DOCTOR, ROLE_ADMIN', 'Spring Security @PreAuthorize on every controller', 'Doctor accounts inactive by default until admin activation', 'Inactive doctor login returns 403 AccountNotActiveException'] },
-  { title: 'IDOR Prevention', items: ['Patient record access uses JWT-derived userId from SecurityContext', 'Path parameters are untrusted for authorization decisions', 'Patient A cannot access Patient B records, even with the correct UUID', 'Doctor access requires an active assignment verified server-side'] },
-  { title: 'Atomic Transactions', items: ['Record creation and audit logging in a single @Transactional boundary', 'Failed audit write rolls back the medical record insertion', 'Audit log is append-only — no UPDATE or DELETE operations', 'Every state change is traceable through the audit trail'] },
+  { 
+    title: 'Stateless JWT Authentication', 
+    icon: <FileKey2 className="w-6 h-6 text-[#0369A1]" />,
+    items: [
+      'Token payload contains only userId and role claims.',
+      'Secret sourced strictly from environment variables, never hardcoded.',
+      'Expiry strictly enforced on every request via custom JwtAuthenticationFilter.',
+      'Token is stored in memory in the React frontend, avoiding localStorage XSS vulnerabilities.'
+    ] 
+  },
+  { 
+    title: 'Domain-Scoped RBAC', 
+    icon: <Lock className="w-6 h-6 text-[#0369A1]" />,
+    items: [
+      'Three authoritative roles: ROLE_PATIENT, ROLE_DOCTOR, ROLE_ADMIN.',
+      'Spring Security @PreAuthorize applied at the controller level.',
+      'Doctor accounts are inactive by default until explicit admin activation.',
+      'Programmatic ownership assertion at the service layer acts as defense-in-depth.'
+    ] 
+  },
+  { 
+    title: 'IDOR Prevention', 
+    icon: <ShieldAlert className="w-6 h-6 text-[#0369A1]" />,
+    items: [
+      'Patient record access uses the JWT-derived userId from the SecurityContext.',
+      'URL path parameters are treated as untrusted for authorization decisions.',
+      'Patient A cannot access Patient B\'s records, even with the correct UUID.',
+      'Doctor access requires an active patient assignment verified server-side.'
+    ] 
+  },
 ];
 
 const SecurityPage: React.FC = () => (
-  <div>
-    {/* Timeline */}
-    <section className="section bg-surface">
-      <div className="container-narrow">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-text-primary mb-4">Security Architecture</h1>
-          <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-            How data flows through MedVault — every step is authenticated, authorized, and audited.
-          </p>
-        </div>
-        <div className="relative max-w-lg mx-auto">
-          <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-primary-200" />
-          {timelineSteps.map((step, i) => (
-            <div key={i} className="relative pl-16 pb-10 last:pb-0">
-              <div className="absolute left-4 top-1 w-5 h-5 bg-primary-500 rounded-full border-4 border-primary-100" />
-              <h3 className="text-lg font-semibold text-text-primary mb-1">{step.title}</h3>
-              <p className="text-sm text-text-secondary">{step.desc}</p>
-            </div>
-          ))}
-        </div>
+  <div className="bg-slate-50 min-h-screen">
+    {/* Page Header */}
+    <div className="bg-[#0F4C81] py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">Security Architecture</h1>
+        <p className="text-lg text-blue-100 max-w-2xl mx-auto font-medium">
+          How data flows through MedVault — every step is authenticated, authorized, and immutably audited to mimic real-world compliance.
+        </p>
       </div>
-    </section>
+    </div>
 
-    {/* Security details */}
-    <section className="section bg-white">
-      <div className="container-wide">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {securitySections.map((section) => (
-            <div key={section.title} className="card p-8">
-              <h3 className="text-xl font-semibold text-text-primary mb-4">{section.title}</h3>
-              <ul className="space-y-3">
-                {section.items.map((item, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm text-text-secondary">
-                    <svg className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+    {/* Details */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      
+      <div className="bg-gradient-to-br from-[#0F4C81] to-[#0369A1] rounded-2xl p-8 text-white mb-12 shadow-md">
+         <h2 className="text-2xl font-bold mb-3">Defense in Depth</h2>
+         <p className="text-blue-100 font-medium leading-relaxed max-w-3xl">
+           MedVault employs a layered security model. From BCrypt strength 12 password hashing at the database layer to CORS origin restrictions at the API gateway, no single layer is entirely trusted.
+         </p>
       </div>
-    </section>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {securitySections.map((section) => (
+          <div key={section.title} className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+              <div className="w-10 h-10 rounded-lg bg-[#EFF6FF] flex items-center justify-center">
+                {section.icon}
+              </div>
+              <h3 className="text-lg font-bold text-[#0F4C81] leading-tight">{section.title}</h3>
+            </div>
+            <ul className="space-y-4">
+              {section.items.map((item, i) => (
+                <li key={i} className="flex items-start gap-3 text-sm text-gray-600 font-medium">
+                  <CheckCircle2 className="w-5 h-5 text-[#0369A1] flex-shrink-0 mt-0.5" />
+                  <span className="leading-relaxed">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
   </div>
 );
 

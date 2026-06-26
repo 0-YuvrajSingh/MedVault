@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../api/auth';
+import { Mail, Lock, ArrowRight, ShieldCheck, CheckCircle2, Loader2 } from 'lucide-react';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -18,6 +19,7 @@ const LoginPage: React.FC = () => {
     try {
       const res = await authAPI.login({ email, password });
       login(res.data.token, res.data.fullName);
+
       // Navigate based on role after decode
       setTimeout(() => {
         const r = (window as any).__MEDVAULT_ROLE__ || role;
@@ -26,63 +28,125 @@ const LoginPage: React.FC = () => {
         else navigate('/patient');
       }, 100);
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Login failed');
+      setError(err.response?.data?.message || err.message || 'Login failed. Please verify your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 rounded-xl overflow-hidden shadow-md">
-      {/* Left — branding */}
-      <div className="hidden md:flex flex-col justify-center bg-gradient-to-br from-admin-500 to-admin-700 p-10 text-white">
-        <h2 className="text-3xl font-bold mb-3">Welcome Back</h2>
-        <p className="text-admin-100 text-sm leading-relaxed">
-          Access your secure healthcare dashboard. Your medical records, assignments, and audit trails are protected by industry-standard authentication.
-        </p>
-        <div className="mt-8 space-y-3">
-          {['JWT-secured sessions', 'Role-based dashboards', 'HIPAA-inspired access control'].map((item) => (
-            <div key={item} className="flex items-center gap-2 text-sm text-admin-100">
-              <svg className="w-4 h-4 text-admin-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-              {item}
-            </div>
-          ))}
+    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 rounded-2xl overflow-hidden shadow-2xl bg-white">
+      {/* Left — Clinical Navy Branding Panel */}
+      <div className="hidden md:flex flex-col justify-center bg-[#0F4C81] p-10 text-white relative">
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
+          {/* Abstract subtle background pattern */}
+          <div className="absolute -top-24 -left-24 w-64 h-64 rounded-full border-[20px] border-white"></div>
+          <div className="absolute bottom-12 -right-12 w-32 h-32 rounded-full border-[10px] border-white"></div>
+        </div>
+
+        <div className="relative z-10">
+          <div className="w-14 h-14 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center mb-6 border border-white/20 shadow-sm">
+            <ShieldCheck className="w-8 h-8 text-blue-100" />
+          </div>
+          <h2 className="text-3xl font-bold mb-3 tracking-tight">MedVault</h2>
+          <p className="text-blue-200 text-sm leading-relaxed mb-10 font-medium">
+            Secure healthcare records management.
+          </p>
+          
+          <div className="space-y-4">
+            {[
+              'Role-based access control',
+              'Immutable audit trail',
+              'JWT-secured sessions'
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-3 text-sm text-blue-100 font-medium">
+                <div className="w-5 h-5 rounded-full bg-blue-500/30 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-300" />
+                </div>
+                {item}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Right — form */}
-      <div className="bg-white p-8 md:p-10">
-        <h2 className="text-2xl font-bold text-text-primary mb-1">Log in</h2>
-        <p className="text-sm text-text-muted mb-8">Enter your credentials to continue</p>
+      {/* Right — Clinical Blue Form */}
+      <div className="p-8 md:p-10 flex flex-col justify-center bg-white">
+        <h2 className="text-2xl font-bold text-gray-900 mb-1.5 tracking-tight">Sign in to your account</h2>
+        <p className="text-sm text-gray-500 mb-8 font-medium">Enter your credentials to access your portal</p>
 
         {error && (
-          <div className="mb-4 alert alert--danger">{error}</div>
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-md flex items-start">
+            <div className="flex-1 text-sm text-red-700 font-medium">{error}</div>
+          </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1.5">Email</label>
-            <input type="email" className="input" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email address</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Mail className="h-5 w-5 text-gray-400" />
+              </div>
+              <input 
+                type="email" 
+                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none" 
+                placeholder="you@hospital.com" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                required 
+              />
+            </div>
           </div>
+          
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1.5">Password</label>
-            <input type="password" className="input" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Lock className="h-5 w-5 text-gray-400" />
+              </div>
+              <input 
+                type="password" 
+                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none" 
+                placeholder="••••••••" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+              />
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
-              <input type="checkbox" className="rounded border-border text-admin-500 focus:ring-admin-500" />
-              Remember me
+          
+          <div className="flex items-center justify-between pt-1">
+            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <input type="checkbox" className="rounded border-gray-300 text-[#0369A1] focus:ring-[#0369A1]" />
+              <span className="font-medium">Remember me</span>
             </label>
-            <span className="text-sm text-text-muted cursor-not-allowed">Forgot password?</span>
+            <span className="text-sm text-[#0369A1] font-semibold hover:underline cursor-not-allowed opacity-90">
+              Forgot password?
+            </span>
           </div>
-          <button type="submit" disabled={loading} className="btn-primary w-full">
-            {loading ? 'Signing in...' : 'Log in'}
+          
+          <button 
+            type="submit" 
+            disabled={loading} 
+            className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-[#0369A1] hover:bg-[#02598B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0369A1] transition-all disabled:opacity-70 mt-2"
+          >
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                Sign in
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </>
+            )}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-text-muted">
+        <p className="mt-8 text-center text-sm text-gray-600">
           Don't have an account?{' '}
-          <Link to="/register" className="text-admin-500 font-medium hover:underline">Register</Link>
+          <Link to="/register" className="text-[#0369A1] font-semibold hover:underline transition-colors">
+            Create one now
+          </Link>
         </p>
       </div>
     </div>

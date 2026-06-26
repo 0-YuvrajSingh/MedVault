@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { patientAPI } from '../../api/patient';
 import type { MedicalRecord } from '../../types';
+import { X } from 'lucide-react';
 
 const MedicalRecordsPage: React.FC = () => {
   const [records, setRecords] = useState<MedicalRecord[]>([]);
@@ -72,7 +73,7 @@ const MedicalRecordsPage: React.FC = () => {
             <div className="sticky top-0 bg-white border-b border-border p-5 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-text-primary">Record Details</h2>
               <button onClick={() => setSelectedRecord(null)} className="p-1 text-text-muted hover:text-text-primary">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-5 space-y-5">
