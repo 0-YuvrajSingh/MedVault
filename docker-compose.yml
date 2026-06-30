@@ -29,7 +29,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=medvault_password
       - SPRING_PROFILES_ACTIVE=docker
       - JWT_SECRET=${JWT_SECRET:-YourSuperSecretKeyForJWT123!}
-      - JWT_EXPIRATION=86400000
+      - JWT_EXPIRATION=1800000
     depends_on:
       db:
         condition: service_healthy

@@ -100,6 +100,46 @@ public class SecurityClaimsTest {
     }
 
     @Test
+    void testStrictIdorProtectionPatientCannotFetchOtherPatientRecords() throws Exception {
+        // Create Patient A
+        User patientA = User.builder().fullName("Patient A").email("pa@ex.com").passwordHash(passwordEncoder.encode("pw")).role("ROLE_PATIENT").active(true).build();
+        userRepository.save(patientA);
+
+        // Create Patient B
+        User patientB = User.builder().fullName("Patient B").email("pb@ex.com").passwordHash(passwordEncoder.encode("pw")).role("ROLE_PATIENT").active(true).build();
+        userRepository.save(patientB);
+
+        // Create Doctor to assign records
+        User doctor = User.builder().fullName("Doctor D").email("docd@ex.com").passwordHash(passwordEncoder.encode("pw")).role("ROLE_DOCTOR").active(true).build();
+        userRepository.save(doctor);
+
+        // Doctor creates a record for Patient B
+        MedicalRecord recordB = MedicalRecord.builder()
+                .patient(patientB)
+                .doctor(doctor)
+                .diagnosis("Flu")
+                .prescription("Rest")
+                .recordDate(java.time.LocalDate.now())
+                .build();
+        medicalRecordRepository.save(recordB);
+
+        // Login as Patient A
+        Map<String, String> loginReq = new HashMap<>();
+        loginReq.put("email", "pa@ex.com");
+        loginReq.put("password", "pw");
+        String response = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginReq)))
+                .andReturn().getResponse().getContentAsString();
+        String patientAToken = objectMapper.readTree(response).get("token").asText();
+
+        // Patient A attempts to fetch Patient B's specific record via IDOR
+        mockMvc.perform(get("/api/patient/records/" + recordB.getId().toString())
+                .header("Authorization", "Bearer " + patientAToken))
+                .andExpect(status().isForbidden()); // Strict IDOR blocks this
+    }
+
+    @Test
     void testImmutableAuditLoggingArchitecture() {
         // Create an audit log
         User admin = User.builder().fullName("Admin").email("admin.audit@ex.com").passwordHash("pw").role("ROLE_ADMIN").active(true).build();

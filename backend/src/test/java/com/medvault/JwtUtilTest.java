@@ -57,4 +57,32 @@ public class JwtUtilTest {
 
         assertTrue(jwtUtil.validateToken(token));
     }
+
+    @Test
+    void testExpiredTokenValidationFails() {
+        User user = new User();
+        user.setId(UUID.randomUUID());
+        user.setRole("ROLE_ADMIN");
+
+        // Temporarily set expiration to negative value so token expires immediately
+        ReflectionTestUtils.setField(jwtUtil, "jwtExpiration", -1000L);
+        String token = jwtUtil.generateToken(user);
+
+        assertFalse(jwtUtil.validateToken(token), "Expired token should fail validation");
+
+        // Restore expiration
+        ReflectionTestUtils.setField(jwtUtil, "jwtExpiration", 1800000L);
+    }
+
+    @Test
+    void testTamperedTokenValidationFails() {
+        User user = new User();
+        user.setId(UUID.randomUUID());
+        user.setRole("ROLE_ADMIN");
+
+        String token = jwtUtil.generateToken(user);
+        String tamperedToken = token + "tampered";
+
+        assertFalse(jwtUtil.validateToken(tamperedToken), "Tampered token should fail validation");
+    }
 }

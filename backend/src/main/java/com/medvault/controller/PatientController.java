@@ -13,6 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
+
 @RestController
 @RequestMapping("/api/patient")
 @PreAuthorize("hasRole('PATIENT')")
@@ -25,8 +30,10 @@ public class PatientController {
     }
 
     @GetMapping("/records")
-    public ResponseEntity<List<MedicalRecordResponse>> getMyRecords(Authentication authentication) {
-        return ResponseEntity.ok(patientService.getRecords(UUID.fromString(authentication.getName())));
+    public ResponseEntity<Page<MedicalRecordResponse>> getMyRecords(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            Authentication authentication) {
+        return ResponseEntity.ok(patientService.getRecords(UUID.fromString(authentication.getName()), pageable));
     }
 
     @GetMapping("/records/{recordId}")

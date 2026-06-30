@@ -10,10 +10,16 @@ const MedicalRecordsPage: React.FC = () => {
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
-    patientAPI.getRecords().then(r => setRecords(r.data)).catch(console.error).finally(() => setLoading(false));
-  }, []);
+    setLoading(true);
+    patientAPI.getRecords(page, 10).then(r => {
+      setRecords(r.data.content);
+      setTotalPages(r.data.totalPages);
+    }).catch(console.error).finally(() => setLoading(false));
+  }, [page]);
 
   // Group by month
   const grouped: Record<string, MedicalRecord[]> = {};
@@ -67,6 +73,28 @@ const MedicalRecordsPage: React.FC = () => {
               </div>
             ))}
           </div>
+          
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center mt-8 pt-4 border-t border-slate-200">
+              <button
+                disabled={page === 0}
+                onClick={() => setPage(p => p - 1)}
+                className="px-4 py-2 bg-white border border-slate-200 rounded text-sm font-medium disabled:opacity-50 hover:bg-slate-50 transition-colors"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-text-muted">
+                Page {page + 1} of {totalPages}
+              </span>
+              <button
+                disabled={page === totalPages - 1}
+                onClick={() => setPage(p => p + 1)}
+                className="px-4 py-2 bg-white border border-slate-200 rounded text-sm font-medium disabled:opacity-50 hover:bg-slate-50 transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       )}
 

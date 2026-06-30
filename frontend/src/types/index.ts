@@ -50,3 +50,15 @@ export interface DecodedToken {
   userId: string;
   exp: number;
 }
+
+export interface PageResponse<T> {
+  content: T[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+  };
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+  first: boolean;
+}

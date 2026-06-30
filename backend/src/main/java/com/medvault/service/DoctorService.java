@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Service
 public class DoctorService {
 
@@ -43,7 +46,7 @@ public class DoctorService {
     }
 
     @Transactional(readOnly = true)
-    public List<MedicalRecordResponse> getPatientRecords(UUID doctorId, UUID patientId) {
+    public Page<MedicalRecordResponse> getPatientRecords(UUID doctorId, UUID patientId, Pageable pageable) {
         User doctor = userRepository.findById(doctorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
         User patient = userRepository.findById(patientId)
@@ -53,9 +56,8 @@ public class DoctorService {
             throw new AccessDeniedException("Doctor is not assigned to this patient");
         }
 
-        return medicalRecordRepository.findByPatientId(patientId).stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        return medicalRecordRepository.findByPatientIdOrderByCreatedAtDesc(patientId, pageable)
+                .map(this::mapToResponse);
     }
 
     @Transactional

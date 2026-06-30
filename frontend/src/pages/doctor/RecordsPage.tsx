@@ -36,6 +36,8 @@ const RecordsPage: React.FC = () => {
   const [selectedPatientId, setSelectedPatientId] = useState(preselectedPatientId);
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const [success, setSuccess] = useState('');
   const [apiError, setApiError] = useState('');
@@ -51,16 +53,22 @@ const RecordsPage: React.FC = () => {
   useEffect(() => {
     if (selectedPatientId) {
       setLoading(true);
-      doctorAPI.getPatientRecords(selectedPatientId).then(r => setRecords(r.data)).catch(console.error).finally(() => setLoading(false));
+      doctorAPI.getPatientRecords(selectedPatientId, page, 10).then(r => {
+        setRecords(r.data.content);
+        setTotalPages(r.data.totalPages);
+      }).catch(console.error).finally(() => setLoading(false));
     } else {
       setRecords([]);
+      setTotalPages(0);
     }
-  }, [selectedPatientId]);
+  }, [selectedPatientId, page]);
 
   const onSubmit = async (data: RecordFormData) => {
     setApiError(''); setSuccess('');
     try {
+      // Force refresh to first page to see the new record
       const res = await doctorAPI.createRecord(selectedPatientId, data);
+      setPage(0);
       setRecords(prev => [res.data, ...prev]);
       reset();
       setSuccess('Medical record securely created and audit logged.');
@@ -296,6 +304,28 @@ const RecordsPage: React.FC = () => {
                         </div>
                       ))}
                     </div>
+                    
+                    {totalPages > 1 && (
+                      <div className="flex justify-between items-center mt-12 pt-6 border-t border-slate-200">
+                        <button
+                          disabled={page === 0}
+                          onClick={() => setPage(p => p - 1)}
+                          className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-text-secondary disabled:opacity-50 hover:bg-slate-50 hover:text-text-primary transition-colors"
+                        >
+                          Previous
+                        </button>
+                        <span className="text-sm font-medium text-text-muted">
+                          Page {page + 1} of {totalPages}
+                        </span>
+                        <button
+                          disabled={page === totalPages - 1}
+                          onClick={() => setPage(p => p + 1)}
+                          className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-text-secondary disabled:opacity-50 hover:bg-slate-50 hover:text-text-primary transition-colors"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

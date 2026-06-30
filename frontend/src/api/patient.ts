@@ -1,7 +1,7 @@
 import api from './axios';
-import type { MedicalRecord } from '../types';
+import type { MedicalRecord, PageResponse } from '../types';
 
 export const patientAPI = {
-  getRecords: () => api.get<MedicalRecord[]>('/patient/records'),
+  getRecords: (page = 0, size = 10) => api.get<PageResponse<MedicalRecord>>(`/patient/records?page=${page}&size=${size}`),
   getRecordById: (recordId: string) => api.get<MedicalRecord>(`/patient/records/${recordId}`),
 };

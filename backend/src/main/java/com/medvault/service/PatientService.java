@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Service
 public class PatientService {
 
@@ -22,11 +25,9 @@ public class PatientService {
     }
 
     @Transactional(readOnly = true)
-    public List<MedicalRecordResponse> getRecords(UUID patientId) {
-        return medicalRecordRepository.findByPatientId(patientId)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<MedicalRecordResponse> getRecords(UUID patientId, Pageable pageable) {
+        return medicalRecordRepository.findByPatientIdOrderByCreatedAtDesc(patientId, pageable)
+                .map(this::mapToResponse);
     }
 
     @Transactional(readOnly = true)

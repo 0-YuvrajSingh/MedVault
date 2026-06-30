@@ -153,6 +153,7 @@ public class FlowIntegrationTest {
                 .doctor(doctor)
                 .diagnosis("Flu")
                 .prescription("Rest")
+                .recordDate(java.time.LocalDate.now())
                 .build();
         medicalRecordRepository.save(recordForPat2);
 

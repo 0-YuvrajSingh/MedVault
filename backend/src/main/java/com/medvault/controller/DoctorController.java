@@ -7,6 +7,10 @@ import com.medvault.service.DoctorService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 
 import java.security.Principal;
 import java.util.List;
@@ -34,9 +38,12 @@ public class DoctorController {
     }
 
     @GetMapping("/patients/{patientId}/records")
-    public ResponseEntity<List<MedicalRecordResponse>> getPatientRecords(@PathVariable UUID patientId, Principal principal) {
+    public ResponseEntity<Page<MedicalRecordResponse>> getPatientRecords(
+            @PathVariable UUID patientId, 
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            Principal principal) {
         UUID doctorId = UUID.fromString(principal.getName());
-        return ResponseEntity.ok(doctorService.getPatientRecords(doctorId, patientId));
+        return ResponseEntity.ok(doctorService.getPatientRecords(doctorId, patientId, pageable));
     }
 
     @PostMapping("/patients/{patientId}/records")

@@ -13,13 +13,17 @@ const AdminPatientRecordsPage: React.FC = () => {
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     if (!id) return;
     const fetchRecords = async () => {
+      setLoading(true);
       try {
-        const res = await adminAPI.getPatientRecords(id);
-        setRecords(res.data);
+        const res = await adminAPI.getPatientRecords(id, page, 10);
+        setRecords(res.data.content);
+        setTotalPages(res.data.totalPages);
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to fetch patient records');
       } finally {
@@ -27,7 +31,7 @@ const AdminPatientRecordsPage: React.FC = () => {
       }
     };
     fetchRecords();
-  }, [id]);
+  }, [id, page]);
 
   if (loading) return <DashboardSkeleton />;
 
@@ -95,6 +99,28 @@ const AdminPatientRecordsPage: React.FC = () => {
               </div>
             </Card>
           ))}
+          
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center mt-6 pt-4">
+              <button
+                disabled={page === 0}
+                onClick={() => setPage(p => p - 1)}
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+              >
+                Previous
+              </button>
+              <span className="text-sm font-medium text-slate-500">
+                Page {page + 1} of {totalPages}
+              </span>
+              <button
+                disabled={page === totalPages - 1}
+                onClick={() => setPage(p => p + 1)}
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

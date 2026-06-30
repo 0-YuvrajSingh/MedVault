@@ -54,7 +54,9 @@ public class AdminController {
     }
 
     @GetMapping("/patients/{patientId}/records")
-    public ResponseEntity<List<com.medvault.dto.MedicalRecordResponse>> getPatientRecords(@PathVariable UUID patientId) {
-        return ResponseEntity.ok(adminService.getPatientRecords(patientId));
+    public ResponseEntity<org.springframework.data.domain.Page<com.medvault.dto.MedicalRecordResponse>> getPatientRecords(
+            @PathVariable UUID patientId,
+            @org.springframework.data.web.PageableDefault(size = 10, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(adminService.getPatientRecords(patientId, pageable));
     }
 }

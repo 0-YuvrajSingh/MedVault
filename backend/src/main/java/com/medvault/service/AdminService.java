@@ -9,6 +9,8 @@ import com.medvault.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -122,11 +124,9 @@ public class AdminService {
     }
 
     @Transactional(readOnly = true)
-    public List<com.medvault.dto.MedicalRecordResponse> getPatientRecords(UUID patientId) {
-        return medicalRecordRepository.findByPatientIdOrderByCreatedAtDesc(patientId)
-                .stream()
-                .map(this::mapToMedicalRecordResponse)
-                .collect(Collectors.toList());
+    public Page<com.medvault.dto.MedicalRecordResponse> getPatientRecords(UUID patientId, Pageable pageable) {
+        return medicalRecordRepository.findByPatientIdOrderByCreatedAtDesc(patientId, pageable)
+                .map(this::mapToMedicalRecordResponse);
     }
 
     private com.medvault.dto.MedicalRecordResponse mapToMedicalRecordResponse(com.medvault.entity.MedicalRecord record) {
