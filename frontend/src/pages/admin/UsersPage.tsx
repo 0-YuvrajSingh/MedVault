@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { adminAPI } from '../../api/admin';
 import type { UserResponse } from '../../types';
+import { DataTable } from '../../components/ui/DataTable';
+import { Link } from 'react-router-dom';
 
 const UsersPage: React.FC = () => {
   const [users, setUsers] = useState<UserResponse[]>([]);
@@ -15,35 +17,55 @@ const UsersPage: React.FC = () => {
     u.fullName.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return <div className="flex items-center justify-center h-64 text-text-muted">Loading users...</div>;
+  const columns = [
+    { key: 'fullName', label: 'Name' },
+    { key: 'email', label: 'Email' },
+    {
+      key: 'role',
+      label: 'Role',
+      render: (u: UserResponse) => (
+        <span className="px-2 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-md uppercase tracking-wider">
+          {u.role.replace('ROLE_', '')}
+        </span>
+      ),
+    },
+    {
+      key: 'active',
+      label: 'Status',
+      render: (u: UserResponse) => (
+        u.active ? <span className="text-green-600 bg-green-50 px-2 py-1 rounded-md text-xs font-bold">Active</span>
+                 : <span className="text-red-600 bg-red-50 px-2 py-1 rounded-md text-xs font-bold">Inactive</span>
+      ),
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (u: UserResponse) => (
+        u.role === 'ROLE_PATIENT' ? (
+          <Link to={`/admin/patients/${u.id}/records`} className="text-blue-600 hover:text-blue-800 text-sm font-semibold hover:underline">
+            View Records
+          </Link>
+        ) : null
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="page-header flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h1>Users</h1>
-          <p>{users.length} total users</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Users</h1>
+          <p className="text-sm text-slate-500 mt-1">{users.length} total active and inactive accounts</p>
         </div>
-        <input type="text" className="input max-w-xs" placeholder="Search users..." value={search} onChange={e => setSearch(e.target.value)} />
+        <input
+          type="text"
+          className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          placeholder="Search users..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
       </div>
-      <div className="card">
-        <div className="table-container border-0">
-          <table className="table">
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th></tr></thead>
-            <tbody>
-              {filtered.map(u => (
-                <tr key={u.id}>
-                  <td className="font-medium">{u.fullName}</td>
-                  <td className="text-text-secondary">{u.email}</td>
-                  <td><span className="badge-role">{u.role.replace('ROLE_', '')}</span></td>
-                  <td>{u.active ? <span className="badge-success">Active</span> : <span className="badge-danger">Inactive</span>}</td>
-                </tr>
-              ))}
-              {filtered.length === 0 && <tr><td colSpan={4} className="text-center text-text-muted py-8">No users found</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <DataTable columns={columns} data={filtered} loading={loading} />
     </div>
   );
 };

@@ -5,11 +5,12 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+let inMemoryToken: string | null = null;
+
 // Request interceptor — inject token from memory
 api.interceptors.request.use((config) => {
-  const token = (window as any).__MEDVAULT_TOKEN__;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (inMemoryToken) {
+    config.headers.Authorization = `Bearer ${inMemoryToken}`;
   }
   return config;
 });
@@ -21,7 +22,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       const path = window.location.pathname;
       if (!path.includes('/login') && !path.includes('/register') && path !== '/') {
-        delete (window as any).__MEDVAULT_TOKEN__;
+        inMemoryToken = null;
         window.location.href = '/login';
       }
     }
@@ -33,11 +34,7 @@ api.interceptors.response.use(
 );
 
 export function setApiToken(token: string | null) {
-  if (token) {
-    (window as any).__MEDVAULT_TOKEN__ = token;
-  } else {
-    delete (window as any).__MEDVAULT_TOKEN__;
-  }
+  inMemoryToken = token;
 }
 
 export default api;

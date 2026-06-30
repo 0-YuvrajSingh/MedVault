@@ -19,19 +19,26 @@ import UsersPage from '../pages/admin/UsersPage';
 import DoctorManagementPage from '../pages/admin/DoctorManagementPage';
 import AssignmentsPage from '../pages/admin/AssignmentsPage';
 import AuditLogsPage from '../pages/admin/AuditLogsPage';
+import SystemHealthPage from '../pages/admin/SystemHealthPage';
+import AdminPatientRecordsPage from '../pages/admin/AdminPatientRecordsPage';
 
 // Doctor pages
 import DoctorDashboard from '../pages/doctor/DoctorDashboard';
 import PatientsPage from '../pages/doctor/PatientsPage';
 import RecordsPage from '../pages/doctor/RecordsPage';
+import DoctorReviewsPage from '../pages/doctor/DoctorReviewsPage';
+import DoctorTimelinePage from '../pages/doctor/DoctorTimelinePage';
+import DoctorNotificationsPage from '../pages/doctor/DoctorNotificationsPage';
 
 // Patient pages
 import PatientDashboard from '../pages/patient/PatientDashboard';
 import MedicalRecordsPage from '../pages/patient/MedicalRecordsPage';
+import PatientTimelinePage from '../pages/patient/PatientTimelinePage';
+import MyDoctorPage from '../pages/patient/MyDoctorPage';
+import PatientNotificationsPage from '../pages/patient/PatientNotificationsPage';
 
 // Shared
 import SettingsPage from '../pages/shared/SettingsPage';
-import PlaceholderPage from '../pages/shared/PlaceholderPage';
 
 const router = createBrowserRouter([
   // Public routes
@@ -63,10 +70,11 @@ const router = createBrowserRouter([
         children: [
           { path: '/admin', element: <AdminDashboard /> },
           { path: '/admin/users', element: <UsersPage /> },
+          { path: '/admin/patients/:id/records', element: <AdminPatientRecordsPage /> },
           { path: '/admin/approvals', element: <DoctorManagementPage /> },
           { path: '/admin/assignments', element: <AssignmentsPage /> },
           { path: '/admin/audit-logs', element: <AuditLogsPage /> },
-          { path: '/admin/system-health', element: <PlaceholderPage /> },
+          { path: '/admin/system-health', element: <SystemHealthPage /> },
           { path: '/admin/settings', element: <SettingsPage /> },
         ],
       },
@@ -83,9 +91,9 @@ const router = createBrowserRouter([
           { path: '/doctor/patients', element: <PatientsPage /> },
           { path: '/doctor/records', element: <RecordsPage /> },
           { path: '/doctor/patients/:patientId/records', element: <RecordsPage /> },
-          { path: '/doctor/reviews', element: <PlaceholderPage /> },
-          { path: '/doctor/timeline', element: <PlaceholderPage /> },
-          { path: '/doctor/notifications', element: <PlaceholderPage /> },
+          { path: '/doctor/reviews', element: <DoctorReviewsPage /> },
+          { path: '/doctor/timeline', element: <DoctorTimelinePage /> },
+          { path: '/doctor/notifications', element: <DoctorNotificationsPage /> },
           { path: '/doctor/settings', element: <SettingsPage /> },
         ],
       },
@@ -100,9 +108,9 @@ const router = createBrowserRouter([
         children: [
           { path: '/patient', element: <PatientDashboard /> },
           { path: '/patient/records', element: <MedicalRecordsPage /> },
-          { path: '/patient/my-doctor', element: <PlaceholderPage /> },
-          { path: '/patient/timeline', element: <PlaceholderPage /> },
-          { path: '/patient/notifications', element: <PlaceholderPage /> },
+          { path: '/patient/my-doctor', element: <MyDoctorPage /> },
+          { path: '/patient/timeline', element: <PatientTimelinePage /> },
+          { path: '/patient/notifications', element: <PatientNotificationsPage /> },
           { path: '/patient/settings', element: <SettingsPage /> },
         ],
       },

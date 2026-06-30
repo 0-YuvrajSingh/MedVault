@@ -19,11 +19,13 @@ public class AdminService {
     private final UserRepository userRepository;
     private final PatientDoctorAssignmentRepository assignmentRepository;
     private final com.medvault.repository.AuditLogRepository auditLogRepository;
+    private final com.medvault.repository.MedicalRecordRepository medicalRecordRepository;
 
-    public AdminService(UserRepository userRepository, PatientDoctorAssignmentRepository assignmentRepository, com.medvault.repository.AuditLogRepository auditLogRepository) {
+    public AdminService(UserRepository userRepository, PatientDoctorAssignmentRepository assignmentRepository, com.medvault.repository.AuditLogRepository auditLogRepository, com.medvault.repository.MedicalRecordRepository medicalRecordRepository) {
         this.userRepository = userRepository;
         this.assignmentRepository = assignmentRepository;
         this.auditLogRepository = auditLogRepository;
+        this.medicalRecordRepository = medicalRecordRepository;
     }
 
     @Transactional(readOnly = true)
@@ -117,5 +119,27 @@ public class AdminService {
                         log.getDetailSnapshot()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.medvault.dto.MedicalRecordResponse> getPatientRecords(UUID patientId) {
+        return medicalRecordRepository.findByPatientIdOrderByCreatedAtDesc(patientId)
+                .stream()
+                .map(this::mapToMedicalRecordResponse)
+                .collect(Collectors.toList());
+    }
+
+    private com.medvault.dto.MedicalRecordResponse mapToMedicalRecordResponse(com.medvault.entity.MedicalRecord record) {
+        return new com.medvault.dto.MedicalRecordResponse(
+                record.getId(),
+                record.getPatient().getId(),
+                record.getPatient().getFullName(),
+                record.getDoctor().getId(),
+                record.getDoctor().getFullName(),
+                record.getDiagnosis(),
+                record.getPrescription(),
+                record.getNotes(),
+                record.getCreatedAt()
+        );
     }
 }

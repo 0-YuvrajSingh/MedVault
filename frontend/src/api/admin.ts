@@ -8,5 +8,6 @@ export const adminAPI = {
   createAssignment: (data: { patientId: string; doctorId: string }) =>
     api.post('/admin/assignments', data),
   getAssignments: () => api.get<AssignmentResponse[]>('/admin/assignments'),
+  getPatientRecords: (patientId: string) => api.get<any[]>(`/admin/patients/${patientId}/records`),
   getAuditLog: (recordId: string) => api.get<AuditLogEntry[]>(`/admin/records/${recordId}/audit`),
 };

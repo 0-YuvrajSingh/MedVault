@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
 import { doctorAPI } from '../../api/doctor';
 import type { UserResponse, MedicalRecord } from '../../types';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import {
   FileText,
   Search,
@@ -16,6 +19,14 @@ import {
 } from 'lucide-react';
 import { formatRelativeTime } from '../../utils/date';
 
+const schema = yup.object().shape({
+  diagnosis: yup.string().required('Diagnosis is required').min(3, 'Diagnosis must be at least 3 characters'),
+  prescription: yup.string().required('Prescription is required').min(3, 'Prescription must be at least 3 characters'),
+  notes: yup.string().optional(),
+});
+
+type RecordFormData = yup.InferType<typeof schema>;
+
 const RecordsPage: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
   const [searchParams] = useSearchParams();
@@ -26,13 +37,12 @@ const RecordsPage: React.FC = () => {
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Form state
-  const [diagnosis, setDiagnosis] = useState('');
-  const [prescription, setPrescription] = useState('');
-  const [notes, setNotes] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState('');
-  const [error, setError] = useState('');
+  const [apiError, setApiError] = useState('');
+
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<RecordFormData>({
+    resolver: yupResolver(schema)
+  });
 
   useEffect(() => {
     doctorAPI.getPatients().then(r => setPatients(r.data)).catch(console.error);
@@ -47,18 +57,17 @@ const RecordsPage: React.FC = () => {
     }
   }, [selectedPatientId]);
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(''); setSuccess(''); setSubmitting(true);
+  const onSubmit = async (data: RecordFormData) => {
+    setApiError(''); setSuccess('');
     try {
-      const res = await doctorAPI.createRecord(selectedPatientId, { diagnosis, prescription, notes });
+      const res = await doctorAPI.createRecord(selectedPatientId, data);
       setRecords(prev => [res.data, ...prev]);
-      setDiagnosis(''); setPrescription(''); setNotes('');
+      reset();
       setSuccess('Medical record securely created and audit logged.');
       setTimeout(() => setSuccess(''), 5000);
     } catch (e: any) {
-      setError(e.response?.data?.message || e.message || 'Failed to create record');
-    } finally { setSubmitting(false); }
+      setApiError(e.response?.data?.message || e.message || 'Failed to create record');
+    }
   };
 
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
@@ -91,7 +100,7 @@ const RecordsPage: React.FC = () => {
               <select
                 className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-slate-200 rounded-xl text-text-primary font-medium focus:ring-2 focus:ring-[var(--role-color)] focus:border-transparent transition-all appearance-none cursor-pointer"
                 value={selectedPatientId}
-                onChange={e => { setSelectedPatientId(e.target.value); setError(''); setSuccess(''); }}
+                onChange={e => { setSelectedPatientId(e.target.value); setApiError(''); setSuccess(''); }}
               >
                 <option value="" disabled>Select a patient to view or add records...</option>
                 {patients.map(p => (
@@ -140,10 +149,10 @@ const RecordsPage: React.FC = () => {
               </div>
 
               <div className="p-6">
-                {error && (
+                {apiError && (
                   <div className="mb-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                    <span className="text-sm font-medium">{error}</span>
+                    <span className="text-sm font-medium">{apiError}</span>
                   </div>
                 )}
                 {success && (
@@ -153,51 +162,49 @@ const RecordsPage: React.FC = () => {
                   </div>
                 )}
 
-                <form onSubmit={handleCreate} className="space-y-5">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                   <div>
                     <label className="block text-sm font-semibold text-text-primary mb-1.5 flex items-center gap-2">
                       <Activity className="w-4 h-4 text-text-muted" /> Diagnosis
                     </label>
                     <input
                       type="text"
-                      className="input w-full"
+                      className={`input w-full ${errors.diagnosis ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                       placeholder="e.g. Acute Bronchitis"
-                      value={diagnosis}
-                      onChange={e => setDiagnosis(e.target.value)}
-                      required
+                      {...register('diagnosis')}
                     />
+                    {errors.diagnosis && <p className="text-red-500 text-xs mt-1 font-medium">{errors.diagnosis.message}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-text-primary mb-1.5 flex items-center gap-2">
                       <Stethoscope className="w-4 h-4 text-text-muted" /> Prescription / Treatment
                     </label>
                     <textarea
-                      className="input w-full min-h-[100px] resize-y"
+                      className={`input w-full min-h-[100px] resize-y ${errors.prescription ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                       placeholder="e.g. Amoxicillin 500mg, 3x daily"
-                      value={prescription}
-                      onChange={e => setPrescription(e.target.value)}
-                      required
+                      {...register('prescription')}
                     />
+                    {errors.prescription && <p className="text-red-500 text-xs mt-1 font-medium">{errors.prescription.message}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-text-primary mb-1.5 flex items-center gap-2">
                       <FileText className="w-4 h-4 text-text-muted" /> Clinical Notes
                     </label>
                     <textarea
-                      className="input w-full min-h-[100px] resize-y"
+                      className={`input w-full min-h-[100px] resize-y ${errors.notes ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                       placeholder="Patient reports mild fever and persistent cough..."
-                      value={notes}
-                      onChange={e => setNotes(e.target.value)}
+                      {...register('notes')}
                     />
+                    {errors.notes && <p className="text-red-500 text-xs mt-1 font-medium">{errors.notes.message}</p>}
                   </div>
 
-                  <button type="submit" disabled={submitting} className="btn-primary w-full py-3.5 text-base rounded-xl mt-4 flex items-center justify-center gap-2 transition-all">
-                    {submitting ? (
+                  <button type="submit" disabled={isSubmitting} className="btn-primary w-full py-3.5 text-base rounded-xl mt-4 flex items-center justify-center gap-2 transition-all">
+                    {isSubmitting ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
                       <Plus className="w-5 h-5" />
                     )}
-                    {submitting ? 'Encrypting & Saving...' : 'Save & Sign Record'}
+                    {isSubmitting ? 'Encrypting & Saving...' : 'Save & Sign Record'}
                   </button>
                   <p className="text-center text-xs text-text-muted font-medium mt-3 flex items-center justify-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Immutable Audit Trail Generated

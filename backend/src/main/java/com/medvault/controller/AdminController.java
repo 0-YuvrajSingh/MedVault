@@ -52,4 +52,9 @@ public class AdminController {
     public ResponseEntity<List<com.medvault.dto.AuditLogResponse>> getAuditLog(@PathVariable UUID recordId) {
         return ResponseEntity.ok(adminService.getAuditLog(recordId));
     }
+
+    @GetMapping("/patients/{patientId}/records")
+    public ResponseEntity<List<com.medvault.dto.MedicalRecordResponse>> getPatientRecords(@PathVariable UUID patientId) {
+        return ResponseEntity.ok(adminService.getPatientRecords(patientId));
+    }
 }
