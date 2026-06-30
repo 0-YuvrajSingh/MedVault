@@ -5,33 +5,44 @@ import { Mail, Lock, User, ArrowRight, ShieldCheck, CheckCircle2, Loader2, Steth
 import Logo from '../../components/common/Logo';
 import { useAuth } from '../../context/AuthContext';
 import { jwtDecode } from 'jwt-decode';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const registerSchema = z.object({
+  fullName: z.string().min(2, 'Name is required'),
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string().min(6, 'Confirm Password must be at least 6 characters'),
+  role: z.enum(['ROLE_PATIENT', 'ROLE_DOCTOR'])
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+type RegisterFormData = z.infer<typeof registerSchema>;
 
 const RegisterPage: React.FC = () => {
   const { login } = useAuth();
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('ROLE_PATIENT');
+  const [role, setRole] = useState('ROLE_PATIENT'); // For visual state
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const { register, handleSubmit, formState: { errors, isSubmitting }, setValue } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      role: 'ROLE_PATIENT'
+    }
+  });
+
+  const onSubmit = async (data: RegisterFormData) => {
     setError('');
     setSuccess('');
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    setLoading(true);
     try {
-      const res = await authAPI.register({ fullName, email, password, role });
-      if (role === 'ROLE_DOCTOR') {
+      const res = await authAPI.register(data);
+      if (data.role === 'ROLE_DOCTOR') {
         setSuccess('Registration successful! Your account requires admin approval before you can log in.');
       } else {
         // Auto-login since they are active immediately
@@ -50,8 +61,6 @@ const RegisterPage: React.FC = () => {
       }
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Registration failed');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -106,7 +115,7 @@ const RegisterPage: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
             <div className="relative">
@@ -115,13 +124,12 @@ const RegisterPage: React.FC = () => {
               </div>
               <input
                 type="text"
-                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none"
+                className={`input block w-full pl-10 pr-3 py-2.5 border ${errors.fullName ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-[#0369A1] focus:border-[#0369A1]'} rounded-lg sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none`}
                 placeholder="John Doe"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
+                {...register('fullName')}
               />
             </div>
+            {errors.fullName && <p className="text-red-500 text-xs mt-1 font-medium">{errors.fullName.message}</p>}
           </div>
 
           <div>
@@ -132,13 +140,12 @@ const RegisterPage: React.FC = () => {
               </div>
               <input
                 type="email"
-                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none"
+                className={`input block w-full pl-10 pr-3 py-2.5 border ${errors.email ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-[#0369A1] focus:border-[#0369A1]'} rounded-lg sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none`}
                 placeholder="you@hospital.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                {...register('email')}
               />
             </div>
+            {errors.email && <p className="text-red-500 text-xs mt-1 font-medium">{errors.email.message}</p>}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -150,14 +157,12 @@ const RegisterPage: React.FC = () => {
                 </div>
                 <input
                   type="password"
-                  className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none"
+                  className={`input block w-full pl-10 pr-3 py-2.5 border ${errors.password ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-[#0369A1] focus:border-[#0369A1]'} rounded-lg sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none`}
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
+                  {...register('password')}
                 />
               </div>
+              {errors.password && <p className="text-red-500 text-xs mt-1 font-medium">{errors.password.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Confirm</label>
@@ -167,13 +172,12 @@ const RegisterPage: React.FC = () => {
                 </div>
                 <input
                   type="password"
-                  className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none"
+                  className={`input block w-full pl-10 pr-3 py-2.5 border ${errors.confirmPassword ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-[#0369A1] focus:border-[#0369A1]'} rounded-lg sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none`}
                   placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
+                  {...register('confirmPassword')}
                 />
               </div>
+              {errors.confirmPassword && <p className="text-red-500 text-xs mt-1 font-medium">{errors.confirmPassword.message}</p>}
             </div>
           </div>
 
@@ -186,7 +190,7 @@ const RegisterPage: React.FC = () => {
                     ? 'border-[#0369A1] bg-[#EFF6FF] text-[#0369A1]'
                     : 'border border-slate-200 text-gray-500 hover:border-gray-300 bg-white'
                   }`}
-                onClick={() => setRole('ROLE_PATIENT')}
+                onClick={() => { setRole('ROLE_PATIENT'); setValue('role', 'ROLE_PATIENT'); }}
               >
                 <User className="w-5 h-5" />
                 Patient
@@ -197,12 +201,13 @@ const RegisterPage: React.FC = () => {
                     ? 'border-[#0369A1] bg-[#EFF6FF] text-[#0369A1]'
                     : 'border border-slate-200 text-gray-500 hover:border-gray-300 bg-white'
                   }`}
-                onClick={() => setRole('ROLE_DOCTOR')}
+                onClick={() => { setRole('ROLE_DOCTOR'); setValue('role', 'ROLE_DOCTOR'); }}
               >
                 <Stethoscope className="w-5 h-5" />
                 Doctor
               </button>
             </div>
+            {errors.role && <p className="text-red-500 text-xs mt-1 font-medium">{errors.role.message}</p>}
           </div>
 
           {role === 'ROLE_DOCTOR' && (
@@ -213,16 +218,16 @@ const RegisterPage: React.FC = () => {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isSubmitting}
             className="btn btn-primary w-full mt-6"
           >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+            {isSubmitting ? (
+              <Loader2 className="w-5 h-5 animate-spin mx-auto" />
             ) : (
-              <>
+              <span className="flex items-center justify-center">
                 Create account
                 <ArrowRight className="w-4 h-4 ml-1" />
-              </>
+              </span>
             )}
           </button>
         </form>

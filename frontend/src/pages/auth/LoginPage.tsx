@@ -5,21 +5,30 @@ import { authAPI } from '../../api/auth';
 import { Mail, Lock, ArrowRight, ShieldCheck, CheckCircle2, Loader2 } from 'lucide-react';
 import Logo from '../../components/common/Logo';
 import { jwtDecode } from 'jwt-decode';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const loginSchema = z.object({
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const { login, role } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema)
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
     setError('');
-    setLoading(true);
     try {
-      const res = await authAPI.login({ email, password });
+      const res = await authAPI.login(data);
       login(res.data.token, res.data.fullName);
 
       const decoded: any = jwtDecode(res.data.token);
@@ -29,8 +38,6 @@ const LoginPage: React.FC = () => {
       else navigate('/patient');
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Login failed. Please verify your credentials.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -80,7 +87,7 @@ const LoginPage: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email address</label>
             <div className="relative">
@@ -89,13 +96,12 @@ const LoginPage: React.FC = () => {
               </div>
               <input
                 type="email"
-                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none"
+                className={`input block w-full pl-10 pr-3 py-2.5 border ${errors.email ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-[#0369A1] focus:border-[#0369A1]'} rounded-lg sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none`}
                 placeholder="you@hospital.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                {...register('email')}
               />
             </div>
+            {errors.email && <p className="text-red-500 text-xs mt-1 font-medium">{errors.email.message}</p>}
           </div>
 
           <div>
@@ -106,13 +112,12 @@ const LoginPage: React.FC = () => {
               </div>
               <input
                 type="password"
-                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none"
+                className={`input block w-full pl-10 pr-3 py-2.5 border ${errors.password ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-[#0369A1] focus:border-[#0369A1]'} rounded-lg sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none`}
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
+                {...register('password')}
               />
             </div>
+            {errors.password && <p className="text-red-500 text-xs mt-1 font-medium">{errors.password.message}</p>}
           </div>
 
           <div className="flex items-center justify-between pt-1">
@@ -127,16 +132,16 @@ const LoginPage: React.FC = () => {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isSubmitting}
             className="btn btn-primary w-full mt-2"
           >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+            {isSubmitting ? (
+              <Loader2 className="w-5 h-5 animate-spin mx-auto" />
             ) : (
-              <>
+              <span className="flex items-center justify-center">
                 Sign in
                 <ArrowRight className="w-4 h-4 ml-1" />
-              </>
+              </span>
             )}
           </button>
         </form>
