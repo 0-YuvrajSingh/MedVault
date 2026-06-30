@@ -10,7 +10,6 @@ import java.util.UUID;
 @Entity
 @Table(name = "audit_log")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

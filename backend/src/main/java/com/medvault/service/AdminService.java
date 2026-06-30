@@ -133,12 +133,11 @@ public class AdminService {
         return new com.medvault.dto.MedicalRecordResponse(
                 record.getId(),
                 record.getPatient().getId(),
-                record.getPatient().getFullName(),
-                record.getDoctor().getId(),
                 record.getDoctor().getFullName(),
                 record.getDiagnosis(),
                 record.getPrescription(),
                 record.getNotes(),
+                record.getRecordDate(),
                 record.getCreatedAt()
         );
     }

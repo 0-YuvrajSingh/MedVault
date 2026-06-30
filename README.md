@@ -18,13 +18,21 @@ MedVault follows a classic client-server architecture with strict separation of 
 **Infrastructure**: Docker, Docker Compose, GitHub Actions
 
 ## Screenshots
-*(Add screenshots of the application here)*
-- Homepage (`screenshots/homepage.png`)
-- Login Page (`screenshots/login.png`)
-- Admin Dashboard (`screenshots/admin.png`)
-- Doctor Portal (`screenshots/doctor.png`)
-- Patient Portal (`screenshots/patient.png`)
-- Swagger UI (`screenshots/swagger.png`)
+
+### Homepage
+![Homepage](screenshots/homepage.png)
+
+### Login Page
+![Login Page](screenshots/login.png)
+
+### Admin Dashboard
+![Admin Dashboard](screenshots/admin.png)
+
+### Doctor Portal
+![Doctor Portal](screenshots/doctor.png)
+
+### Patient Portal
+![Patient Portal](screenshots/patient.png)
 
 ## API
 Interactive API documentation is available via Swagger UI. Once the backend is running, navigate to:
@@ -52,8 +60,8 @@ mvn test
 ```
 
 ## Future Improvements
-- Email verification during registration
-- Refresh tokens for extended session management
-- Real-time notifications and alerts
-- Appointment scheduling module
-- File uploads for medical documents and lab results
+- **Email Verification**: Implement validation links during registration.
+- **Strict Memory-Only Security Tradeoffs**: Note that MedVault currently implements a strictly *in-memory* JWT architecture (no `localStorage` or cookies) to entirely eliminate XSS token theft risks. A future improvement could introduce a `/refresh` endpoint with short-lived `HttpOnly` cookies to improve UX (preventing F5 logout) while maintaining maximum security.
+- **Real-time Notifications**: Alerts for new assignments and records.
+- **Appointment Scheduling Module**: Calendar integration.
+- **File Uploads**: For medical documents and lab results.
