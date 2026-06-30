@@ -1,0 +1,2 @@
+# Force LF line endings for the Maven wrapper script so it runs correctly on Unix/Linux systems
+backend/mvnw text eol=lf
