@@ -35,9 +35,9 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 rounded-xl overflow-hidden border-4 border-black bg-white" style={{ boxShadow: '12px 12px 0px #000' }}>
+    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 rounded-xl overflow-hidden border border-slate-200 bg-white" style={{ boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.1)" }}>
       {/* Left — Vibrant Panel */}
-      <div className="hidden md:flex flex-col justify-center bg-[#9747FF] border-r-4 border-black p-10 text-white relative">
+      <div className="hidden md:flex flex-col justify-center bg-[#9747FF] border-r-4 border-slate-200 p-10 text-white relative">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
           {/* Abstract subtle background pattern */}
           <div className="absolute -top-24 -left-24 w-64 h-64 rounded-full border-[20px] border-white"></div>
@@ -51,7 +51,7 @@ const LoginPage: React.FC = () => {
           <p className="text-blue-200 text-sm leading-relaxed mb-10 font-medium">
             Secure healthcare records management.
           </p>
-          
+
           <div className="space-y-4">
             {[
               'Role-based access control',
@@ -87,34 +87,34 @@ const LoginPage: React.FC = () => {
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Mail className="h-5 w-5 text-gray-400" />
               </div>
-              <input 
-                type="email" 
-                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none" 
-                placeholder="you@hospital.com" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                required 
+              <input
+                type="email"
+                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none"
+                placeholder="you@hospital.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Lock className="h-5 w-5 text-gray-400" />
               </div>
-              <input 
-                type="password" 
-                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none" 
-                placeholder="••••••••" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                required 
+              <input
+                type="password"
+                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between pt-1">
             <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
               <input type="checkbox" className="rounded border-gray-300 text-[#0369A1] focus:ring-[#0369A1]" />
@@ -124,10 +124,10 @@ const LoginPage: React.FC = () => {
               Forgot password?
             </span>
           </div>
-          
-          <button 
-            type="submit" 
-            disabled={loading} 
+
+          <button
+            type="submit"
+            disabled={loading}
             className="btn btn-primary w-full mt-2"
           >
             {loading ? (

@@ -30,7 +30,6 @@ const RecordsPage: React.FC = () => {
   const [diagnosis, setDiagnosis] = useState('');
   const [prescription, setPrescription] = useState('');
   const [notes, setNotes] = useState('');
-  const [recordDate, setRecordDate] = useState(new Date().toISOString().split('T')[0]);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -52,9 +51,9 @@ const RecordsPage: React.FC = () => {
     e.preventDefault();
     setError(''); setSuccess(''); setSubmitting(true);
     try {
-      const res = await doctorAPI.createRecord(selectedPatientId, { diagnosis, prescription, notes, recordDate });
+      const res = await doctorAPI.createRecord(selectedPatientId, { diagnosis, prescription, notes });
       setRecords(prev => [res.data, ...prev]);
-      setDiagnosis(''); setPrescription(''); setNotes(''); setRecordDate(new Date().toISOString().split('T')[0]);
+      setDiagnosis(''); setPrescription(''); setNotes('');
       setSuccess('Medical record securely created and audit logged.');
       setTimeout(() => setSuccess(''), 5000);
     } catch (e: any) {
@@ -89,9 +88,9 @@ const RecordsPage: React.FC = () => {
             </label>
             <div className="relative max-w-xl">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
-              <select 
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 border-2 border-black rounded-xl text-text-primary font-medium focus:ring-2 focus:ring-[var(--role-color)] focus:border-transparent transition-all appearance-none cursor-pointer"
-                value={selectedPatientId} 
+              <select
+                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-slate-200 rounded-xl text-text-primary font-medium focus:ring-2 focus:ring-[var(--role-color)] focus:border-transparent transition-all appearance-none cursor-pointer"
+                value={selectedPatientId}
                 onChange={e => { setSelectedPatientId(e.target.value); setError(''); setSuccess(''); }}
               >
                 <option value="" disabled>Select a patient to view or add records...</option>
@@ -118,7 +117,7 @@ const RecordsPage: React.FC = () => {
       {!selectedPatientId ? (
         /* Empty State */
         <div className="card-elevated flex flex-col items-center justify-center p-16 text-center">
-          <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 border-8 border-black border-2">
+          <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 border-8 border-slate-200">
             <User className="w-10 h-10 text-gray-400" />
           </div>
           <h2 className="text-xl font-bold text-text-primary mb-2">No Patient Selected</h2>
@@ -128,7 +127,7 @@ const RecordsPage: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
-          
+
           {/* Left Column: Create Form */}
           <div className="xl:col-span-4 sticky top-6">
             <div className="card-elevated overflow-hidden border-t-4 border-t-[var(--role-color)]">
@@ -153,56 +152,45 @@ const RecordsPage: React.FC = () => {
                     <span className="text-sm font-medium">{success}</span>
                   </div>
                 )}
-                
+
                 <form onSubmit={handleCreate} className="space-y-5">
                   <div>
                     <label className="block text-sm font-semibold text-text-primary mb-1.5 flex items-center gap-2">
                       <Activity className="w-4 h-4 text-text-muted" /> Diagnosis
                     </label>
-                    <input 
-                      type="text" 
-                      className="input w-full" 
+                    <input
+                      type="text"
+                      className="input w-full"
                       placeholder="e.g. Acute Bronchitis"
-                      value={diagnosis} 
-                      onChange={e => setDiagnosis(e.target.value)} 
-                      required 
+                      value={diagnosis}
+                      onChange={e => setDiagnosis(e.target.value)}
+                      required
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-text-primary mb-1.5 flex items-center gap-2">
                       <Stethoscope className="w-4 h-4 text-text-muted" /> Prescription / Treatment
                     </label>
-                    <textarea 
-                      className="input w-full min-h-[100px] resize-y" 
+                    <textarea
+                      className="input w-full min-h-[100px] resize-y"
                       placeholder="e.g. Amoxicillin 500mg, 3x daily"
-                      value={prescription} 
-                      onChange={e => setPrescription(e.target.value)} 
-                      required 
+                      value={prescription}
+                      onChange={e => setPrescription(e.target.value)}
+                      required
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-text-primary mb-1.5 flex items-center gap-2">
                       <FileText className="w-4 h-4 text-text-muted" /> Clinical Notes
                     </label>
-                    <textarea 
-                      className="input w-full min-h-[100px] resize-y" 
+                    <textarea
+                      className="input w-full min-h-[100px] resize-y"
                       placeholder="Patient reports mild fever and persistent cough..."
-                      value={notes} 
-                      onChange={e => setNotes(e.target.value)} 
+                      value={notes}
+                      onChange={e => setNotes(e.target.value)}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-text-primary mb-1.5 flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-text-muted" /> Date of Visit
-                    </label>
-                    <input 
-                      type="date" 
-                      className="input w-full" 
-                      value={recordDate} 
-                      onChange={e => setRecordDate(e.target.value)} 
-                      required 
-                    />
-                  </div>
+
                   <button type="submit" disabled={submitting} className="btn-primary w-full py-3.5 text-base rounded-xl mt-4 flex items-center justify-center gap-2 transition-all">
                     {submitting ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -231,11 +219,11 @@ const RecordsPage: React.FC = () => {
                   {records.length} Records
                 </div>
               </div>
-              
+
               <div className="p-8 bg-gray-50/50">
                 {loading ? (
                   <div className="flex flex-col items-center justify-center py-20">
-                    <div className="w-10 h-10 border-4 border-black border-2 border-t-[var(--role-color)] rounded-full animate-spin mb-4" />
+                    <div className="w-10 h-10 border-4 border-slate-200 border-t-[var(--role-color)] rounded-full animate-spin mb-4" />
                     <p className="text-text-muted font-medium">Decrypting records...</p>
                   </div>
                 ) : records.length === 0 ? (
@@ -250,7 +238,7 @@ const RecordsPage: React.FC = () => {
                   <div className="relative">
                     {/* Timeline Line */}
                     <div className="absolute left-8 top-6 bottom-6 w-0.5 bg-gray-200 rounded-full" />
-                    
+
                     <div className="space-y-8 relative">
                       {records.map((r, i) => (
                         <div key={r.id} className="relative flex items-start gap-6 group">
@@ -258,9 +246,9 @@ const RecordsPage: React.FC = () => {
                           <div className="w-16 flex-shrink-0 flex justify-end relative z-10 pt-1.5">
                             <div className="w-4 h-4 rounded-full bg-[var(--role-color)] ring-4 ring-white shadow-sm group-hover:scale-125 transition-transform duration-300" />
                           </div>
-                          
+
                           {/* Record Card */}
-                          <div className="flex-1 bg-white border-2 border-black rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                          <div className="flex-1 bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-50">
                               <div>
                                 <h3 className="text-lg font-bold text-text-primary">{r.diagnosis}</h3>
@@ -273,7 +261,7 @@ const RecordsPage: React.FC = () => {
                                 <CheckCircle2 className="w-3.5 h-3.5" /> Verified
                               </div>
                             </div>
-                            
+
                             <div className="space-y-4">
                               <div className="flex gap-4">
                                 <div className="p-2.5 bg-blue-50 rounded-xl h-fit text-blue-600">
@@ -284,7 +272,7 @@ const RecordsPage: React.FC = () => {
                                   <p className="text-text-primary text-sm leading-relaxed whitespace-pre-wrap">{r.prescription}</p>
                                 </div>
                               </div>
-                              
+
                               {r.notes && (
                                 <div className="flex gap-4">
                                   <div className="p-2.5 bg-purple-50 rounded-xl h-fit text-purple-600">

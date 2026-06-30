@@ -29,6 +29,10 @@ import RecordsPage from '../pages/doctor/RecordsPage';
 import PatientDashboard from '../pages/patient/PatientDashboard';
 import MedicalRecordsPage from '../pages/patient/MedicalRecordsPage';
 
+// Shared
+import SettingsPage from '../pages/shared/SettingsPage';
+import PlaceholderPage from '../pages/shared/PlaceholderPage';
+
 const router = createBrowserRouter([
   // Public routes
   {
@@ -59,9 +63,11 @@ const router = createBrowserRouter([
         children: [
           { path: '/admin', element: <AdminDashboard /> },
           { path: '/admin/users', element: <UsersPage /> },
-          { path: '/admin/doctors', element: <DoctorManagementPage /> },
+          { path: '/admin/approvals', element: <DoctorManagementPage /> },
           { path: '/admin/assignments', element: <AssignmentsPage /> },
-          { path: '/admin/audit', element: <AuditLogsPage /> },
+          { path: '/admin/audit-logs', element: <AuditLogsPage /> },
+          { path: '/admin/system-health', element: <PlaceholderPage /> },
+          { path: '/admin/settings', element: <SettingsPage /> },
         ],
       },
     ],
@@ -77,6 +83,10 @@ const router = createBrowserRouter([
           { path: '/doctor/patients', element: <PatientsPage /> },
           { path: '/doctor/records', element: <RecordsPage /> },
           { path: '/doctor/patients/:patientId/records', element: <RecordsPage /> },
+          { path: '/doctor/reviews', element: <PlaceholderPage /> },
+          { path: '/doctor/timeline', element: <PlaceholderPage /> },
+          { path: '/doctor/notifications', element: <PlaceholderPage /> },
+          { path: '/doctor/settings', element: <SettingsPage /> },
         ],
       },
     ],
@@ -90,6 +100,10 @@ const router = createBrowserRouter([
         children: [
           { path: '/patient', element: <PatientDashboard /> },
           { path: '/patient/records', element: <MedicalRecordsPage /> },
+          { path: '/patient/my-doctor', element: <PlaceholderPage /> },
+          { path: '/patient/timeline', element: <PlaceholderPage /> },
+          { path: '/patient/notifications', element: <PlaceholderPage /> },
+          { path: '/patient/settings', element: <SettingsPage /> },
         ],
       },
     ],

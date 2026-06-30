@@ -7,7 +7,7 @@ const AuthLayout: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       {/* Minimal clinical navbar */}
-      <nav className="bg-white/80 backdrop-blur-lg border-b border-black border-2 sticky top-0 z-10">
+      <nav className="bg-white/80 backdrop-blur-lg border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           
           <Logo />
@@ -26,7 +26,7 @@ const AuthLayout: React.FC = () => {
       </main>
       
       {/* Simple Footer */}
-      <footer className="py-6 text-center border-t border-black border-2 bg-white">
+      <footer className="py-6 text-center border-t border-slate-200 bg-white">
           <p className="text-sm text-gray-500 font-medium">
             &copy; {new Date().getFullYear()} MedVault. Secure Healthcare Record Management.
           </p>

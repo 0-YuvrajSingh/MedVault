@@ -56,9 +56,9 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 rounded-xl overflow-hidden border-4 border-black bg-white" style={{ boxShadow: '12px 12px 0px #000' }}>
+    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 rounded-xl overflow-hidden border border-slate-200 bg-white" style={{ boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.1)" }}>
       {/* Left — Vibrant Panel */}
-      <div className="hidden md:flex flex-col justify-center bg-[#9747FF] border-r-4 border-black p-10 text-white relative">
+      <div className="hidden md:flex flex-col justify-center bg-[#9747FF] border-r-4 border-slate-200 p-10 text-white relative">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
           {/* Abstract subtle background pattern */}
           <div className="absolute -top-24 -left-24 w-64 h-64 rounded-full border-[20px] border-white"></div>
@@ -72,7 +72,7 @@ const RegisterPage: React.FC = () => {
           <p className="text-blue-200 text-sm leading-relaxed mb-10 font-medium">
             Create your account to access secure healthcare management tools.
           </p>
-          
+
           <div className="space-y-4">
             {[
               'Instant patient portal access',
@@ -113,34 +113,34 @@ const RegisterPage: React.FC = () => {
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <User className="h-5 w-5 text-gray-400" />
               </div>
-              <input 
-                type="text" 
-                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none" 
-                placeholder="John Doe" 
-                value={fullName} 
-                onChange={(e) => setFullName(e.target.value)} 
-                required 
+              <input
+                type="text"
+                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none"
+                placeholder="John Doe"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
               />
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email address</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Mail className="h-5 w-5 text-gray-400" />
               </div>
-              <input 
-                type="email" 
-                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none" 
-                placeholder="you@hospital.com" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                required 
+              <input
+                type="email"
+                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none"
+                placeholder="you@hospital.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
@@ -148,13 +148,13 @@ const RegisterPage: React.FC = () => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
-                <input 
-                  type="password" 
-                  className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none" 
-                  placeholder="••••••••" 
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
-                  required 
+                <input
+                  type="password"
+                  className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                   minLength={6}
                 />
               </div>
@@ -165,13 +165,13 @@ const RegisterPage: React.FC = () => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
-                <input 
-                  type="password" 
-                  className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none" 
-                  placeholder="••••••••" 
-                  value={confirmPassword} 
-                  onChange={(e) => setConfirmPassword(e.target.value)} 
-                  required 
+                <input
+                  type="password"
+                  className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-[#0369A1] sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
                 />
               </div>
             </div>
@@ -182,11 +182,10 @@ const RegisterPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-sm font-medium transition-all ${
-                  role === 'ROLE_PATIENT' 
-                  ? 'border-[#0369A1] bg-[#EFF6FF] text-[#0369A1]' 
-                  : 'border-black border-2 text-gray-500 hover:border-gray-300 bg-white'
-                }`}
+                className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-sm font-medium transition-all ${role === 'ROLE_PATIENT'
+                    ? 'border-[#0369A1] bg-[#EFF6FF] text-[#0369A1]'
+                    : 'border border-slate-200 text-gray-500 hover:border-gray-300 bg-white'
+                  }`}
                 onClick={() => setRole('ROLE_PATIENT')}
               >
                 <User className="w-5 h-5" />
@@ -194,11 +193,10 @@ const RegisterPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-sm font-medium transition-all ${
-                  role === 'ROLE_DOCTOR' 
-                  ? 'border-[#0369A1] bg-[#EFF6FF] text-[#0369A1]' 
-                  : 'border-black border-2 text-gray-500 hover:border-gray-300 bg-white'
-                }`}
+                className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-sm font-medium transition-all ${role === 'ROLE_DOCTOR'
+                    ? 'border-[#0369A1] bg-[#EFF6FF] text-[#0369A1]'
+                    : 'border border-slate-200 text-gray-500 hover:border-gray-300 bg-white'
+                  }`}
                 onClick={() => setRole('ROLE_DOCTOR')}
               >
                 <Stethoscope className="w-5 h-5" />
@@ -212,10 +210,10 @@ const RegisterPage: React.FC = () => {
               ⚠️ Doctor accounts require admin approval before login is permitted.
             </div>
           )}
-          
-          <button 
-            type="submit" 
-            disabled={loading} 
+
+          <button
+            type="submit"
+            disabled={loading}
             className="btn btn-primary w-full mt-6"
           >
             {loading ? (

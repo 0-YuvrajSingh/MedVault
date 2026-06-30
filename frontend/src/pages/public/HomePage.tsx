@@ -1,15 +1,22 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { ShieldAlert, Database, Lock, User, UserPlus, ShieldCheck, ArrowRight } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const HomePage: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <div className="bg-slate-50 min-h-screen">
       {/* Hero Section - What & Why */}
-      <section className="relative bg-white pt-20 pb-32 border-b border-black border-2 overflow-hidden">
+      <section className="relative bg-white pt-20 pb-32 border-b border-slate-200 overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-40">
-           <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[#EFF6FF] to-transparent"></div>
-           <div className="absolute -top-48 -right-48 w-96 h-96 rounded-full border-[40px] border-[#EFF6FF]"></div>
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[#EFF6FF] to-transparent"></div>
+          <div className="absolute -top-48 -right-48 w-96 h-96 rounded-full border-[40px] border-[#EFF6FF]"></div>
         </div>
 
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
@@ -27,7 +34,7 @@ const HomePage: React.FC = () => {
           <p className="text-lg text-gray-500 max-w-3xl mx-auto mb-10 leading-relaxed">
             We use bank-level encryption and strict privacy controls to ensure that only you and your authorized doctors can access your health information.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link to="/login" className="px-8 py-3.5 bg-[#0F4C81] hover:bg-[#0A365C] text-white font-bold rounded-lg shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 flex items-center gap-2">
               Login to Portal <ArrowRight className="w-4 h-4" />
@@ -46,10 +53,10 @@ const HomePage: React.FC = () => {
             <h2 className="text-3xl font-extrabold text-[#0F4C81]">Who It Is For</h2>
             <p className="text-gray-500 mt-2 font-medium">Distinct workflows governed by strict role-based access.</p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Patient */}
-            <div className="bg-white rounded-xl shadow-sm border-2 border-black p-8 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-green-600 mb-6">
                 <User className="w-6 h-6" />
               </div>
@@ -65,7 +72,7 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* Doctor */}
-            <div className="bg-white rounded-xl shadow-sm border-2 border-black p-8 hover:shadow-md transition-shadow transform md:-translate-y-4 border-t-4 border-t-[#0369A1]">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 hover:shadow-md transition-shadow transform md:-translate-y-4 border-t-4 border-t-[#0369A1]">
               <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-[#0369A1] mb-6">
                 <ShieldCheck className="w-6 h-6" />
               </div>
@@ -81,7 +88,7 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* Admin */}
-            <div className="bg-white rounded-xl shadow-sm border-2 border-black p-8 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 mb-6">
                 <UserPlus className="w-6 h-6" />
               </div>
@@ -100,13 +107,13 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Security Promise */}
-      <section className="py-20 bg-white border-t border-black border-2">
+      <section className="py-20 bg-white border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-gradient-to-br from-[#0F4C81] to-[#0369A1] rounded-xl p-10 md:p-14 text-white shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
-            
+
             <h2 className="text-3xl font-extrabold text-white mb-8 relative z-10">The Security Promise</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
                 <Lock className="w-8 h-8 text-blue-200 mb-4" />
