@@ -6,7 +6,7 @@ const HomePage: React.FC = () => {
   return (
     <div className="bg-slate-50 min-h-screen">
       {/* Hero Section - What & Why */}
-      <section className="relative bg-white pt-20 pb-32 border-b border-gray-200 overflow-hidden">
+      <section className="relative bg-white pt-20 pb-32 border-b border-black border-2 overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-40">
            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[#EFF6FF] to-transparent"></div>
            <div className="absolute -top-48 -right-48 w-96 h-96 rounded-full border-[40px] border-[#EFF6FF]"></div>
@@ -14,7 +14,7 @@ const HomePage: React.FC = () => {
 
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
           <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-[#0369A1] rounded-2xl flex items-center justify-center shadow-lg transform rotate-3">
+            <div className="w-16 h-16 bg-[#0369A1] rounded-xl flex items-center justify-center shadow-lg transform rotate-3">
               <ShieldCheck className="w-10 h-10 text-white" />
             </div>
           </div>
@@ -49,7 +49,7 @@ const HomePage: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Patient */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl shadow-sm border-2 border-black p-8 hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-green-600 mb-6">
                 <User className="w-6 h-6" />
               </div>
@@ -65,7 +65,7 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* Doctor */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 hover:shadow-md transition-shadow transform md:-translate-y-4 border-t-4 border-t-[#0369A1]">
+            <div className="bg-white rounded-xl shadow-sm border-2 border-black p-8 hover:shadow-md transition-shadow transform md:-translate-y-4 border-t-4 border-t-[#0369A1]">
               <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-[#0369A1] mb-6">
                 <ShieldCheck className="w-6 h-6" />
               </div>
@@ -81,7 +81,7 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* Admin */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl shadow-sm border-2 border-black p-8 hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 mb-6">
                 <UserPlus className="w-6 h-6" />
               </div>
@@ -100,9 +100,9 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Security Promise */}
-      <section className="py-20 bg-white border-t border-gray-200">
+      <section className="py-20 bg-white border-t border-black border-2">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-br from-[#0F4C81] to-[#0369A1] rounded-3xl p-10 md:p-14 text-white shadow-xl relative overflow-hidden">
+          <div className="bg-gradient-to-br from-[#0F4C81] to-[#0369A1] rounded-xl p-10 md:p-14 text-white shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
             
             <h2 className="text-3xl font-extrabold text-white mb-8 relative z-10">The Security Promise</h2>

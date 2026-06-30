@@ -17,7 +17,7 @@ const PublicLayout: React.FC = () => {
     } as React.CSSProperties}>
 
       {/* Main Navbar */}
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-lg border-b border-gray-200 shadow-sm">
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-lg border-b border-black border-2 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
 
           <Logo />
@@ -50,13 +50,13 @@ const PublicLayout: React.FC = () => {
         </div>
 
         {mobileOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white animate-fade-in shadow-md">
+          <div className="md:hidden border-t border-black border-2 bg-white animate-fade-in shadow-md">
             <div className="px-4 py-3 space-y-1">
               {navLinks.map((link) => (
                 <Link key={link.to} to={link.to} className={`block px-3 py-2 text-sm font-bold rounded-md ${location.pathname === link.to ? 'text-[#0369A1] bg-[#EFF6FF]' : 'text-gray-600 hover:bg-slate-50'
                   }`} onClick={() => setMobileOpen(false)}>{link.label}</Link>
               ))}
-              <div className="pt-4 pb-2 border-t border-gray-200 flex flex-col gap-3">
+              <div className="pt-4 pb-2 border-t border-black border-2 flex flex-col gap-3">
                 <Link to="/login" className="btn-secondary text-center font-bold" onClick={() => setMobileOpen(false)}>Login</Link>
                 <Link to="/register" className="btn-primary text-center shadow-sm font-bold flex items-center justify-center gap-2" onClick={() => setMobileOpen(false)}>
                   Register

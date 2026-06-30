@@ -114,18 +114,24 @@ module.exports = {
 
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        heading: ['Poppins', 'Inter', 'sans-serif'],
+        heading: ['Inter', 'system-ui', 'sans-serif'],
       },
 
       borderRadius: {
-        'sm': '12px',
-        'md': '16px',
-        'lg': '20px',
+        'sm': '6px',
+        'md': '8px',
+        'lg': '12px',
+        'xl': '12px',
+        '2xl': '16px',
+        '3xl': '24px',
       },
 
       boxShadow: {
-        'sm': '0 1px 2px rgba(15, 23, 42, 0.04)',
-        'md': '0 8px 24px rgba(15, 23, 42, 0.08)',
+        'sm': '4px 4px 0px rgba(0, 0, 0, 1)',
+        'md': '6px 6px 0px rgba(0, 0, 0, 1)',
+        'lg': '8px 8px 0px rgba(0, 0, 0, 1)',
+        'xl': '12px 12px 0px rgba(0, 0, 0, 1)',
+        '2xl': '16px 16px 0px rgba(0, 0, 0, 1)',
       },
 
       animation: {

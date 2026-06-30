@@ -56,9 +56,9 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 rounded-2xl overflow-hidden shadow-2xl bg-white">
-      {/* Left — Clinical Navy Branding Panel */}
-      <div className="hidden md:flex flex-col justify-center bg-[#0F4C81] p-10 text-white relative">
+    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 rounded-xl overflow-hidden border-4 border-black bg-white" style={{ boxShadow: '12px 12px 0px #000' }}>
+      {/* Left — Vibrant Panel */}
+      <div className="hidden md:flex flex-col justify-center bg-[#9747FF] border-r-4 border-black p-10 text-white relative">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
           {/* Abstract subtle background pattern */}
           <div className="absolute -top-24 -left-24 w-64 h-64 rounded-full border-[20px] border-white"></div>
@@ -185,7 +185,7 @@ const RegisterPage: React.FC = () => {
                 className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-sm font-medium transition-all ${
                   role === 'ROLE_PATIENT' 
                   ? 'border-[#0369A1] bg-[#EFF6FF] text-[#0369A1]' 
-                  : 'border-gray-200 text-gray-500 hover:border-gray-300 bg-white'
+                  : 'border-black border-2 text-gray-500 hover:border-gray-300 bg-white'
                 }`}
                 onClick={() => setRole('ROLE_PATIENT')}
               >
@@ -197,7 +197,7 @@ const RegisterPage: React.FC = () => {
                 className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-sm font-medium transition-all ${
                   role === 'ROLE_DOCTOR' 
                   ? 'border-[#0369A1] bg-[#EFF6FF] text-[#0369A1]' 
-                  : 'border-gray-200 text-gray-500 hover:border-gray-300 bg-white'
+                  : 'border-black border-2 text-gray-500 hover:border-gray-300 bg-white'
                 }`}
                 onClick={() => setRole('ROLE_DOCTOR')}
               >
@@ -216,7 +216,7 @@ const RegisterPage: React.FC = () => {
           <button 
             type="submit" 
             disabled={loading} 
-            className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-[#0369A1] hover:bg-[#02598B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0369A1] transition-all disabled:opacity-70 mt-6"
+            className="btn btn-primary w-full mt-6"
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />

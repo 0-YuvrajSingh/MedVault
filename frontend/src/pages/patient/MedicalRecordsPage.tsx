@@ -52,7 +52,7 @@ const MedicalRecordsPage: React.FC = () => {
                   <h2 className="text-lg font-semibold text-text-primary">{month}</h2>
                   <span className="badge-gray">{items.length}</span>
                 </div>
-                <div className="ml-1.5 border-l-2 border-gray-200 pl-6 space-y-4">
+                <div className="ml-1.5 border-l-2 border-black border-2 pl-6 space-y-4">
                   {items.map(r => (
                     <div key={r.id} className="card-elevated p-5 cursor-pointer hover:-translate-y-0.5 transition-all duration-200" onClick={() => setSelectedRecord(r)}>
                       <div className="flex items-center justify-between mb-2">
@@ -88,7 +88,7 @@ const MedicalRecordsPage: React.FC = () => {
               </div>
               <div>
                 <label className="text-xs font-medium uppercase tracking-wider text-text-muted">Prescription</label>
-                <p className="text-text-primary mt-1 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">{selectedRecord.prescription}</p>
+                <p className="text-text-primary mt-1 leading-relaxed bg-gray-50 p-3 rounded-lg border-2 border-black">{selectedRecord.prescription}</p>
               </div>
               {selectedRecord.notes && (
                 <div>
@@ -97,22 +97,22 @@ const MedicalRecordsPage: React.FC = () => {
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="p-3 bg-gray-50 rounded-lg border-2 border-black">
                   <label className="text-xs font-medium uppercase tracking-wider text-text-muted">Doctor</label>
                   <p className="text-text-primary mt-1 font-medium">{selectedRecord.doctorName || '—'}</p>
                 </div>
-                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="p-3 bg-gray-50 rounded-lg border-2 border-black">
                   <label className="text-xs font-medium uppercase tracking-wider text-text-muted">Created</label>
                   <p className="text-text-primary mt-1 text-sm font-medium">{new Date(selectedRecord.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</p>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-2 border-black">
                 <label className="text-xs font-medium uppercase tracking-wider text-text-muted mb-0">Audit Status</label>
                 <span className="badge-success">Securely Logged</span>
               </div>
               <div>
                 <label className="text-xs font-medium uppercase tracking-wider text-text-muted">Record ID</label>
-                <p className="text-xs text-text-muted mt-1 font-mono bg-gray-50 p-2 rounded border border-gray-100 select-all">{selectedRecord.id}</p>
+                <p className="text-xs text-text-muted mt-1 font-mono bg-gray-50 p-2 rounded border-2 border-black select-all">{selectedRecord.id}</p>
               </div>
             </div>
           </div>

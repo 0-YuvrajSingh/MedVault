@@ -67,7 +67,7 @@ const RecordsPage: React.FC = () => {
   return (
     <div className="space-y-8 animate-fade-in pb-12">
       {/* Premium Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-[var(--role-color)] to-blue-600 rounded-2xl p-8 text-white shadow-md">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-[var(--role-color)] to-blue-600 rounded-xl p-8 text-white shadow-md">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
             <FileText className="w-8 h-8 text-white" />
@@ -90,7 +90,7 @@ const RecordsPage: React.FC = () => {
             <div className="relative max-w-xl">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
               <select 
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-text-primary font-medium focus:ring-2 focus:ring-[var(--role-color)] focus:border-transparent transition-all appearance-none cursor-pointer"
+                className="w-full pl-12 pr-4 py-3 bg-gray-50 border-2 border-black rounded-xl text-text-primary font-medium focus:ring-2 focus:ring-[var(--role-color)] focus:border-transparent transition-all appearance-none cursor-pointer"
                 value={selectedPatientId} 
                 onChange={e => { setSelectedPatientId(e.target.value); setError(''); setSuccess(''); }}
               >
@@ -118,7 +118,7 @@ const RecordsPage: React.FC = () => {
       {!selectedPatientId ? (
         /* Empty State */
         <div className="card-elevated flex flex-col items-center justify-center p-16 text-center">
-          <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 border-8 border-gray-100">
+          <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 border-8 border-black border-2">
             <User className="w-10 h-10 text-gray-400" />
           </div>
           <h2 className="text-xl font-bold text-text-primary mb-2">No Patient Selected</h2>
@@ -235,7 +235,7 @@ const RecordsPage: React.FC = () => {
               <div className="p-8 bg-gray-50/50">
                 {loading ? (
                   <div className="flex flex-col items-center justify-center py-20">
-                    <div className="w-10 h-10 border-4 border-gray-200 border-t-[var(--role-color)] rounded-full animate-spin mb-4" />
+                    <div className="w-10 h-10 border-4 border-black border-2 border-t-[var(--role-color)] rounded-full animate-spin mb-4" />
                     <p className="text-text-muted font-medium">Decrypting records...</p>
                   </div>
                 ) : records.length === 0 ? (
@@ -260,7 +260,7 @@ const RecordsPage: React.FC = () => {
                           </div>
                           
                           {/* Record Card */}
-                          <div className="flex-1 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                          <div className="flex-1 bg-white border-2 border-black rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-50">
                               <div>
                                 <h3 className="text-lg font-bold text-text-primary">{r.diagnosis}</h3>

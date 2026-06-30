@@ -41,7 +41,7 @@ const PatientDashboard: React.FC = () => {
         <div className="lg:col-span-1 space-y-6">
            <div className="grid grid-cols-1 gap-4">
               {stats.map(s => (
-                 <div key={s.label} className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group hover:-translate-y-1">
+                 <div key={s.label} className="bg-white rounded-xl p-5 border-2 border-black shadow-sm hover:shadow-md transition-all duration-300 group hover:-translate-y-1">
                    <div className="flex items-center gap-4">
                      <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-emerald-50 text-emerald-600 group-hover:scale-110 transition-transform duration-300 shrink-0">
                        {s.icon}
@@ -55,7 +55,7 @@ const PatientDashboard: React.FC = () => {
               ))}
            </div>
            
-           <div className="bg-emerald-50 rounded-2xl p-6 border border-emerald-100 shadow-sm">
+           <div className="bg-emerald-50 rounded-xl p-6 border border-emerald-100 shadow-sm">
              <h3 className="text-emerald-900 font-extrabold text-lg mb-2 flex items-center gap-2">
                <Archive className="w-5 h-5 text-emerald-600" />
                Full Medical History
@@ -69,8 +69,8 @@ const PatientDashboard: React.FC = () => {
 
         {/* Right Column: Recent Records */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+          <div className="bg-white rounded-xl border-2 border-black shadow-sm flex flex-col h-full overflow-hidden">
+            <div className="p-6 border-b border-black border-2 flex justify-between items-center bg-gray-50/50">
               <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-emerald-600" />
                 Recent Medical History
@@ -91,7 +91,7 @@ const PatientDashboard: React.FC = () => {
                 </div>
               ) : (
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-white text-gray-400 font-bold uppercase text-[10px] tracking-wider border-b border-gray-100">
+                  <thead className="bg-white text-gray-400 font-bold uppercase text-[10px] tracking-wider border-b border-black border-2">
                     <tr><th className="px-6 py-4">Date</th><th className="px-6 py-4">Doctor</th><th className="px-6 py-4">Diagnosis</th></tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 font-medium">

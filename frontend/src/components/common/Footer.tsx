@@ -11,7 +11,7 @@ const Footer: React.FC<FooterProps> = ({ variant = 'public' }) => {
 
   if (variant === 'dashboard') {
     return (
-      <footer className="mt-auto py-6 text-center text-xs text-gray-400 font-medium border-t border-gray-100 flex flex-col items-center justify-center gap-1">
+      <footer className="mt-auto py-6 text-center text-xs text-gray-400 font-medium border-t border-black border-2 flex flex-col items-center justify-center gap-1">
         <div className="flex items-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5" />
           <span>MedVault Secure Systems</span>
@@ -22,7 +22,7 @@ const Footer: React.FC<FooterProps> = ({ variant = 'public' }) => {
   }
 
   return (
-    <footer className="bg-white border-t border-gray-200 pt-16 pb-8">
+    <footer className="bg-white border-t border-black border-2 pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div className="col-span-1 md:col-span-2">
@@ -59,12 +59,12 @@ const Footer: React.FC<FooterProps> = ({ variant = 'public' }) => {
           </div>
         </div>
         
-        <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="pt-8 border-t border-black border-2 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-gray-400 font-medium">
             &copy; {currentYear} MedVault Inc. All rights reserved.
           </p>
           <div className="flex gap-4">
-            <span className="text-xs text-gray-400 font-medium bg-gray-50 px-2.5 py-1 rounded-md border border-gray-100">
+            <span className="text-xs text-gray-400 font-medium bg-gray-50 px-2.5 py-1 rounded-md border-2 border-black">
               System Status: All Systems Operational
             </span>
           </div>

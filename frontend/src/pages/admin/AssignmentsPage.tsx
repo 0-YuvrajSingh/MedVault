@@ -91,7 +91,7 @@ const AssignmentsPage: React.FC = () => {
                 <tr key={a.id}>
                   <td className="font-medium">{a.patientName}</td>
                   <td>{a.doctorName}</td>
-                  <td className="text-text-muted">{new Date(a.createdAt).toLocaleDateString()}</td>
+                  <td className="text-text-muted">{new Date(a.assignedAt).toLocaleDateString()}</td>
                 </tr>
               ))}
               {assignments.length === 0 && <tr><td colSpan={3} className="text-center text-text-muted py-8">No assignments yet</td></tr>}

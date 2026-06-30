@@ -32,7 +32,7 @@ export interface AssignmentResponse {
   patientName: string;
   doctorId: string;
   doctorName: string;
-  createdAt: string;
+  assignedAt: string;
 }
 
 export interface AuditLogEntry {

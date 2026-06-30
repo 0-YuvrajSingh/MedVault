@@ -142,7 +142,7 @@ const DashboardLayout: React.FC = () => {
         {/* Collapse Toggle */}
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-20 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-300 shadow-sm z-10 transition-colors"
+          className="absolute -right-3 top-20 w-6 h-6 bg-white border-2 border-black rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-300 shadow-sm z-10 transition-colors"
         >
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
@@ -207,7 +207,7 @@ const DashboardLayout: React.FC = () => {
             <div className="relative" ref={profileRef}>
               <button 
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2 p-1 pl-2 pr-1 rounded-full border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all focus:outline-none"
+                className="flex items-center gap-2 p-1 pl-2 pr-1 rounded-full border-2 border-black hover:border-black border-2 hover:bg-gray-50 transition-all focus:outline-none"
               >
                 <span className="text-sm font-bold text-gray-700 hidden sm:block ml-1">
                   {fullName?.split(' ')[0]}
@@ -220,7 +220,7 @@ const DashboardLayout: React.FC = () => {
 
               {/* Profile Dropdown */}
               {profileOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 animate-fade-in origin-top-right">
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border-2 border-black py-2 animate-fade-in origin-top-right">
                   <div className="px-4 py-3 border-b border-gray-50 mb-2">
                     <p className="text-sm font-bold text-gray-900 truncate">{fullName}</p>
                     <p className="text-xs font-medium text-gray-500 truncate">{role?.replace('ROLE_', '')}</p>
