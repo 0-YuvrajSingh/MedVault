@@ -23,7 +23,45 @@ export interface MedicalRecord {
 export interface CreateRecordData {
   diagnosis: string;
   prescription: string;
-  notes: string;
+  notes?: string;
+  recordDate?: string;
+}
+
+export interface UserProfile {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+  active: boolean;
+  profilePhoto?: string;
+  emailNotifications?: boolean;
+  createdAt: string;
+}
+
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface NotificationPreferences {
+  emailNotifications: boolean;
+}
+
+export interface DoctorInfo {
+  id: string;
+  fullName: string;
+  email: string;
+  assignedAt: string;
+}
+
+export interface SystemHealth {
+  apiStatus: string;
+  uptime: string;
+  database: string;
+  cpu: string;
+  memory: string;
+  memoryTotal: string;
+  timestamp: number;
 }
 
 export interface AssignmentResponse {

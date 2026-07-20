@@ -77,7 +77,7 @@ public class DoctorService {
                 .diagnosis(request.getDiagnosis())
                 .prescription(request.getPrescription())
                 .notes(request.getNotes())
-                .recordDate(request.getRecordDate())
+                .recordDate(request.getRecordDate() != null ? request.getRecordDate() : java.time.LocalDate.now())
                 .build();
 
         MedicalRecord savedRecord = medicalRecordRepository.save(record);

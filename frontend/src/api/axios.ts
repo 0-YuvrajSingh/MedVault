@@ -7,7 +7,6 @@ const api = axios.create({
 
 let inMemoryToken: string | null = null;
 
-// Request interceptor — inject token from memory
 api.interceptors.request.use((config) => {
   if (inMemoryToken) {
     config.headers.Authorization = `Bearer ${inMemoryToken}`;
@@ -15,7 +14,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor — handle 401 globally
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -23,7 +21,7 @@ api.interceptors.response.use(
       const path = window.location.pathname;
       if (!path.includes('/login') && !path.includes('/register') && path !== '/') {
         inMemoryToken = null;
-        window.location.href = '/login';
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
       }
     }
     if (error.response?.data?.message) {

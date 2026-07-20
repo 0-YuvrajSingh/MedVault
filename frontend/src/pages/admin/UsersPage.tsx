@@ -1,46 +1,44 @@
-import React, { useEffect, useState } from 'react';
-import { adminAPI } from '../../api/admin';
+import React, { useState } from 'react';
+import { useUsers } from '../../hooks/useAdminQuery';
 import type { UserResponse } from '../../types';
 import { DataTable } from '../../components/ui/DataTable';
 import { Link } from 'react-router-dom';
 
 const UsersPage: React.FC = () => {
-  const [users, setUsers] = useState<UserResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: users = [], isLoading } = useUsers();
   const [search, setSearch] = useState('');
-
-  useEffect(() => {
-    adminAPI.getUsers().then(r => setUsers(r.data)).catch(console.error).finally(() => setLoading(false));
-  }, []);
 
   const filtered = users.filter(u =>
     u.fullName.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())
   );
 
   const columns = [
-    { key: 'fullName', label: 'Name' },
-    { key: 'email', label: 'Email' },
     {
-      key: 'role',
-      label: 'Role',
-      render: (u: UserResponse) => (
+      header: 'Name',
+      accessor: (u: UserResponse) => <span className="font-semibold text-slate-800">{u.fullName}</span>,
+    },
+    {
+      header: 'Email',
+      accessor: (u: UserResponse) => <span className="text-slate-500">{u.email}</span>,
+    },
+    {
+      header: 'Role',
+      accessor: (u: UserResponse) => (
         <span className="px-2 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-md uppercase tracking-wider">
           {u.role.replace('ROLE_', '')}
         </span>
       ),
     },
     {
-      key: 'active',
-      label: 'Status',
-      render: (u: UserResponse) => (
+      header: 'Status',
+      accessor: (u: UserResponse) => (
         u.active ? <span className="text-green-600 bg-green-50 px-2 py-1 rounded-md text-xs font-bold">Active</span>
                  : <span className="text-red-600 bg-red-50 px-2 py-1 rounded-md text-xs font-bold">Inactive</span>
       ),
     },
     {
-      key: 'actions',
-      label: 'Actions',
-      render: (u: UserResponse) => (
+      header: 'Actions',
+      accessor: (u: UserResponse) => (
         u.role === 'ROLE_PATIENT' ? (
           <Link to={`/admin/patients/${u.id}/records`} className="text-blue-600 hover:text-blue-800 text-sm font-semibold hover:underline">
             View Records
@@ -65,7 +63,7 @@ const UsersPage: React.FC = () => {
           onChange={e => setSearch(e.target.value)}
         />
       </div>
-      <DataTable columns={columns} data={filtered} loading={loading} />
+      <DataTable columns={columns} data={filtered} keyExtractor={(u) => u.id} loading={isLoading} />
     </div>
   );
 };

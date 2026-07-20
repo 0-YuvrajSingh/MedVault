@@ -2,7 +2,10 @@ package com.medvault.service;
 
 import com.medvault.dto.MedicalRecordResponse;
 import com.medvault.entity.MedicalRecord;
+import com.medvault.entity.PatientDoctorAssignment;
+import com.medvault.entity.User;
 import com.medvault.repository.MedicalRecordRepository;
+import com.medvault.repository.PatientDoctorAssignmentRepository;
 import com.medvault.exception.AccessDeniedException;
 import com.medvault.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -19,9 +22,15 @@ import org.springframework.data.domain.Pageable;
 public class PatientService {
 
     private final MedicalRecordRepository medicalRecordRepository;
+    private final PatientDoctorAssignmentRepository assignmentRepository;
+    private final com.medvault.repository.UserRepository userRepository;
 
-    public PatientService(MedicalRecordRepository medicalRecordRepository) {
+    public PatientService(MedicalRecordRepository medicalRecordRepository,
+                          PatientDoctorAssignmentRepository assignmentRepository,
+                          com.medvault.repository.UserRepository userRepository) {
         this.medicalRecordRepository = medicalRecordRepository;
+        this.assignmentRepository = assignmentRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional(readOnly = true)
@@ -40,6 +49,25 @@ public class PatientService {
         }
 
         return mapToResponse(record);
+    }
+
+    public com.medvault.dto.DoctorResponse getMyDoctor(UUID patientId) {
+        List<PatientDoctorAssignment> assignments = assignmentRepository.findAll().stream()
+                .filter(a -> a.getPatient().getId().equals(patientId))
+                .collect(Collectors.toList());
+
+        if (assignments.isEmpty()) {
+            return null;
+        }
+
+        PatientDoctorAssignment assignment = assignments.get(0);
+        User doctor = assignment.getDoctor();
+        return new com.medvault.dto.DoctorResponse(
+                doctor.getId(),
+                doctor.getFullName(),
+                doctor.getEmail(),
+                assignment.getAssignedAt()
+        );
     }
 
     private MedicalRecordResponse mapToResponse(MedicalRecord record) {

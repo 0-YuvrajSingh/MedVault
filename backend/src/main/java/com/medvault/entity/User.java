@@ -36,6 +36,13 @@ public class User {
     @Column(name = "is_active", nullable = false)
     private boolean active = false;
 
+    @Column(name = "profile_photo")
+    private String profilePhoto;
+
+    @Builder.Default
+    @Column(name = "email_notifications", nullable = false)
+    private boolean emailNotifications = true;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

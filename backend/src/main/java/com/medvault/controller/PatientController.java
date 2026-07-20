@@ -1,5 +1,6 @@
 package com.medvault.controller;
 
+import com.medvault.dto.DoctorResponse;
 import com.medvault.dto.MedicalRecordResponse;
 import com.medvault.service.PatientService;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +11,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -39,5 +39,15 @@ public class PatientController {
     @GetMapping("/records/{recordId}")
     public ResponseEntity<MedicalRecordResponse> getRecord(@PathVariable UUID recordId, Authentication authentication) {
         return ResponseEntity.ok(patientService.getRecord(recordId, UUID.fromString(authentication.getName())));
+    }
+
+    @GetMapping("/my-doctor")
+    public ResponseEntity<DoctorResponse> getMyDoctor(Authentication authentication) {
+        UUID patientId = UUID.fromString(authentication.getName());
+        DoctorResponse doctor = patientService.getMyDoctor(patientId);
+        if (doctor == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(doctor);
     }
 }

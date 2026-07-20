@@ -1,25 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { adminAPI } from '../../api/admin';
-import type { UserResponse, AssignmentResponse } from '../../types';
+import React from 'react';
+import { useUsers, useAssignments } from '../../hooks/useAdminQuery';
 import { Users, UserCog, User, ClipboardList, Shield, Activity } from 'lucide-react';
 import { DashboardSkeleton } from '../../components/common/Skeleton';
 
 const AdminDashboard: React.FC = () => {
-  const [users, setUsers] = useState<UserResponse[]>([]);
-  const [assignments, setAssignments] = useState<AssignmentResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [usersRes, assignRes] = await Promise.all([adminAPI.getUsers(), adminAPI.getAssignments()]);
-        setUsers(usersRes.data);
-        setAssignments(assignRes.data);
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
-    };
-    load();
-  }, []);
+  const { data: users = [], isLoading: usersLoading } = useUsers();
+  const { data: assignments = [], isLoading: assignmentsLoading } = useAssignments();
 
   const doctors = users.filter(u => u.role === 'ROLE_DOCTOR');
   const patients = users.filter(u => u.role === 'ROLE_PATIENT');
@@ -32,11 +18,10 @@ const AdminDashboard: React.FC = () => {
     { label: 'Assignments', value: assignments.length, meta: 'Doctor-Patient links', icon: <ClipboardList className="w-6 h-6" /> },
   ];
 
-  if (loading) return <DashboardSkeleton />;
+  if (usersLoading || assignmentsLoading) return <DashboardSkeleton />;
 
   return (
     <div className="space-y-8 animate-fade-in pb-12">
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -44,7 +29,6 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((s) => (
           <div key={s.label} className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 group hover:-translate-y-1">
@@ -61,7 +45,6 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pending Actions */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
             <div className="bg-gray-50/50 p-6 border-b border-slate-200">
@@ -103,7 +86,6 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Recent Users */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
             <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-gray-50/50">

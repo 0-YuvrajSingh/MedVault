@@ -1,33 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { adminAPI } from '../../api/admin';
-import type { UserResponse } from '../../types';
+import React from 'react';
+import { useUsers, useActivateDoctor, useDeactivateDoctor } from '../../hooks/useAdminQuery';
 
 const DoctorManagementPage: React.FC = () => {
-  const [users, setUsers] = useState<UserResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-
-  const fetchUsers = () => adminAPI.getUsers().then(r => setUsers(r.data)).catch(console.error).finally(() => setLoading(false));
-
-  useEffect(() => { fetchUsers(); }, []);
+  const { data: users = [], isLoading } = useUsers();
+  const activate = useActivateDoctor();
+  const deactivate = useDeactivateDoctor();
 
   const doctors = users.filter(u => u.role === 'ROLE_DOCTOR');
   const pending = doctors.filter(d => !d.active);
   const active = doctors.filter(d => d.active);
 
-  const handleActivate = async (id: string) => {
-    setActionLoading(id);
-    try { await adminAPI.activateDoctor(id); fetchUsers(); } catch (e: any) { alert(e.message); }
-    finally { setActionLoading(null); }
-  };
-
-  const handleDeactivate = async (id: string) => {
-    setActionLoading(id);
-    try { await adminAPI.deactivateDoctor(id); fetchUsers(); } catch (e: any) { alert(e.message); }
-    finally { setActionLoading(null); }
-  };
-
-  if (loading) return <div className="flex items-center justify-center h-64 text-text-muted">Loading doctors...</div>;
+  if (isLoading) return <div className="flex items-center justify-center h-64 text-text-muted">Loading doctors...</div>;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -36,7 +19,6 @@ const DoctorManagementPage: React.FC = () => {
         <p>{doctors.length} doctors total, {pending.length} pending approval</p>
       </div>
 
-      {/* Pending */}
       {pending.length > 0 && (
         <div className="card overflow-hidden">
           <div className="alert alert--warning rounded-none border-x-0 border-t-0">
@@ -51,8 +33,12 @@ const DoctorManagementPage: React.FC = () => {
                     <td className="font-medium">{d.fullName}</td>
                     <td className="text-text-secondary">{d.email}</td>
                     <td>
-                      <button onClick={() => handleActivate(d.id)} disabled={actionLoading === d.id} className="btn-primary btn-sm">
-                        {actionLoading === d.id ? 'Approving...' : 'Approve'}
+                      <button
+                        onClick={() => activate.mutate(d.id)}
+                        disabled={activate.isPending && activate.variables === d.id}
+                        className="btn-primary btn-sm"
+                      >
+                        {activate.isPending && activate.variables === d.id ? 'Approving...' : 'Approve'}
                       </button>
                     </td>
                   </tr>
@@ -63,7 +49,6 @@ const DoctorManagementPage: React.FC = () => {
         </div>
       )}
 
-      {/* Active Doctors */}
       <div className="card">
         <div className="p-5 border-b border-border">
           <h2 className="text-lg font-semibold text-text-primary">Active Doctors ({active.length})</h2>
@@ -78,8 +63,12 @@ const DoctorManagementPage: React.FC = () => {
                   <td className="text-text-secondary">{d.email}</td>
                   <td><span className="badge-success">Active</span></td>
                   <td>
-                    <button onClick={() => handleDeactivate(d.id)} disabled={actionLoading === d.id} className="btn-danger btn-sm">
-                      {actionLoading === d.id ? '...' : 'Deactivate'}
+                    <button
+                      onClick={() => deactivate.mutate(d.id)}
+                      disabled={deactivate.isPending && deactivate.variables === d.id}
+                      className="btn-danger btn-sm"
+                    >
+                      {deactivate.isPending && deactivate.variables === d.id ? '...' : 'Deactivate'}
                     </button>
                   </td>
                 </tr>

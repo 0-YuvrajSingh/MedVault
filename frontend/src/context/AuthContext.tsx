@@ -60,8 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout();
         return;
       }
-      
-      // Setup polling to gracefully log out when token expires naturally
+
       const timeUntilExpiry = (decoded.exp * 1000) - Date.now();
       if (timeUntilExpiry > 0) {
         const timeout = setTimeout(() => logout(), timeUntilExpiry);
@@ -73,6 +72,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout();
     }
   }, [token, logout]);
+
+  // Listen for global 401 events
+  useEffect(() => {
+    const handleUnauthorized = () => logout();
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, [logout]);
 
   return (
     <AuthContext.Provider value={{ token, role, userId, fullName, login, logout, isAuthenticated: !!token }}>

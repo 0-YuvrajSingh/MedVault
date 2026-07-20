@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { adminAPI } from '../../api/admin';
-import type { UserResponse, AssignmentResponse } from '../../types';
+import React, { useState } from 'react';
+import { useUsers, useAssignments, useCreateAssignment } from '../../hooks/useAdminQuery';
+import type { AssignmentResponse } from '../../types';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -15,9 +15,9 @@ const schema = yup.object().shape({
 type AssignFormData = yup.InferType<typeof schema>;
 
 const AssignmentsPage: React.FC = () => {
-  const [users, setUsers] = useState<UserResponse[]>([]);
-  const [assignments, setAssignments] = useState<AssignmentResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: users = [] } = useUsers();
+  const { data: assignments = [], isLoading } = useAssignments();
+  const createAssignment = useCreateAssignment();
   const [apiError, setApiError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -25,36 +25,25 @@ const AssignmentsPage: React.FC = () => {
     resolver: yupResolver(schema)
   });
 
-  const fetchData = async () => {
-    try {
-      const [u, a] = await Promise.all([adminAPI.getUsers(), adminAPI.getAssignments()]);
-      setUsers(u.data);
-      setAssignments(a.data);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  };
-
-  useEffect(() => { fetchData(); }, []);
-
   const patients = users.filter(u => u.role === 'ROLE_PATIENT');
   const doctors = users.filter(u => u.role === 'ROLE_DOCTOR' && u.active);
 
   const onSubmit = async (data: AssignFormData) => {
-    setApiError(''); setSuccess('');
+    setApiError('');
+    setSuccess('');
     try {
-      await adminAPI.createAssignment(data);
+      await createAssignment.mutateAsync(data);
       setSuccess('Assignment securely established.');
       reset();
-      fetchData();
     } catch (e: any) {
       setApiError(e.response?.data?.message || e.message || 'Assignment failed due to a system error.');
     }
   };
 
   const columns = [
-    { key: 'patientName', label: 'Patient Name', render: (a: AssignmentResponse) => <span className="font-semibold text-slate-800">{a.patientName}</span> },
-    { key: 'doctorName', label: 'Assigned Doctor', render: (a: AssignmentResponse) => <span className="text-slate-600">Dr. {a.doctorName}</span> },
-    { key: 'assignedAt', label: 'Assigned Date', render: (a: AssignmentResponse) => <span className="text-slate-500 text-sm font-medium">{new Date(a.assignedAt).toLocaleDateString()}</span> },
+    { header: 'Patient Name', accessor: (a: AssignmentResponse) => <span className="font-semibold text-slate-800">{a.patientName}</span> },
+    { header: 'Assigned Doctor', accessor: (a: AssignmentResponse) => <span className="text-slate-600">Dr. {a.doctorName}</span> },
+    { header: 'Assigned Date', accessor: (a: AssignmentResponse) => <span className="text-slate-500 text-sm font-medium">{new Date(a.assignedAt).toLocaleDateString()}</span> },
   ];
 
   return (
@@ -68,7 +57,7 @@ const AssignmentsPage: React.FC = () => {
         <h2 className="text-lg font-bold text-slate-900 mb-6">Create New Assignment</h2>
         {apiError && <div className="mb-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm">{apiError}</div>}
         {success && <div className="mb-6 p-4 bg-green-50 text-green-700 border border-green-200 rounded-lg text-sm">{success}</div>}
-        
+
         <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">Patient</label>
@@ -78,7 +67,7 @@ const AssignmentsPage: React.FC = () => {
             </select>
             {errors.patientId && <p className="text-red-500 text-xs mt-1 font-medium">{errors.patientId.message}</p>}
           </div>
-          
+
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">Doctor</label>
             <select {...register('doctorId')} className={`w-full px-4 py-2.5 bg-slate-50 border ${errors.doctorId ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-slate-200 focus:ring-blue-500 focus:border-blue-500'} rounded-lg text-sm transition-colors outline-none`}>
@@ -100,7 +89,7 @@ const AssignmentsPage: React.FC = () => {
         <div className="p-6 border-b border-slate-100 bg-slate-50/50">
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500">Active Relationships ({assignments.length})</h2>
         </div>
-        <DataTable columns={columns} data={assignments} loading={loading} />
+        <DataTable columns={columns} data={assignments} keyExtractor={(a) => a.id} loading={isLoading} />
       </div>
     </div>
   );

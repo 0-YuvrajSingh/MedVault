@@ -1,8 +1,25 @@
 import React from 'react';
 import { Card } from '../../components/ui/Card';
 import { Activity, Server, Database, HardDrive, Network } from 'lucide-react';
+import { useHealth } from '../../hooks/useHealthQuery';
 
 const SystemHealthPage: React.FC = () => {
+  const { data: health, isLoading, isError } = useHealth();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-fade-in pb-12">
+        <div className="page-header">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Health</h1>
+          <p className="text-sm text-slate-500 mt-1">Real-time monitoring of infrastructure and services</p>
+        </div>
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in pb-12">
       <div className="page-header">
@@ -13,11 +30,15 @@ const SystemHealthPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="p-6 flex flex-col gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-green-50 text-green-600 rounded-lg"><Activity className="w-5 h-5" /></div>
+            <div className={`p-2.5 rounded-lg ${health?.database === 'Connected' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+              <Activity className="w-5 h-5" />
+            </div>
             <h2 className="font-bold text-slate-700">API Status</h2>
           </div>
-          <div className="text-2xl font-black text-slate-900">Operational</div>
-          <p className="text-xs text-slate-500 font-medium">99.9% uptime (last 30 days)</p>
+          <div className={`text-2xl font-black ${isError ? 'text-red-600' : 'text-slate-900'}`}>
+            {isError ? 'Offline' : health?.apiStatus || 'Unknown'}
+          </div>
+          <p className="text-xs text-slate-500 font-medium">Uptime: {health?.uptime || 'N/A'}</p>
         </Card>
 
         <Card className="p-6 flex flex-col gap-4">
@@ -25,8 +46,8 @@ const SystemHealthPage: React.FC = () => {
             <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg"><Server className="w-5 h-5" /></div>
             <h2 className="font-bold text-slate-700">CPU Usage</h2>
           </div>
-          <div className="text-2xl font-black text-slate-900">14.2%</div>
-          <p className="text-xs text-slate-500 font-medium">Stable across 4 instances</p>
+          <div className="text-2xl font-black text-slate-900">{health?.cpu || 'N/A'}</div>
+          <p className="text-xs text-slate-500 font-medium">Stable across instances</p>
         </Card>
 
         <Card className="p-6 flex flex-col gap-4">
@@ -34,17 +55,25 @@ const SystemHealthPage: React.FC = () => {
             <div className="p-2.5 bg-purple-50 text-purple-600 rounded-lg"><HardDrive className="w-5 h-5" /></div>
             <h2 className="font-bold text-slate-700">Memory</h2>
           </div>
-          <div className="text-2xl font-black text-slate-900">4.1 GB</div>
-          <p className="text-xs text-slate-500 font-medium">51% of 8.0 GB provisioned</p>
+          <div className="text-2xl font-black text-slate-900">{health?.memory || 'N/A'}</div>
+          <p className="text-xs text-slate-500 font-medium">
+            {health?.memory && health?.memoryTotal ? `${Math.round(parseInt(health.memory) / parseInt(health.memoryTotal) * 100)}% of ${health.memoryTotal} provisioned` : 'N/A'}
+          </p>
         </Card>
 
         <Card className="p-6 flex flex-col gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-orange-50 text-orange-600 rounded-lg"><Database className="w-5 h-5" /></div>
+            <div className={`p-2.5 rounded-lg ${health?.database === 'Connected' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+              <Database className="w-5 h-5" />
+            </div>
             <h2 className="font-bold text-slate-700">Database</h2>
           </div>
-          <div className="text-2xl font-black text-slate-900">Connected</div>
-          <p className="text-xs text-slate-500 font-medium">Replication lag: 12ms</p>
+          <div className={`text-2xl font-black ${health?.database !== 'Connected' ? 'text-red-600' : 'text-slate-900'}`}>
+            {health?.database || 'Unknown'}
+          </div>
+          <p className="text-xs text-slate-500 font-medium">
+            {health?.database === 'Connected' ? 'Replication lag: &lt;1ms' : 'Connection failed'}
+          </p>
         </Card>
       </div>
 
@@ -63,7 +92,9 @@ const SystemHealthPage: React.FC = () => {
                 <h3 className="font-bold text-slate-800 text-sm">Automated Backup Complete</h3>
                 <p className="text-xs text-slate-500 mt-1">Database snapshot created and stored securely.</p>
               </div>
-              <div className="ml-auto text-xs font-semibold text-slate-400">{new Date(Date.now() - i * 86400000).toLocaleDateString()}</div>
+              <div className="ml-auto text-xs font-semibold text-slate-400">
+                {new Date(Date.now() - i * 86400000).toLocaleDateString()}
+              </div>
             </div>
           ))}
         </div>

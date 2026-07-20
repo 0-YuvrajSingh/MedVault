@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { adminAPI } from '../../api/admin';
-import type { MedicalRecord } from '../../types';
+import { usePatientRecords } from '../../hooks/useAdminQuery';
 import { Card } from '../../components/ui/Card';
 import { ArrowLeft, Activity, FileText, Calendar, ShieldAlert } from 'lucide-react';
 import { DashboardSkeleton } from '../../components/common/Skeleton';
@@ -10,30 +9,12 @@ import { formatRelativeTime } from '../../utils/date';
 const AdminPatientRecordsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [records, setRecords] = useState<MedicalRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+  const { data, isLoading, error } = usePatientRecords(id || '', page);
 
-  useEffect(() => {
-    if (!id) return;
-    const fetchRecords = async () => {
-      setLoading(true);
-      try {
-        const res = await adminAPI.getPatientRecords(id, page, 10);
-        setRecords(res.data.content);
-        setTotalPages(res.data.totalPages);
-      } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to fetch patient records');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRecords();
-  }, [id, page]);
+  if (isLoading) return <DashboardSkeleton />;
 
-  if (loading) return <DashboardSkeleton />;
+  const records = data?.content ?? [];
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
@@ -48,7 +29,7 @@ const AdminPatientRecordsPage: React.FC = () => {
       </div>
 
       {error ? (
-        <div className="p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl">{error}</div>
+        <div className="p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl">{(error as any)?.response?.data?.message || 'Failed to fetch patient records'}</div>
       ) : records.length === 0 ? (
         <Card className="p-12 text-center flex flex-col items-center border-dashed">
           <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
@@ -99,8 +80,8 @@ const AdminPatientRecordsPage: React.FC = () => {
               </div>
             </Card>
           ))}
-          
-          {totalPages > 1 && (
+
+          {(data?.totalPages ?? 0) > 1 && (
             <div className="flex justify-between items-center mt-6 pt-4">
               <button
                 disabled={page === 0}
@@ -110,10 +91,10 @@ const AdminPatientRecordsPage: React.FC = () => {
                 Previous
               </button>
               <span className="text-sm font-medium text-slate-500">
-                Page {page + 1} of {totalPages}
+                Page {page + 1} of {data?.totalPages ?? 0}
               </span>
               <button
-                disabled={page === totalPages - 1}
+                disabled={page === (data?.totalPages ?? 0) - 1}
                 onClick={() => setPage(p => p + 1)}
                 className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-colors"
               >

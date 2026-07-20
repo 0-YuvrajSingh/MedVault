@@ -1,7 +1,6 @@
 package com.medvault.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -16,6 +15,5 @@ public class CreateRecordRequest {
 
     private String notes;
 
-    @NotNull(message = "Record date is required")
     private LocalDate recordDate;
 }

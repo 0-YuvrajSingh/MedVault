@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
-import { doctorAPI } from '../../api/doctor';
-import type { UserResponse, MedicalRecord } from '../../types';
+import { useDoctorPatients, usePatientRecords, useCreateRecord } from '../../hooks/useDoctorQuery';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -32,44 +31,29 @@ const RecordsPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const preselectedPatientId = patientId || searchParams.get('patientId') || '';
 
-  const [patients, setPatients] = useState<UserResponse[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState(preselectedPatientId);
-  const [records, setRecords] = useState<MedicalRecord[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-
   const [success, setSuccess] = useState('');
   const [apiError, setApiError] = useState('');
+
+  const { data: patients = [] } = useDoctorPatients();
+  const { data: recordsData, isLoading: recordsLoading } = usePatientRecords(selectedPatientId, page);
+  const createRecord = useCreateRecord(selectedPatientId);
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<RecordFormData>({
     resolver: yupResolver(schema)
   });
 
-  useEffect(() => {
-    doctorAPI.getPatients().then(r => setPatients(r.data)).catch(console.error);
-  }, []);
-
-  useEffect(() => {
-    if (selectedPatientId) {
-      setLoading(true);
-      doctorAPI.getPatientRecords(selectedPatientId, page, 10).then(r => {
-        setRecords(r.data.content);
-        setTotalPages(r.data.totalPages);
-      }).catch(console.error).finally(() => setLoading(false));
-    } else {
-      setRecords([]);
-      setTotalPages(0);
-    }
-  }, [selectedPatientId, page]);
+  const records = recordsData?.content ?? [];
+  const totalPages = recordsData?.totalPages ?? 0;
+  const selectedPatient = patients.find(p => p.id === selectedPatientId);
 
   const onSubmit = async (data: RecordFormData) => {
-    setApiError(''); setSuccess('');
+    setApiError('');
+    setSuccess('');
     try {
-      // Force refresh to first page to see the new record
-      const res = await doctorAPI.createRecord(selectedPatientId, data);
+      await createRecord.mutateAsync(data);
       setPage(0);
-      setRecords(prev => [res.data, ...prev]);
       reset();
       setSuccess('Medical record securely created and audit logged.');
       setTimeout(() => setSuccess(''), 5000);
@@ -78,11 +62,8 @@ const RecordsPage: React.FC = () => {
     }
   };
 
-  const selectedPatient = patients.find(p => p.id === selectedPatientId);
-
   return (
     <div className="space-y-8 animate-fade-in pb-12">
-      {/* Premium Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-[var(--role-color)] to-blue-600 rounded-xl p-8 text-white shadow-md">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
@@ -95,7 +76,6 @@ const RecordsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Patient Selector */}
       <div className="card-elevated p-6 border-l-4 border-l-[var(--role-color)]">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1">
@@ -132,7 +112,6 @@ const RecordsPage: React.FC = () => {
       </div>
 
       {!selectedPatientId ? (
-        /* Empty State */
         <div className="card-elevated flex flex-col items-center justify-center p-16 text-center">
           <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 border-8 border-slate-200">
             <User className="w-10 h-10 text-gray-400" />
@@ -145,7 +124,6 @@ const RecordsPage: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
 
-          {/* Left Column: Create Form */}
           <div className="xl:col-span-4 sticky top-6">
             <div className="card-elevated overflow-hidden border-t-4 border-t-[var(--role-color)]">
               <div className="p-6 bg-gray-50 border-b border-border">
@@ -222,7 +200,6 @@ const RecordsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Timeline */}
           <div className="xl:col-span-8">
             <div className="card-elevated">
               <div className="p-6 border-b border-border flex items-center justify-between">
@@ -236,7 +213,7 @@ const RecordsPage: React.FC = () => {
               </div>
 
               <div className="p-8 bg-gray-50/50">
-                {loading ? (
+                {recordsLoading ? (
                   <div className="flex flex-col items-center justify-center py-20">
                     <div className="w-10 h-10 border-4 border-slate-200 border-t-[var(--role-color)] rounded-full animate-spin mb-4" />
                     <p className="text-text-muted font-medium">Decrypting records...</p>
@@ -251,18 +228,15 @@ const RecordsPage: React.FC = () => {
                   </div>
                 ) : (
                   <div className="relative">
-                    {/* Timeline Line */}
                     <div className="absolute left-8 top-6 bottom-6 w-0.5 bg-gray-200 rounded-full" />
 
                     <div className="space-y-8 relative">
-                      {records.map((r, i) => (
+                      {records.map((r) => (
                         <div key={r.id} className="relative flex items-start gap-6 group">
-                          {/* Timeline Dot */}
                           <div className="w-16 flex-shrink-0 flex justify-end relative z-10 pt-1.5">
                             <div className="w-4 h-4 rounded-full bg-[var(--role-color)] ring-4 ring-white shadow-sm group-hover:scale-125 transition-transform duration-300" />
                           </div>
 
-                          {/* Record Card */}
                           <div className="flex-1 bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-50">
                               <div>
@@ -304,7 +278,7 @@ const RecordsPage: React.FC = () => {
                         </div>
                       ))}
                     </div>
-                    
+
                     {totalPages > 1 && (
                       <div className="flex justify-between items-center mt-12 pt-6 border-t border-slate-200">
                         <button

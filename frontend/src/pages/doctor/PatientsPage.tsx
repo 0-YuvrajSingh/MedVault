@@ -1,18 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { doctorAPI } from '../../api/doctor';
-import type { UserResponse } from '../../types';
+import React from 'react';
+import { useDoctorPatients } from '../../hooks/useDoctorQuery';
 import { useNavigate } from 'react-router-dom';
 
 const PatientsPage: React.FC = () => {
-  const [patients, setPatients] = useState<UserResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: patients = [], isLoading } = useDoctorPatients();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    doctorAPI.getPatients().then(r => setPatients(r.data)).catch(console.error).finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return <div className="flex items-center justify-center h-64 text-text-muted">Loading patients...</div>;
+  if (isLoading) return <div className="flex items-center justify-center h-64 text-text-muted">Loading patients...</div>;
 
   return (
     <div className="space-y-6 animate-fade-in">

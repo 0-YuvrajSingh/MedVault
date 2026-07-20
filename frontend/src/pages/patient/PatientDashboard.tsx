@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { patientAPI } from '../../api/patient';
-import type { MedicalRecord } from '../../types';
+import React from 'react';
+import { usePatientRecords } from '../../hooks/usePatientQuery';
 import { FileText, Activity, UserCircle, Archive } from 'lucide-react';
 import { DashboardSkeleton } from '../../components/common/Skeleton';
 import { formatRelativeTime } from '../../utils/date';
@@ -8,14 +7,10 @@ import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 
 const PatientDashboard: React.FC = () => {
-  const [records, setRecords] = useState<MedicalRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading } = usePatientRecords(0);
   const { fullName } = useAuth();
 
-  useEffect(() => {
-    patientAPI.getRecords().then(r => setRecords(r.data)).catch(console.error).finally(() => setLoading(false));
-  }, []);
-
+  const records = data?.content ?? [];
   const latest = records[0];
 
   const stats = [
@@ -24,11 +19,10 @@ const PatientDashboard: React.FC = () => {
     { label: 'Primary Doctor', value: latest?.doctorName || '—', icon: <UserCircle className="w-5 h-5" /> },
   ];
 
-  if (loading) return <DashboardSkeleton />;
+  if (isLoading) return <DashboardSkeleton />;
 
   return (
     <div className="space-y-8 animate-fade-in pb-12">
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Hello, {fullName?.split(' ')[0] || ''}</h1>
@@ -37,7 +31,6 @@ const PatientDashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Stats & Actions */}
         <div className="lg:col-span-1 space-y-6">
           <div className="grid grid-cols-1 gap-4">
             {stats.map(s => (
@@ -48,7 +41,7 @@ const PatientDashboard: React.FC = () => {
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-gray-500 font-bold text-[10px] tracking-widest uppercase mb-1">{s.label}</h3>
-                    <div className="text-xl font-black text-gray-900 truncate">{s.value}</div>
+                    <div className="text-xl font-black text-gray-900 truncate">{typeof s.value === 'number' ? s.value : s.value}</div>
                   </div>
                 </div>
               </div>
@@ -67,7 +60,6 @@ const PatientDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Recent Records */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
             <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-gray-50/50">

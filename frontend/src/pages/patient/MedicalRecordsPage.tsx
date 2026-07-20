@@ -1,27 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { patientAPI } from '../../api/patient';
+import { usePatientRecords } from '../../hooks/usePatientQuery';
 import type { MedicalRecord } from '../../types';
 import { X, FileText } from 'lucide-react';
 import { formatRelativeTime } from '../../utils/date';
 import { DashboardSkeleton } from '../../components/common/Skeleton';
 
 const MedicalRecordsPage: React.FC = () => {
-  const [records, setRecords] = useState<MedicalRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
   const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+  const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
+  const { data, isLoading } = usePatientRecords(page);
 
-  useEffect(() => {
-    setLoading(true);
-    patientAPI.getRecords(page, 10).then(r => {
-      setRecords(r.data.content);
-      setTotalPages(r.data.totalPages);
-    }).catch(console.error).finally(() => setLoading(false));
-  }, [page]);
+  const records = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 0;
 
-  // Group by month
   const grouped: Record<string, MedicalRecord[]> = {};
   records.forEach(r => {
     const d = new Date(r.createdAt);
@@ -30,7 +22,7 @@ const MedicalRecordsPage: React.FC = () => {
     grouped[key].push(r);
   });
 
-  if (loading) return <DashboardSkeleton />;
+  if (isLoading) return <DashboardSkeleton />;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -49,7 +41,6 @@ const MedicalRecordsPage: React.FC = () => {
         </div>
       ) : (
         <div className="relative">
-          {/* Timeline */}
           <div className="space-y-8">
             {Object.entries(grouped).map(([month, items]) => (
               <div key={month}>
@@ -73,7 +64,7 @@ const MedicalRecordsPage: React.FC = () => {
               </div>
             ))}
           </div>
-          
+
           {totalPages > 1 && (
             <div className="flex justify-between items-center mt-8 pt-4 border-t border-slate-200">
               <button
@@ -98,7 +89,6 @@ const MedicalRecordsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Record detail drawer */}
       {selectedRecord && createPortal(
         <div className="fixed inset-0 z-[100] flex justify-end">
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedRecord(null)} />
