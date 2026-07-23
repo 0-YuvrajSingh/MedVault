@@ -4,6 +4,7 @@ import com.medvault.dto.AssignDoctorRequest;
 import com.medvault.dto.AssignmentResponse;
 import com.medvault.dto.UserResponse;
 import com.medvault.service.AdminService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +39,7 @@ public class AdminController {
     }
 
     @PostMapping("/assignments")
-    public ResponseEntity<Void> assignDoctor(@RequestBody AssignDoctorRequest request) {
+    public ResponseEntity<Void> assignDoctor(@Valid @RequestBody AssignDoctorRequest request) {
         adminService.assignDoctorToPatient(request);
         return ResponseEntity.ok().build();
     }

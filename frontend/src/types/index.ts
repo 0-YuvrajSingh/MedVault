@@ -56,11 +56,11 @@ export interface DoctorInfo {
 
 export interface SystemHealth {
   apiStatus: string;
-  uptime: string;
+  uptimeMs: number;
   database: string;
-  cpu: string;
-  memory: string;
-  memoryTotal: string;
+  cpuCores: number;
+  usedMemoryMB: number;
+  totalMemoryMB: number;
   timestamp: number;
 }
 
@@ -77,9 +77,8 @@ export interface AuditLogEntry {
   id: string;
   action: string;
   recordId: string;
-  performedBy: string;
-  performedByName?: string;
-  timestamp: string;
+  performedByName: string;
+  performedAt: string;
 }
 
 export interface DecodedToken {

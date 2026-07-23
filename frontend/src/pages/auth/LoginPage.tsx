@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLogin } from '../../hooks/useAuthQuery';
-import { Mail, Lock, ArrowRight, ShieldCheck, CheckCircle2, Loader2 } from 'lucide-react';
-import Logo from '../../components/common/Logo';
+import { Mail, Lock, ArrowRight, Shield } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
 import { jwtDecode } from 'jwt-decode';
 
 const LoginPage: React.FC = () => {
@@ -24,7 +24,6 @@ const LoginPage: React.FC = () => {
     try {
       const data = await loginMutation.mutateAsync({ email, password });
       login(data.token, data.fullName);
-
       const decoded: any = jwtDecode(data.token);
       const r = decoded.role;
       if (r === 'ROLE_ADMIN') navigate('/admin');
@@ -36,56 +35,30 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 rounded-xl overflow-hidden border border-slate-200 bg-white" style={{ boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.1)" }}>
-      <div className="hidden md:flex flex-col justify-center bg-[#9747FF] border-r-4 border-slate-200 p-10 text-white relative">
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
-          <div className="absolute -top-24 -left-24 w-64 h-64 rounded-full border-[20px] border-white"></div>
-          <div className="absolute bottom-12 -right-12 w-32 h-32 rounded-full border-[10px] border-white"></div>
-        </div>
-        <div className="relative z-10">
-          <div className="mb-8 scale-125 origin-left">
-            <Logo variant="dark" />
+    <div className="w-full max-w-md">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
+        <div className="text-center mb-8">
+          <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <Shield className="w-6 h-6 text-primary-600" />
           </div>
-          <p className="text-blue-200 text-sm leading-relaxed mb-10 font-medium">
-            Secure healthcare records management.
-          </p>
-          <div className="space-y-4">
-            {[
-              'Role-based access control',
-              'Immutable audit trail',
-              'JWT-secured sessions'
-            ].map((item) => (
-              <div key={item} className="flex items-center gap-3 text-sm text-blue-100 font-medium">
-                <div className="w-5 h-5 rounded-full bg-blue-500/30 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-300" />
-                </div>
-                {item}
-              </div>
-            ))}
-          </div>
+          <h1 className="text-xl font-bold text-slate-900">Sign in</h1>
+          <p className="text-sm text-slate-500 mt-1">Enter your credentials to access your portal</p>
         </div>
-      </div>
-
-      <div className="p-8 md:p-10 flex flex-col justify-center bg-white">
-        <h2 className="text-2xl font-bold text-gray-900 mb-1.5 tracking-tight">Sign in to your account</h2>
-        <p className="text-sm text-gray-500 mb-8 font-medium">Enter your credentials to access your portal</p>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-md flex items-start">
-            <div className="flex-1 text-sm text-red-700 font-medium">{error}</div>
+          <div className="mb-6 p-3 bg-danger-50 border border-danger-100 rounded-lg text-sm text-danger-700 font-medium">
+            {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email address</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Email address</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
-              </div>
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="email"
-                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 focus:ring-[#0369A1] focus:border-[#0369A1] rounded-lg sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none"
+                className="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 transition-all outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                 placeholder="you@hospital.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -94,14 +67,12 @@ const LoginPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
-              </div>
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="password"
-                className="input block w-full pl-10 pr-3 py-2.5 border border-gray-300 focus:ring-[#0369A1] focus:border-[#0369A1] rounded-lg sm:text-sm bg-gray-50 focus:bg-white transition-colors outline-none"
+                className="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 transition-all outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                 placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
@@ -109,36 +80,16 @@ const LoginPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-1">
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-              <input type="checkbox" className="rounded border-gray-300 text-[#0369A1] focus:ring-[#0369A1]" />
-              <span className="font-medium">Remember me</span>
-            </label>
-            <span className="text-sm text-[#0369A1] font-semibold hover:underline cursor-not-allowed opacity-90">
-              Forgot password?
-            </span>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loginMutation.isPending}
-            className="btn btn-primary w-full mt-2"
-          >
-            {loginMutation.isPending ? (
-              <Loader2 className="w-5 h-5 animate-spin mx-auto" />
-            ) : (
-              <span className="flex items-center justify-center">
-                Sign in
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </span>
-            )}
-          </button>
+          <Button type="submit" loading={loginMutation.isPending} className="w-full">
+            {!loginMutation.isPending && 'Sign in'}
+            {!loginMutation.isPending && <ArrowRight className="w-4 h-4" />}
+          </Button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm text-slate-500">
           Don't have an account?{' '}
-          <Link to="/register" className="text-[#0369A1] font-semibold hover:underline transition-colors">
-            Create one now
+          <Link to="/register" className="text-primary-600 font-medium hover:text-primary-700 transition-colors">
+            Create one
           </Link>
         </p>
       </div>

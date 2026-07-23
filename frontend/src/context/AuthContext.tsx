@@ -9,6 +9,7 @@ interface AuthContextType {
   userId: string | null;
   fullName: string | null;
   login: (token: string, fullName?: string) => void;
+  updateFullName: (fullName: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -28,6 +29,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setFullName(null);
     setApiToken(null);
   }, []);
+
+  const updateFullName = useCallback((name: string) => setFullName(name), []);
 
   const login = useCallback((newToken: string, name?: string) => {
     try {
@@ -81,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [logout]);
 
   return (
-    <AuthContext.Provider value={{ token, role, userId, fullName, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ token, role, userId, fullName, login, logout, updateFullName, isAuthenticated: !!token }}>
       {children}
     </AuthContext.Provider>
   );

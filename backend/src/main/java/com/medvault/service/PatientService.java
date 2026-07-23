@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -52,9 +51,7 @@ public class PatientService {
     }
 
     public com.medvault.dto.DoctorResponse getMyDoctor(UUID patientId) {
-        List<PatientDoctorAssignment> assignments = assignmentRepository.findAll().stream()
-                .filter(a -> a.getPatient().getId().equals(patientId))
-                .collect(Collectors.toList());
+        List<PatientDoctorAssignment> assignments = assignmentRepository.findByPatient_Id(patientId);
 
         if (assignments.isEmpty()) {
             return null;

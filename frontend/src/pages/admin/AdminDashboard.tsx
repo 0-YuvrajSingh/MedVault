@@ -1,130 +1,165 @@
 import React from 'react';
 import { useUsers, useAssignments } from '../../hooks/useAdminQuery';
-import { Users, UserCog, User, ClipboardList, Shield, Activity } from 'lucide-react';
-import { DashboardSkeleton } from '../../components/common/Skeleton';
+import { Users, UserCog, User, ClipboardList, Shield, Activity, BarChart3 } from 'lucide-react';
+import { DashboardSkeleton } from '../../components/ui/Skeleton';
+import { Card } from '../../components/ui/Card';
+import { Badge } from '../../components/ui/Badge';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const AdminDashboard: React.FC = () => {
-  const { data: users = [], isLoading: usersLoading } = useUsers();
-  const { data: assignments = [], isLoading: assignmentsLoading } = useAssignments();
+  const { data: users = [], isLoading: usersLoading, isError: usersError } = useUsers();
+  const { data: assignments = [], isLoading: assignmentsLoading, isError: assignmentsError } = useAssignments();
 
   const doctors = users.filter(u => u.role === 'ROLE_DOCTOR');
   const patients = users.filter(u => u.role === 'ROLE_PATIENT');
+  const admins = users.filter(u => u.role === 'ROLE_ADMIN');
   const pendingDoctors = doctors.filter(d => !d.active);
 
-  const stats = [
-    { label: 'Total Users', value: users.length, meta: 'All registered accounts', icon: <Users className="w-6 h-6" /> },
-    { label: 'Doctors', value: doctors.length, meta: 'Medical personnel', icon: <UserCog className="w-6 h-6" /> },
-    { label: 'Patients', value: patients.length, meta: 'Registered patients', icon: <User className="w-6 h-6" /> },
-    { label: 'Assignments', value: assignments.length, meta: 'Doctor-Patient links', icon: <ClipboardList className="w-6 h-6" /> },
+  const roleChartData = [
+    { name: 'Admin', count: admins.length, fill: '#2563EB' },
+    { name: 'Doctor', count: doctors.length, fill: '#0D9488' },
+    { name: 'Patient', count: patients.length, fill: '#059669' },
   ];
 
   if (usersLoading || assignmentsLoading) return <DashboardSkeleton />;
 
-  return (
-    <div className="space-y-8 animate-fade-in pb-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  if (usersError || assignmentsError) {
+    return (
+      <div className="space-y-8 pb-12">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage users, doctors, and system assignments.</p>
+          <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-1">Manage users, doctors, and system assignments.</p>
         </div>
+        <Card className="p-6">
+          <div className="text-center py-8">
+            <div className="w-12 h-12 bg-danger-50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <BarChart3 className="w-6 h-6 text-danger-500" />
+            </div>
+            <h3 className="text-sm font-semibold text-slate-900 mb-1">Failed to load dashboard</h3>
+            <p className="text-sm text-slate-500 mb-4">Unable to load system data. Please try again later.</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 pb-12">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
+        <p className="text-sm text-slate-500 mt-1">Manage users, doctors, and system assignments.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((s) => (
-          <div key={s.label} className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 group hover:-translate-y-1">
-            <div className="flex items-center justify-between mb-5">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-50 text-[#0369A1] group-hover:scale-110 transition-transform duration-300">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Users', value: users.length, icon: <Users className="w-5 h-5" />, color: 'bg-primary-50 text-primary-600' },
+          { label: 'Doctors', value: doctors.length, icon: <UserCog className="w-5 h-5" />, color: 'bg-teal-50 text-teal-600' },
+          { label: 'Patients', value: patients.length, icon: <User className="w-5 h-5" />, color: 'bg-green-50 text-green-600' },
+          { label: 'Assignments', value: assignments.length, icon: <ClipboardList className="w-5 h-5" />, color: 'bg-amber-50 text-amber-600' },
+        ].map(s => (
+          <Card key={s.label} className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${s.color}`}>
                 {s.icon}
               </div>
-              <span className="text-3xl font-black text-gray-900">{s.value}</span>
+              <span className="text-2xl font-bold text-slate-900">{s.value}</span>
             </div>
-            <h3 className="text-gray-900 font-bold text-sm tracking-wide mb-1">{s.label}</h3>
-            <p className="text-xs font-semibold text-gray-400">{s.meta}</p>
-          </div>
+            <p className="text-sm font-medium text-slate-500">{s.label}</p>
+          </Card>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="bg-gray-50/50 p-6 border-b border-slate-200">
-              <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2.5">
-                <Shield className="w-5 h-5 text-amber-500" />
+        <div className="lg:col-span-2">
+          <Card className="p-5">
+            <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2 mb-4">
+              <BarChart3 className="w-4 h-4 text-primary-600" />
+              Users by Role
+            </h2>
+            <div className="h-60">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={roleChartData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748B' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94A3B8' }} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '12px' }}
+                  />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
+
+        <div>
+          <Card className="h-full">
+            <div className="px-5 py-4 border-b border-slate-100">
+              <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <Shield className="w-4 h-4 text-amber-500" />
                 Action Required
               </h2>
             </div>
-            <div className="p-6 flex-1">
+            <div className="p-5">
               {pendingDoctors.length > 0 ? (
-                <div className="space-y-4">
-                  <p className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-50 p-3 rounded-xl border border-amber-100">
-                    {pendingDoctors.length} doctor(s) pending approval
-                  </p>
-                  <div className="space-y-3">
-                    {pendingDoctors.slice(0, 3).map(d => (
-                      <div key={d.id} className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border border-slate-200 transition-colors">
-                        <div>
-                          <div className="font-bold text-sm text-gray-900 mb-0.5">{d.fullName}</div>
-                          <div className="text-xs font-semibold text-gray-500">{d.email}</div>
-                        </div>
-                        <button className="px-4 py-2 bg-[#0F4C81] text-white text-xs font-bold rounded-lg hover:bg-[#0369A1] transition-colors shadow-sm">
-                          Review
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                <div className="space-y-3">
+                  <Badge variant="warning" dot>{pendingDoctors.length} pending approval</Badge>
+                  {pendingDoctors.slice(0, 3).map(d => (
+                    <div key={d.id} className="p-3 rounded-lg border border-slate-100 bg-slate-50">
+                      <div className="text-sm font-medium text-slate-900">{d.fullName}</div>
+                      <div className="text-xs text-slate-400">{d.email}</div>
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <div className="text-center py-12 flex flex-col items-center justify-center h-full">
-                  <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-4">
-                    <ClipboardList className="w-8 h-8 text-emerald-500" />
+                <div className="text-center py-8">
+                  <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <ClipboardList className="w-6 h-6 text-green-500" />
                   </div>
-                  <p className="text-base font-bold text-gray-900 mb-1">All caught up!</p>
-                  <p className="text-sm font-medium text-gray-500">No pending approvals in queue.</p>
+                  <p className="text-sm font-medium text-slate-900">All caught up!</p>
+                  <p className="text-xs text-slate-500">No pending approvals.</p>
                 </div>
               )}
             </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2.5">
-                <Activity className="w-5 h-5 text-[#0369A1]" />
-                Network Activity
-              </h2>
-              <button className="text-xs font-bold uppercase tracking-wider text-[#0369A1] hover:text-[#0F4C81] transition-colors">View All Directory</button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-white text-gray-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
-                  <tr><th className="px-6 py-4">User</th><th className="px-6 py-4">Role</th><th className="px-6 py-4">Status</th></tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50 font-medium">
-                  {users.slice(0, 5).map(u => (
-                    <tr key={u.id} className="hover:bg-gray-50/50 transition-colors group">
-                      <td className="px-6 py-4">
-                        <div className="text-gray-900 font-bold mb-1">{u.fullName}</div>
-                        <div className="text-gray-500 text-xs font-semibold">{u.email}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
-                          {u.role.replace('ROLE_', '')}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        {u.active
-                          ? <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">Active</span>
-                          : <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-100">Inactive</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          </Card>
         </div>
       </div>
+
+      <Card>
+        <div className="px-5 py-4 border-b border-slate-100">
+          <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-primary-600" />
+            Recent Activity
+          </h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100">
+                <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th>
+                <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
+                <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {users.slice(0, 5).map(u => (
+                <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-5 py-3.5">
+                    <div className="text-sm font-medium text-slate-900">{u.fullName}</div>
+                    <div className="text-xs text-slate-400">{u.email}</div>
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <Badge variant="neutral">{u.role.replace('ROLE_', '')}</Badge>
+                  </td>
+                  <td className="px-5 py-3.5">
+                    {u.active ? <Badge variant="success" dot>Active</Badge> : <Badge variant="danger" dot>Inactive</Badge>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
     </div>
   );
 };

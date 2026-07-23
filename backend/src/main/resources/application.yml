@@ -26,13 +26,18 @@ spring:
     user: medvault_user
     password: medvault_password
 
+---
 server:
   port: 8080
 
 jwt:
-  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:1800000} # 30 minutes in ms
 
 logging:
   level:
     com.medvault: DEBUG
+
+rate-limiting:
+  login:
+    max-requests-per-minute: 5

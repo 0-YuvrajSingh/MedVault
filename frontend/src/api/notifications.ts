@@ -6,6 +6,7 @@ export interface NotificationItem {
   message: string;
   read: boolean;
   createdAt: string;
+  type?: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
 }
 
 export const notificationsAPI = {

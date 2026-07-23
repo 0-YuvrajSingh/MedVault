@@ -4,19 +4,14 @@ import { useDoctorPatients, usePatientRecords, useCreateRecord } from '../../hoo
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import {
-  FileText,
-  Search,
-  Stethoscope,
-  Activity,
-  Calendar,
-  User,
-  Clock,
-  AlertCircle,
-  CheckCircle2,
-  Plus
-} from 'lucide-react';
+import { FileText, Search, Stethoscope, Activity, Calendar, User, ChevronLeft, ChevronRight, Clock, Plus, CheckCircle } from 'lucide-react';
 import { formatRelativeTime } from '../../utils/date';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Textarea } from '../../components/ui/Input';
+import { Input } from '../../components/ui/Input';
+import { showToast } from '../../components/ui/Toast';
 
 const schema = yup.object().shape({
   diagnosis: yup.string().required('Diagnosis is required').min(3, 'Diagnosis must be at least 3 characters'),
@@ -33,7 +28,6 @@ const RecordsPage: React.FC = () => {
 
   const [selectedPatientId, setSelectedPatientId] = useState(preselectedPatientId);
   const [page, setPage] = useState(0);
-  const [success, setSuccess] = useState('');
   const [apiError, setApiError] = useState('');
 
   const { data: patients = [] } = useDoctorPatients();
@@ -50,262 +44,180 @@ const RecordsPage: React.FC = () => {
 
   const onSubmit = async (data: RecordFormData) => {
     setApiError('');
-    setSuccess('');
     try {
       await createRecord.mutateAsync(data);
       setPage(0);
       reset();
-      setSuccess('Medical record securely created and audit logged.');
-      setTimeout(() => setSuccess(''), 5000);
+      showToast('success', 'Record created', 'Medical record securely created and audit logged.');
     } catch (e: any) {
       setApiError(e.response?.data?.message || e.message || 'Failed to create record');
     }
   };
 
   return (
-    <div className="space-y-8 animate-fade-in pb-12">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-[var(--role-color)] to-blue-600 rounded-xl p-8 text-white shadow-md">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-            <FileText className="w-8 h-8 text-white" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight mb-1">Medical Records</h1>
-            <p className="text-blue-100 font-medium">Manage and review patient clinical histories</p>
-          </div>
-        </div>
+    <div className="space-y-6 pb-12">
+      <div className="page-header">
+        <h1>Medical Records</h1>
+        <p>Manage and review patient clinical histories</p>
       </div>
 
-      <div className="card-elevated p-6 border-l-4 border-l-[var(--role-color)]">
+      <Card className="p-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1">
-            <label className="block text-sm font-bold text-text-primary mb-2 flex items-center gap-2">
-              <User className="w-4 h-4 text-[var(--role-color)]" />
-              Select Patient Context
+            <label className="block text-sm font-medium text-slate-700 mb-1.5 flex items-center gap-2">
+              <User className="w-4 h-4 text-slate-400" />
+              Select Patient
             </label>
             <div className="relative max-w-xl">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <select
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-slate-200 rounded-xl text-text-primary font-medium focus:ring-2 focus:ring-[var(--role-color)] focus:border-transparent transition-all appearance-none cursor-pointer"
+                className="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 appearance-none cursor-pointer"
                 value={selectedPatientId}
-                onChange={e => { setSelectedPatientId(e.target.value); setApiError(''); setSuccess(''); }}
+                onChange={e => { setSelectedPatientId(e.target.value); setApiError(''); }}
               >
-                <option value="" disabled>Select a patient to view or add records...</option>
+                <option value="" disabled>Select a patient...</option>
                 {patients.map(p => (
-                  <option key={p.id} value={p.id}>{p.fullName} (ID: {p.id.substring(0, 8)}...)</option>
+                  <option key={p.id} value={p.id}>{p.fullName}</option>
                 ))}
               </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
             </div>
           </div>
           {selectedPatient && (
-            <div className="sm:ml-auto px-6 py-3 bg-[var(--role-tint)] rounded-xl flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-[var(--role-color)] animate-pulse" />
-              <span className="text-[var(--role-text)] font-semibold">Active Context: {selectedPatient.fullName}</span>
-            </div>
+            <Badge variant="info" dot>Active: {selectedPatient.fullName}</Badge>
           )}
         </div>
-      </div>
+      </Card>
 
       {!selectedPatientId ? (
-        <div className="card-elevated flex flex-col items-center justify-center p-16 text-center">
-          <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 border-8 border-slate-200">
-            <User className="w-10 h-10 text-gray-400" />
+        <Card className="flex flex-col items-center justify-center py-16">
+          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
+            <User className="w-8 h-8 text-slate-400" />
           </div>
-          <h2 className="text-xl font-bold text-text-primary mb-2">No Patient Selected</h2>
-          <p className="text-text-secondary max-w-md">
-            Please select a patient from the dropdown above to view their medical history or to securely log a new medical record.
-          </p>
-        </div>
+          <h2 className="text-base font-semibold text-slate-900 mb-1">No Patient Selected</h2>
+          <p className="text-sm text-slate-500 text-center max-w-md">Select a patient from the dropdown above to view their medical history or add a new record.</p>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
-
-          <div className="xl:col-span-4 sticky top-6">
-            <div className="card-elevated overflow-hidden border-t-4 border-t-[var(--role-color)]">
-              <div className="p-6 bg-gray-50 border-b border-border">
-                <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-[var(--role-color)]" />
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+          <div className="xl:col-span-4 sticky top-6 space-y-4">
+            <Card>
+              <div className="px-5 py-4 border-b border-slate-100">
+                <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                  <Plus className="w-4 h-4 text-primary-600" />
                   New Clinical Record
                 </h2>
-                <p className="text-sm text-text-secondary mt-1">Append securely to {selectedPatient?.fullName}'s file.</p>
               </div>
-
-              <div className="p-6">
+              <div className="p-5">
                 {apiError && (
-                  <div className="mb-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                    <span className="text-sm font-medium">{apiError}</span>
-                  </div>
+                  <div className="mb-4 p-3 bg-danger-50 border border-danger-100 rounded-lg text-sm text-danger-700">{apiError}</div>
                 )}
-                {success && (
-                  <div className="mb-6 p-4 bg-green-50 text-green-700 border border-green-200 rounded-xl flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-                    <span className="text-sm font-medium">{success}</span>
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-semibold text-text-primary mb-1.5 flex items-center gap-2">
-                      <Activity className="w-4 h-4 text-text-muted" /> Diagnosis
-                    </label>
-                    <input
-                      type="text"
-                      className={`input w-full ${errors.diagnosis ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
-                      placeholder="e.g. Acute Bronchitis"
-                      {...register('diagnosis')}
-                    />
-                    {errors.diagnosis && <p className="text-red-500 text-xs mt-1 font-medium">{errors.diagnosis.message}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-text-primary mb-1.5 flex items-center gap-2">
-                      <Stethoscope className="w-4 h-4 text-text-muted" /> Prescription / Treatment
-                    </label>
-                    <textarea
-                      className={`input w-full min-h-[100px] resize-y ${errors.prescription ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
-                      placeholder="e.g. Amoxicillin 500mg, 3x daily"
-                      {...register('prescription')}
-                    />
-                    {errors.prescription && <p className="text-red-500 text-xs mt-1 font-medium">{errors.prescription.message}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-text-primary mb-1.5 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-text-muted" /> Clinical Notes
-                    </label>
-                    <textarea
-                      className={`input w-full min-h-[100px] resize-y ${errors.notes ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
-                      placeholder="Patient reports mild fever and persistent cough..."
-                      {...register('notes')}
-                    />
-                    {errors.notes && <p className="text-red-500 text-xs mt-1 font-medium">{errors.notes.message}</p>}
-                  </div>
-
-                  <button type="submit" disabled={isSubmitting} className="btn-primary w-full py-3.5 text-base rounded-xl mt-4 flex items-center justify-center gap-2 transition-all">
-                    {isSubmitting ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <Plus className="w-5 h-5" />
-                    )}
-                    {isSubmitting ? 'Encrypting & Saving...' : 'Save & Sign Record'}
-                  </button>
-                  <p className="text-center text-xs text-text-muted font-medium mt-3 flex items-center justify-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Immutable Audit Trail Generated
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <Input
+                    label="Diagnosis"
+                    error={errors.diagnosis?.message}
+                    icon={<Activity className="w-4 h-4" />}
+                    placeholder="e.g. Acute Bronchitis"
+                    {...register('diagnosis')}
+                  />
+                  <Textarea
+                    label="Prescription / Treatment"
+                    error={errors.prescription?.message}
+                    placeholder="e.g. Amoxicillin 500mg, 3x daily"
+                    {...register('prescription')}
+                  />
+                  <Textarea
+                    label="Clinical Notes"
+                    error={errors.notes?.message}
+                    placeholder="Patient reports mild fever and persistent cough..."
+                    {...register('notes')}
+                  />
+                  <Button type="submit" loading={isSubmitting} className="w-full" icon={<Plus className="w-4 h-4" />}>
+                    {isSubmitting ? '' : 'Save Record'}
+                  </Button>
+                  <p className="text-xs text-center text-slate-400 flex items-center justify-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> Audit trail generated
                   </p>
                 </form>
               </div>
-            </div>
+            </Card>
           </div>
 
           <div className="xl:col-span-8">
-            <div className="card-elevated">
-              <div className="p-6 border-b border-border flex items-center justify-between">
+            <Card>
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-text-primary">Clinical History</h2>
-                  <p className="text-sm text-text-secondary mt-1">Chronological medical records for {selectedPatient?.fullName}</p>
+                  <h2 className="text-sm font-semibold text-slate-900">Clinical History</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Records for {selectedPatient?.fullName}</p>
                 </div>
-                <div className="px-3 py-1 bg-gray-100 rounded-lg text-sm font-bold text-text-secondary">
-                  {records.length} Records
-                </div>
+                <Badge variant="neutral">{records.length} records</Badge>
               </div>
 
-              <div className="p-8 bg-gray-50/50">
-                {recordsLoading ? (
-                  <div className="flex flex-col items-center justify-center py-20">
-                    <div className="w-10 h-10 border-4 border-slate-200 border-t-[var(--role-color)] rounded-full animate-spin mb-4" />
-                    <p className="text-text-muted font-medium">Decrypting records...</p>
+              {recordsLoading ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <div className="w-8 h-8 border-2 border-slate-200 border-t-primary-600 rounded-full animate-spin mb-3" />
+                  <p className="text-sm text-slate-400">Loading records...</p>
+                </div>
+              ) : records.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                    <FileText className="w-7 h-7 text-slate-400" />
                   </div>
-                ) : records.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-                      <FileText className="w-8 h-8 text-gray-300" />
-                    </div>
-                    <h3 className="text-lg font-bold text-text-primary mb-1">No Historical Records</h3>
-                    <p className="text-text-secondary">This patient's file is currently empty.</p>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <div className="absolute left-8 top-6 bottom-6 w-0.5 bg-gray-200 rounded-full" />
-
-                    <div className="space-y-8 relative">
-                      {records.map((r) => (
-                        <div key={r.id} className="relative flex items-start gap-6 group">
-                          <div className="w-16 flex-shrink-0 flex justify-end relative z-10 pt-1.5">
-                            <div className="w-4 h-4 rounded-full bg-[var(--role-color)] ring-4 ring-white shadow-sm group-hover:scale-125 transition-transform duration-300" />
-                          </div>
-
-                          <div className="flex-1 bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-50">
-                              <div>
-                                <h3 className="text-lg font-bold text-text-primary">{r.diagnosis}</h3>
-                                <div className="flex flex-wrap items-center gap-3 text-sm text-text-muted mt-1 font-medium">
-                                  <span className="flex items-center gap-1.5 font-bold text-[var(--role-color)]"><Clock className="w-4 h-4" /> {formatRelativeTime(r.createdAt)}</span>
-                                  <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {new Date(r.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-                                </div>
-                              </div>
-                              <div className="px-3 py-1 bg-green-50 text-green-700 font-semibold text-xs rounded-lg flex items-center gap-1.5 border border-green-100">
-                                <CheckCircle2 className="w-3.5 h-3.5" /> Verified
-                              </div>
-                            </div>
-
-                            <div className="space-y-4">
-                              <div className="flex gap-4">
-                                <div className="p-2.5 bg-blue-50 rounded-xl h-fit text-blue-600">
-                                  <Stethoscope className="w-5 h-5" />
-                                </div>
-                                <div>
-                                  <h4 className="text-xs font-bold uppercase tracking-wider text-text-muted mb-1">Prescription & Treatment</h4>
-                                  <p className="text-text-primary text-sm leading-relaxed whitespace-pre-wrap">{r.prescription}</p>
-                                </div>
-                              </div>
-
-                              {r.notes && (
-                                <div className="flex gap-4">
-                                  <div className="p-2.5 bg-purple-50 rounded-xl h-fit text-purple-600">
-                                    <FileText className="w-5 h-5" />
-                                  </div>
-                                  <div>
-                                    <h4 className="text-xs font-bold uppercase tracking-wider text-text-muted mb-1">Clinical Notes</h4>
-                                    <p className="text-text-secondary text-sm leading-relaxed whitespace-pre-wrap">{r.notes}</p>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
+                  <h3 className="text-sm font-semibold text-slate-900 mb-1">No Historical Records</h3>
+                  <p className="text-xs text-slate-500">This patient's file is currently empty.</p>
+                </div>
+              ) : (
+                <div className="p-5 space-y-4">
+                  {records.map((r) => (
+                    <Card key={r.id} className="p-4">
+                      <div className="flex items-start justify-between gap-4 mb-3 pb-3 border-b border-slate-50">
+                        <div>
+                          <h3 className="text-sm font-semibold text-slate-900">{r.diagnosis}</h3>
+                          <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
+                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {formatRelativeTime(r.createdAt)}</span>
+                            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(r.createdAt).toLocaleDateString()}</span>
                           </div>
                         </div>
-                      ))}
-                    </div>
-
-                    {totalPages > 1 && (
-                      <div className="flex justify-between items-center mt-12 pt-6 border-t border-slate-200">
-                        <button
-                          disabled={page === 0}
-                          onClick={() => setPage(p => p - 1)}
-                          className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-text-secondary disabled:opacity-50 hover:bg-slate-50 hover:text-text-primary transition-colors"
-                        >
-                          Previous
-                        </button>
-                        <span className="text-sm font-medium text-text-muted">
-                          Page {page + 1} of {totalPages}
-                        </span>
-                        <button
-                          disabled={page === totalPages - 1}
-                          onClick={() => setPage(p => p + 1)}
-                          className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-text-secondary disabled:opacity-50 hover:bg-slate-50 hover:text-text-primary transition-colors"
-                        >
-                          Next
-                        </button>
+                        <Badge variant="success" dot>Verified</Badge>
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+                      <div className="space-y-3">
+                        <div className="flex gap-3">
+                          <div className="p-2 bg-primary-50 rounded-lg h-fit text-primary-600">
+                            <Stethoscope className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-0.5">Treatment</p>
+                            <p className="text-sm text-slate-700 whitespace-pre-wrap">{r.prescription}</p>
+                          </div>
+                        </div>
+                        {r.notes && (
+                          <div className="flex gap-3">
+                            <div className="p-2 bg-slate-50 rounded-lg h-fit text-slate-500">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-0.5">Notes</p>
+                              <p className="text-sm text-slate-600 whitespace-pre-wrap">{r.notes}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
 
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                      <Button variant="secondary" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} icon={<ChevronLeft className="w-4 h-4" />}>
+                        Previous
+                      </Button>
+                      <span className="text-sm text-slate-500">Page {page + 1} of {totalPages}</span>
+                      <Button variant="secondary" size="sm" disabled={page === totalPages - 1} onClick={() => setPage(p => p + 1)}>
+                        Next <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
+          </div>
         </div>
       )}
     </div>

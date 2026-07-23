@@ -34,3 +34,9 @@ export function formatRelativeTime(dateString: string | Date): string {
     day: 'numeric'
   });
 }
+
+export function formatRecordTimestamp(dateString: string | Date): string {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'Unknown date';
+  return date.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}

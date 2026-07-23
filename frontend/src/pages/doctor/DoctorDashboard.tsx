@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useDoctorPatients } from '../../hooks/useDoctorQuery';
-import { Users, FileText, Calendar, Search, UserX, UserPlus } from 'lucide-react';
+import { Users, Calendar, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { DashboardSkeleton } from '../../components/common/Skeleton';
+import { DashboardSkeleton } from '../../components/ui/Skeleton';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 const DoctorDashboard: React.FC = () => {
-  const { data: patients = [], isLoading } = useDoctorPatients();
+  const { data: patients = [], isLoading, isError } = useDoctorPatients();
   const [search, setSearch] = useState('');
   const { fullName } = useAuth();
 
@@ -15,124 +18,132 @@ const DoctorDashboard: React.FC = () => {
     p.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const stats = [
-    { label: 'Assigned Patients', value: patients.length, icon: <Users className="w-5 h-5" /> },
-    { label: 'Active Records', value: '—', icon: <FileText className="w-5 h-5" /> },
-    { label: 'Date', value: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), icon: <Calendar className="w-5 h-5" /> },
-  ];
-
   if (isLoading) return <DashboardSkeleton />;
 
-  return (
-    <div className="space-y-8 animate-fade-in pb-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  if (isError) {
+    return (
+      <div className="space-y-8 pb-12">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Good morning, Dr. {fullName?.split(' ')[0] || ''}</h1>
-          <p className="text-sm text-gray-500 mt-1">Here is your daily overview and recent patient assignments.</p>
+          <h1 className="text-2xl font-bold text-slate-900">Good morning, Dr. {fullName?.split(' ')[0] || ''}</h1>
+          <p className="text-sm text-slate-500 mt-1">Here is your daily overview and recent patient assignments.</p>
         </div>
+        <Card className="p-6">
+          <div className="text-center py-8">
+            <div className="w-12 h-12 bg-danger-50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Users className="w-6 h-6 text-danger-500" />
+            </div>
+            <h3 className="text-sm font-semibold text-slate-900 mb-1">Failed to load dashboard</h3>
+            <p className="text-sm text-slate-500 mb-4">Unable to load patient data. Please try again later.</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 pb-12">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Good morning, Dr. {fullName?.split(' ')[0] || ''}</h1>
+        <p className="text-sm text-slate-500 mt-1">Here is your daily overview and recent patient assignments.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-            <h3 className="text-gray-900 font-extrabold text-lg mb-5 flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-teal-600" />
-              Recent Assignments
-            </h3>
-            <div className="space-y-3">
+        <div className="lg:col-span-1 space-y-4">
+          <Card className="p-5">
+            <h3 className="text-sm font-semibold text-slate-900 mb-3">Recent Assignments</h3>
+            <div className="space-y-2">
               {patients.slice(0, 3).map(p => (
-                <Link to={`/doctor/patients/${p.id}/records`} key={p.id} className="block bg-teal-50/50 border border-teal-100 rounded-xl p-4 hover:bg-teal-100/50 transition-colors cursor-pointer">
-                  <div className="flex gap-3">
-                    <div className="mt-0.5"><Calendar className="w-4 h-4 text-teal-500" /></div>
+                <Link to={`/doctor/patients/${p.id}/records`} key={p.id} className="block p-3 rounded-lg bg-slate-50 border border-slate-100 hover:bg-primary-50 hover:border-primary-100 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
+                      {p.fullName.substring(0, 2).toUpperCase()}
+                    </div>
                     <div>
-                      <div className="text-sm font-bold text-teal-900 mb-0.5">{p.fullName}</div>
-                      <div className="text-xs font-semibold text-teal-700">Needs initial checkup</div>
+                      <div className="text-sm font-medium text-slate-900">{p.fullName}</div>
+                      <div className="text-xs text-slate-400">View records</div>
                     </div>
                   </div>
                 </Link>
               ))}
               {patients.length === 0 && (
-                <div className="text-sm font-medium text-gray-500 py-4 text-center">No recent assignments.</div>
+                <p className="text-sm text-slate-400 text-center py-4">No assignments yet.</p>
               )}
             </div>
-          </div>
+          </Card>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {stats.map(s => (
-              <div key={s.label} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 group hover:-translate-y-1">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-teal-50 text-teal-600 group-hover:scale-110 transition-transform duration-300">
-                    {s.icon}
-                  </div>
-                </div>
-                <div className="text-2xl font-black text-gray-900">{s.value}</div>
-                <h3 className="text-gray-500 font-bold text-[10px] tracking-widest uppercase mt-1.5">{s.label}</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Card className="p-4">
+              <div className="text-lg font-bold text-slate-900">{patients.length}</div>
+              <div className="flex items-center gap-2 mt-1">
+                <Users className="w-4 h-4 text-slate-400" />
+                <span className="text-xs text-slate-500">Assigned Patients</span>
               </div>
-            ))}
+            </Card>
+            <Card className="p-4">
+              <div className="text-lg font-bold text-slate-900">{new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
+              <div className="flex items-center gap-2 mt-1">
+                <Calendar className="w-4 h-4 text-slate-400" />
+                <span className="text-xs text-slate-500">Today</span>
+              </div>
+            </Card>
           </div>
         </div>
 
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
-            <div className="p-6 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
-              <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
-                <Users className="w-5 h-5 text-teal-600" />
-                Patient Roster
-              </h2>
-              <div className="relative w-full sm:w-64">
-                <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
+        <div className="lg:col-span-2">
+          <Card>
+            <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <h2 className="text-sm font-semibold text-slate-900">Patient Roster</h2>
+              <div className="relative w-full sm:w-60">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Search patients..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all shadow-sm"
+                  className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                 />
               </div>
             </div>
-
-            <div className="p-0 overflow-x-auto flex-1">
-              {filteredPatients.length === 0 ? (
-                <div className="p-12 text-center flex flex-col items-center justify-center h-full">
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <UserX className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <div className="text-gray-900 font-bold text-lg mb-1">
-                    {search ? 'No patients match your search' : 'No patients assigned'}
-                  </div>
-                  <div className="text-gray-500 text-sm font-medium">
-                    {search ? 'Try a different name or email.' : 'Contact administration to receive your patient roster.'}
-                  </div>
-                </div>
-              ) : (
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-white text-gray-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
-                    <tr><th className="px-6 py-4">Patient Profile</th><th className="px-6 py-4">Contact</th><th className="px-6 py-4 text-right">Action</th></tr>
+            {filteredPatients.length === 0 ? (
+              <EmptyState
+                icon={<Users className="w-8 h-8" />}
+                title={search ? 'No patients match your search' : 'No patients assigned'}
+                description={search ? 'Try a different name or email.' : 'Contact administration to receive your patient roster.'}
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Patient</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
+                      <th className="px-5 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Action</th>
+                    </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50 font-medium">
+                  <tbody className="divide-y divide-slate-50">
                     {filteredPatients.map(p => (
-                      <tr key={p.id} className="hover:bg-teal-50/30 transition-colors group">
-                        <td className="px-6 py-4">
+                      <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-black text-xs shadow-sm">
+                            <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold">
                               {p.fullName.substring(0, 2).toUpperCase()}
                             </div>
-                            <div className="text-gray-900 font-bold">{p.fullName}</div>
+                            <span className="text-slate-900 font-medium">{p.fullName}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-gray-500 text-xs font-semibold">{p.email}</td>
-                        <td className="px-6 py-4 text-right">
-                          <Link to={`/doctor/patients/${p.id}/records`} className="inline-block px-4 py-2 bg-white border border-slate-200 text-gray-700 hover:bg-teal-50 hover:border-teal-200 hover:text-teal-700 rounded-lg text-xs font-bold transition-all shadow-sm">
-                            View File
+                        <td className="px-5 py-3.5 text-slate-500">{p.email}</td>
+                        <td className="px-5 py-3.5 text-right">
+                          <Link to={`/doctor/patients/${p.id}/records`}>
+                            <Button variant="secondary" size="sm">View Records</Button>
                           </Link>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              )}
-            </div>
-          </div>
+              </div>
+            )}
+          </Card>
         </div>
       </div>
     </div>

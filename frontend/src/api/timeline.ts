@@ -4,8 +4,8 @@ export interface TimelineEvent {
   id: string;
   title: string;
   description: string;
-  date: string;
-  type: 'appointment' | 'record' | 'other';
+  eventDate: string;
+  eventType: string;
 }
 
 export const timelineAPI = {

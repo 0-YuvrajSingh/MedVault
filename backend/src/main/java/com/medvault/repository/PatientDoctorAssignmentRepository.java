@@ -11,4 +11,5 @@ public interface PatientDoctorAssignmentRepository extends JpaRepository<Patient
     boolean existsByPatientAndDoctor(User patient, User doctor);
     java.util.List<PatientDoctorAssignment> findAllByDoctorId(UUID doctorId);
     java.util.Optional<PatientDoctorAssignment> findByPatientIdAndDoctorId(UUID patientId, UUID doctorId);
+    java.util.List<PatientDoctorAssignment> findByPatient_Id(UUID patientId);
 }

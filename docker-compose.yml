@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15-alpine
@@ -28,13 +26,13 @@ services:
       - SPRING_DATASOURCE_USERNAME=medvault_user
       - SPRING_DATASOURCE_PASSWORD=medvault_password
       - SPRING_PROFILES_ACTIVE=docker
-      - JWT_SECRET=${JWT_SECRET:-YourSuperSecretKeyForJWT123!}
+      - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION=1800000
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
       interval: 10s
       timeout: 5s
       retries: 3

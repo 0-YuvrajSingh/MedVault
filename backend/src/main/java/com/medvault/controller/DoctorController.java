@@ -4,6 +4,7 @@ import com.medvault.dto.CreateRecordRequest;
 import com.medvault.dto.MedicalRecordResponse;
 import com.medvault.dto.UserResponse;
 import com.medvault.service.DoctorService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -47,7 +48,7 @@ public class DoctorController {
     }
 
     @PostMapping("/patients/{patientId}/records")
-    public ResponseEntity<MedicalRecordResponse> createRecord(@PathVariable UUID patientId, @RequestBody CreateRecordRequest request, Principal principal) {
+    public ResponseEntity<MedicalRecordResponse> createRecord(@PathVariable UUID patientId, @Valid @RequestBody CreateRecordRequest request, Principal principal) {
         UUID doctorId = UUID.fromString(principal.getName());
         return ResponseEntity.ok(doctorService.createRecord(doctorId, patientId, request));
     }

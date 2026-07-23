@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/common/Logo';
 import Footer from '../components/common/Footer';
-import { LayoutDashboard, Users, UserCog, ClipboardList, Shield, FileText, LogOut, Menu, X, Bell, ChevronDown, Settings, ChevronLeft, ChevronRight, Search, Activity, HeartPulse, Clock } from 'lucide-react';
+import { LayoutDashboard, Users, UserCog, ClipboardList, Shield, FileText, LogOut, Menu, X, Bell, ChevronDown, Settings, Activity, HeartPulse, Clock, Search } from 'lucide-react';
 
 interface SidebarItem {
   to: string;
@@ -23,7 +24,7 @@ const adminItems: SidebarItem[] = [
 
 const doctorItems: SidebarItem[] = [
   { to: '/doctor', label: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
-  { to: '/doctor/patients', label: 'Assigned Patients', icon: <Users className="w-5 h-5" /> },
+  { to: '/doctor/patients', label: 'Patients', icon: <Users className="w-5 h-5" /> },
   { to: '/doctor/records', label: 'Records', icon: <FileText className="w-5 h-5" /> },
   { to: '/doctor/reviews', label: 'Reviews', icon: <ClipboardList className="w-5 h-5" /> },
   { to: '/doctor/timeline', label: 'Timeline', icon: <Clock className="w-5 h-5" /> },
@@ -47,25 +48,17 @@ function getSidebarItems(role: string | null): SidebarItem[] {
   return [];
 }
 
-const roleTokens = {
-  ROLE_ADMIN: { color: '#0369A1', tint: '#EFF6FF', text: '#0F4C81', label: 'Admin Portal' },
-  ROLE_DOCTOR: { color: '#0D9488', tint: '#CCFBF1', text: '#0F766E', label: 'Doctor Portal' },
-  ROLE_PATIENT: { color: '#059669', tint: '#ECFDF5', text: '#047857', label: 'Patient Portal' },
-};
-
 const DashboardLayout: React.FC = () => {
   const { role, logout, fullName } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
   const profileRef = useRef<HTMLDivElement>(null);
   const items = getSidebarItems(role);
-  const tokens = roleTokens[role as keyof typeof roleTokens] ?? roleTokens.ROLE_PATIENT;
+  const themeClass = role === 'ROLE_ADMIN' ? 'theme-admin' : role === 'ROLE_DOCTOR' ? 'theme-doctor' : 'theme-patient';
 
-  // Handle clicking outside profile dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -81,107 +74,67 @@ const DashboardLayout: React.FC = () => {
     navigate('/login');
   };
 
-  // Compute breadcrumbs
-  const pathSegments = location.pathname.split('/').filter(Boolean);
-  const breadcrumbs = pathSegments.map((segment, index) => {
-    const url = `/${pathSegments.slice(0, index + 1).join('/')}`;
-    const label = segment.charAt(0).toUpperCase() + segment.slice(1);
-    const isLast = index === pathSegments.length - 1;
-    return (
-      <React.Fragment key={url}>
-        {index > 0 && <span className="text-gray-400 font-medium">/</span>}
-        {isLast ? (
-          <span className="text-gray-900 font-bold">{label}</span>
-        ) : (
-          <Link to={url} className="text-gray-500 font-medium hover:text-[var(--role-color)] transition-colors">{label}</Link>
-        )}
-      </React.Fragment>
-    );
-  });
+  const isActive = (path: string) => {
+    if (path === location.pathname) return true;
+    if (path !== '/' && location.pathname.startsWith(path) && path.split('/').length > 2) return true;
+    return false;
+  };
 
   return (
-    <div className="min-h-screen flex bg-surface" style={{
-      '--role-color': tokens.color,
-      '--role-tint': tokens.tint,
-      '--role-text': tokens.text,
-    } as React.CSSProperties}>
-
+    <div className={`${themeClass} min-h-screen flex bg-slate-50`}>
       {/* Sidebar - Desktop */}
-      <aside className={`hidden lg:flex lg:flex-col bg-white border-r border-border transition-all duration-300 relative ${isCollapsed ? 'w-20' : 'w-64'}`}>
-        <div className="h-16 flex items-center justify-center border-b border-border">
-          {isCollapsed ? (
-            <div className="w-10 h-10 bg-[var(--role-color)] rounded-xl flex items-center justify-center text-white font-black text-xl shadow-md">
-              M
-            </div>
-          ) : (
-            <div className="px-6 w-full flex items-center">
-              <Logo />
-            </div>
-          )}
+      <aside className="hidden lg:flex lg:flex-col w-64 bg-white border-r border-slate-200">
+        <div className="h-16 flex items-center px-6 border-b border-slate-100">
+          <Logo />
         </div>
 
-        <div className="h-1 w-full" style={{ backgroundColor: 'var(--role-color)' }} />
-
-        <div className="flex-1 py-4 flex flex-col overflow-y-auto">
-          {!isCollapsed && (
-            <div className="mb-4 px-6">
-              <span className="text-xs font-bold uppercase tracking-wider text-text-muted">{tokens.label}</span>
-            </div>
-          )}
-
-          <nav className="space-y-1 px-3">
-            {items.map((item) => {
-              const isActive = location.pathname === item.to || (location.pathname.startsWith(item.to) && item.to !== `/${role?.split('_')[1]?.toLowerCase()}`);
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={`nav-item ${isActive ? 'nav-item--active' : ''} ${isCollapsed ? 'justify-center px-0' : ''}`}
-                  title={isCollapsed ? item.label : undefined}
-                >
-                  <div className={`${isActive ? 'text-[var(--role-color)]' : 'text-gray-500'}`}>
-                    {item.icon}
-                  </div>
-                  {!isCollapsed && <span>{item.label}</span>}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Collapse Toggle */}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-20 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-300 shadow-sm z-10 transition-colors"
-        >
-          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
+        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+          {items.map((item) => {
+            const active = isActive(item.to);
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 ${
+                  active
+                    ? 'bg-primary-50 text-primary-700'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <span className={active ? 'text-primary-600' : 'text-slate-400'}>{item.icon}</span>
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
       </aside>
 
-      {/* Mobile sidebar overlay (unchanged logic, just styled nav items) */}
+      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+          <div className="fixed inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
           <div className="relative w-64 bg-white flex flex-col animate-slide-in-right">
-            <div className="h-16 flex items-center justify-between px-6 border-b border-border">
+            <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100">
               <Logo />
-              <button onClick={() => setSidebarOpen(false)} className="p-1 text-text-muted hover:text-text-primary">
+              <button onClick={() => setSidebarOpen(false)} className="p-1 text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <nav className="flex-1 py-4 px-3 space-y-1">
               {items.map((item) => {
-                const isActive = location.pathname === item.to || (location.pathname.startsWith(item.to) && item.to !== `/${role?.split('_')[1]?.toLowerCase()}`);
+                const active = isActive(item.to);
                 return (
                   <Link
                     key={item.to}
                     to={item.to}
                     onClick={() => setSidebarOpen(false)}
-                    className={`nav-item ${isActive ? 'nav-item--active' : ''}`}
+                    className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 ${
+                      active
+                        ? 'bg-primary-50 text-primary-700'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
                   >
-                    <div className={`${isActive ? 'text-[var(--role-color)]' : 'text-gray-500'}`}>
-                      {item.icon}
-                    </div>
+                    <span className={active ? 'text-primary-600' : 'text-slate-400'}>{item.icon}</span>
                     {item.label}
                   </Link>
                 );
@@ -194,56 +147,51 @@ const DashboardLayout: React.FC = () => {
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 bg-white border-b border-border flex items-center justify-between px-6 sticky top-0 z-40">
-          <div className="flex items-center gap-4">
-            <button className="lg:hidden p-2 text-text-secondary hover:text-text-primary" onClick={() => setSidebarOpen(true)}>
-              <Menu className="w-6 h-6" />
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40">
+          <div className="flex items-center gap-3">
+            <button className="lg:hidden p-2 text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100" onClick={() => setSidebarOpen(true)}>
+              <Menu className="w-5 h-5" />
             </button>
-            <div className="hidden lg:flex items-center gap-2 text-sm">
-              {breadcrumbs}
-            </div>
           </div>
 
-          <div className="flex items-center gap-5">
-            <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
-            </button>
-
-            <span className="hidden sm:inline-flex badge-role">
-              {tokens.label}
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+              {role?.replace('ROLE_', '')}
             </span>
 
             <div className="relative" ref={profileRef}>
               <button
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2 p-1 pl-2 pr-1 rounded-full border border-slate-200 hover:border border-slate-200 hover:bg-gray-50 transition-all focus:outline-none"
+                className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 transition-colors"
               >
-                <span className="text-sm font-bold text-gray-700 hidden sm:block ml-1">
+                <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-sm font-semibold">
+                  {fullName?.[0] ?? 'U'}
+                </div>
+                <span className="text-sm font-medium text-slate-700 hidden sm:block">
                   {fullName?.split(' ')[0]}
                 </span>
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold avatar-accent shadow-sm border border-[var(--role-color)] bg-white">
-                  {fullName?.[0] ?? role?.[5] ?? 'U'}
-                </div>
-                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* Profile Dropdown */}
               {profileOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 animate-fade-in origin-top-right">
-                  <div className="px-4 py-3 border-b border-gray-50 mb-2">
-                    <p className="text-sm font-bold text-gray-900 truncate">{fullName}</p>
-                    <p className="text-xs font-medium text-gray-500 truncate">{role?.replace('ROLE_', '')}</p>
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 animate-scale-in origin-top-right z-50">
+                  <div className="px-4 py-3 border-b border-slate-100 mb-1">
+                    <p className="text-sm font-semibold text-slate-900 truncate">{fullName}</p>
+                    <p className="text-xs text-slate-500">{role?.replace('ROLE_', '')}</p>
                   </div>
-
-                  <button className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-not-allowed opacity-70">
+                  <button
+                    onClick={() => { navigate(
+                      role === 'ROLE_ADMIN' ? '/admin/settings' :
+                      role === 'ROLE_DOCTOR' ? '/doctor/settings' :
+                      '/patient/settings'
+                    ); setProfileOpen(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
                     <Settings className="w-4 h-4" />
-                    Account Settings
+                    Settings
                   </button>
-
-                  <div className="h-px bg-gray-50 my-2"></div>
-
-                  <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-sm font-bold text-danger-600 hover:bg-danger-50 transition-colors">
+                  <div className="h-px bg-slate-100 my-1" />
+                  <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
                     <LogOut className="w-4 h-4" />
                     Sign out
                   </button>
@@ -254,12 +202,18 @@ const DashboardLayout: React.FC = () => {
         </header>
 
         {/* Content */}
-        <main className="flex-1 p-6 overflow-auto flex flex-col relative bg-gray-50/30">
-          <div className="flex-1 max-w-7xl mx-auto w-full">
+        <motion.main
+          key={location.pathname}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+          className="flex-1 p-4 lg:p-6 overflow-auto"
+        >
+          <div className="max-w-7xl mx-auto page-transition">
             <Outlet />
           </div>
-          <Footer variant="dashboard" />
-        </main>
+        </motion.main>
+        <Footer variant="dashboard" />
       </div>
     </div>
   );

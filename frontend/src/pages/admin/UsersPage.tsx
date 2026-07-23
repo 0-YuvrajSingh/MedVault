@@ -2,68 +2,98 @@ import React, { useState } from 'react';
 import { useUsers } from '../../hooks/useAdminQuery';
 import type { UserResponse } from '../../types';
 import { DataTable } from '../../components/ui/DataTable';
+import type { Column } from '../../components/ui/DataTable';
+import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+const PAGE_SIZE = 10;
 
 const UsersPage: React.FC = () => {
   const { data: users = [], isLoading } = useUsers();
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
 
   const filtered = users.filter(u =>
     u.fullName.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const columns = [
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages - 1);
+  const paged = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+
+  const columns: Column<UserResponse>[] = [
     {
       header: 'Name',
-      accessor: (u: UserResponse) => <span className="font-semibold text-slate-800">{u.fullName}</span>,
+      accessor: (u) => <span className="font-medium text-slate-900">{u.fullName}</span>,
     },
     {
       header: 'Email',
-      accessor: (u: UserResponse) => <span className="text-slate-500">{u.email}</span>,
+      accessor: (u) => <span className="text-slate-500">{u.email}</span>,
     },
     {
       header: 'Role',
-      accessor: (u: UserResponse) => (
-        <span className="px-2 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-md uppercase tracking-wider">
-          {u.role.replace('ROLE_', '')}
-        </span>
-      ),
+      accessor: (u) => <Badge variant="neutral">{u.role.replace('ROLE_', '')}</Badge>,
     },
     {
       header: 'Status',
-      accessor: (u: UserResponse) => (
-        u.active ? <span className="text-green-600 bg-green-50 px-2 py-1 rounded-md text-xs font-bold">Active</span>
-                 : <span className="text-red-600 bg-red-50 px-2 py-1 rounded-md text-xs font-bold">Inactive</span>
-      ),
+      accessor: (u) => u.active ? <Badge variant="success" dot>Active</Badge> : <Badge variant="danger" dot>Inactive</Badge>,
     },
     {
-      header: 'Actions',
-      accessor: (u: UserResponse) => (
-        u.role === 'ROLE_PATIENT' ? (
-          <Link to={`/admin/patients/${u.id}/records`} className="text-blue-600 hover:text-blue-800 text-sm font-semibold hover:underline">
-            View Records
-          </Link>
-        ) : null
-      ),
+      header: '',
+      accessor: (u) => u.role === 'ROLE_PATIENT' ? (
+        <Link to={`/admin/patients/${u.id}/records`}>
+          <Button variant="ghost" size="sm">View Records</Button>
+        </Link>
+      ) : null,
     },
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 pb-12">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Users</h1>
-          <p className="text-sm text-slate-500 mt-1">{users.length} total active and inactive accounts</p>
+          <p className="text-sm text-slate-500 mt-1">{users.length} total accounts</p>
         </div>
         <input
           type="text"
-          className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 w-full sm:w-60"
           placeholder="Search users..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); setPage(0); }}
         />
       </div>
-      <DataTable columns={columns} data={filtered} keyExtractor={(u) => u.id} loading={isLoading} />
+
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <DataTable columns={columns} data={paged} keyExtractor={(u) => u.id} loading={isLoading} emptyMessage="No users found." />
+      </div>
+
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+          <span className="text-sm text-slate-500">
+            Showing {(safePage * PAGE_SIZE) + 1}–{Math.min((safePage + 1) * PAGE_SIZE, filtered.length)} of {filtered.length}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" size="sm" disabled={safePage === 0} onClick={() => setPage(p => Math.max(0, p - 1))}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => setPage(i)}
+                className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${i === safePage ? 'bg-primary-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <Button variant="secondary" size="sm" disabled={safePage >= totalPages - 1} onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

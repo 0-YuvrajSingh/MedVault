@@ -1,114 +1,134 @@
 import React from 'react';
 import { usePatientRecords } from '../../hooks/usePatientQuery';
-import { FileText, Activity, UserCircle, Archive } from 'lucide-react';
-import { DashboardSkeleton } from '../../components/common/Skeleton';
-import { formatRelativeTime } from '../../utils/date';
+import { FileText, Activity, UserCircle, ArrowRight } from 'lucide-react';
+import { DashboardSkeleton } from '../../components/ui/Skeleton';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { formatRecordTimestamp } from '../../utils/date';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 
 const PatientDashboard: React.FC = () => {
-  const { data, isLoading } = usePatientRecords(0);
+  const { data, isLoading, isError } = usePatientRecords(0);
   const { fullName } = useAuth();
 
   const records = data?.content ?? [];
   const latest = records[0];
 
-  const stats = [
-    { label: 'Medical Records', value: records.length, icon: <FileText className="w-5 h-5" /> },
-    { label: 'Latest Diagnosis', value: latest?.diagnosis || '—', icon: <Activity className="w-5 h-5" /> },
-    { label: 'Primary Doctor', value: latest?.doctorName || '—', icon: <UserCircle className="w-5 h-5" /> },
-  ];
-
   if (isLoading) return <DashboardSkeleton />;
 
-  return (
-    <div className="space-y-8 animate-fade-in pb-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  if (isError) {
+    return (
+      <div className="space-y-8 pb-12">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Hello, {fullName?.split(' ')[0] || ''}</h1>
-          <p className="text-sm text-gray-500 mt-1">Here is an overview of your medical records and care team.</p>
+          <h1 className="text-2xl font-bold text-slate-900">Hello, {fullName?.split(' ')[0] || ''}</h1>
+          <p className="text-sm text-slate-500 mt-1">Here is an overview of your medical records and care team.</p>
         </div>
+        <Card className="p-6">
+          <div className="text-center py-8">
+            <div className="w-12 h-12 bg-danger-50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Activity className="w-6 h-6 text-danger-500" />
+            </div>
+            <h3 className="text-sm font-semibold text-slate-900 mb-1">Failed to load dashboard</h3>
+            <p className="text-sm text-slate-500 mb-4">Unable to load your medical data. Please try again later.</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 pb-12">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Hello, {fullName?.split(' ')[0] || ''}</h1>
+        <p className="text-sm text-slate-500 mt-1">Here is an overview of your medical records and care team.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-6">
-          <div className="grid grid-cols-1 gap-4">
-            {stats.map(s => (
-              <div key={s.label} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 group hover:-translate-y-1">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-emerald-50 text-emerald-600 group-hover:scale-110 transition-transform duration-300 shrink-0">
-                    {s.icon}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-gray-500 font-bold text-[10px] tracking-widest uppercase mb-1">{s.label}</h3>
-                    <div className="text-xl font-black text-gray-900 truncate">{typeof s.value === 'number' ? s.value : s.value}</div>
-                  </div>
-                </div>
+      <div className="grid grid-cols-1 2xl:grid-cols-3 gap-6">
+        <div className="2xl:col-span-1 min-w-0 space-y-4">
+          <Card className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
+                <FileText className="w-5 h-5" />
               </div>
-            ))}
-          </div>
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Medical Records</p>
+                <p className="text-xl font-bold text-slate-900">{records.length}</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
+                <Activity className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Latest Diagnosis</p>
+                <p className="text-base font-semibold text-slate-900 truncate">{latest?.diagnosis || '—'}</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <UserCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Primary Doctor</p>
+                <p className="text-base font-semibold text-slate-900 truncate">{latest?.doctorName || '—'}</p>
+              </div>
+            </div>
+          </Card>
 
-          <div className="bg-emerald-50 rounded-xl p-6 border border-emerald-100 shadow-sm">
-            <h3 className="text-emerald-900 font-extrabold text-lg mb-2 flex items-center gap-2">
-              <Archive className="w-5 h-5 text-emerald-600" />
-              Full Medical History
-            </h3>
-            <p className="text-emerald-700 text-sm font-medium mb-4">Access and review all of your securely encrypted medical records.</p>
-            <Link to="/patient/records" className="block text-center w-full py-2.5 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+          <Link to="/patient/records" className="block mt-2">
+            <Button variant="secondary" className="w-full" icon={<ArrowRight className="w-4 h-4" />}>
               View All Records
-            </Link>
-          </div>
+            </Button>
+          </Link>
         </div>
 
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
-            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-emerald-600" />
-                Recent Medical History
-              </h2>
-              <Link to="/patient/records" className="text-xs font-bold uppercase tracking-wider text-emerald-600 hover:text-emerald-700 transition-colors">
-                View All
-              </Link>
+        <div className="2xl:col-span-2 min-w-0">
+          <Card>
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-900">Recent Medical Records</h2>
+              {records.length > 0 && (
+                <Link to="/patient/records" className="text-xs font-medium text-primary-600 hover:text-primary-700">
+                  View all
+                </Link>
+              )}
             </div>
-
-            <div className="p-0 overflow-x-auto flex-1">
-              {records.length === 0 ? (
-                <div className="p-12 text-center flex flex-col items-center justify-center h-full">
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Activity className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <div className="text-gray-900 font-bold text-lg mb-1">No records found</div>
-                  <div className="text-gray-500 text-sm font-medium">Your medical history is currently empty.</div>
-                </div>
-              ) : (
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-white text-gray-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
-                    <tr><th className="px-6 py-4">Date</th><th className="px-6 py-4">Doctor</th><th className="px-6 py-4">Diagnosis</th></tr>
+            {records.length === 0 ? (
+              <EmptyState
+                icon={<Activity className="w-8 h-8" />}
+                title="No records found"
+                description="Your medical history is currently empty."
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[36rem] text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Doctor</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Diagnosis</th>
+                    </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50 font-medium">
+                  <tbody className="divide-y divide-slate-50">
                     {records.slice(0, 5).map(r => (
-                      <tr key={r.id} className="hover:bg-emerald-50/30 transition-colors group">
-                        <td className="px-6 py-4">
-                          <div className="text-gray-900 font-bold mb-1">{formatRelativeTime(r.createdAt)}</div>
-                          <div className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">Record</div>
+                      <tr key={r.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <span className="text-slate-900 font-medium"><time dateTime={r.createdAt} title={r.createdAt}>{formatRecordTimestamp(r.createdAt)}</time></span>
                         </td>
-                        <td className="px-6 py-4 text-gray-900 font-bold">
-                          <div className="flex items-center gap-2">
-                            <UserCircle className="w-4 h-4 text-emerald-500" />
-                            {r.doctorName}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-gray-600 font-medium max-w-xs truncate">
-                          {r.diagnosis}
-                        </td>
+                        <td className="px-5 py-3.5 text-slate-600">{r.doctorName}</td>
+                        <td className="px-5 py-3.5 text-slate-700 max-w-xs truncate">{r.diagnosis}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              )}
-            </div>
-          </div>
+              </div>
+            )}
+          </Card>
         </div>
       </div>
     </div>

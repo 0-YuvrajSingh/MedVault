@@ -3,6 +3,7 @@ package com.medvault.controller;
 import com.medvault.dto.ChangePasswordRequest;
 import com.medvault.dto.NotificationPreferencesRequest;
 import com.medvault.dto.UpdateProfileRequest;
+import com.medvault.dto.UserProfileResponse;
 import com.medvault.entity.User;
 import com.medvault.service.UserProfileService;
 import jakarta.validation.Valid;
@@ -23,17 +24,17 @@ public class UserProfileController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<User> getProfile(Authentication authentication) {
+    public ResponseEntity<UserProfileResponse> getProfile(Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(userProfileService.getProfile(userId));
+        return ResponseEntity.ok(toResponse(userProfileService.getProfile(userId)));
     }
 
     @PatchMapping("/profile")
-    public ResponseEntity<User> updateProfile(
+    public ResponseEntity<UserProfileResponse> updateProfile(
             @Valid @RequestBody UpdateProfileRequest request,
             Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(userProfileService.updateProfile(userId, request));
+        return ResponseEntity.ok(toResponse(userProfileService.updateProfile(userId, request)));
     }
 
     @PostMapping("/change-password")
@@ -46,10 +47,23 @@ public class UserProfileController {
     }
 
     @PatchMapping("/notifications")
-    public ResponseEntity<User> updateNotificationPreferences(
+    public ResponseEntity<UserProfileResponse> updateNotificationPreferences(
             @RequestBody NotificationPreferencesRequest request,
             Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(userProfileService.updateNotificationPreferences(userId, request));
+        return ResponseEntity.ok(toResponse(userProfileService.updateNotificationPreferences(userId, request)));
+    }
+
+    private UserProfileResponse toResponse(User user) {
+        return UserProfileResponse.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .active(user.isActive())
+                .profilePhoto(user.getProfilePhoto())
+                .emailNotifications(user.isEmailNotifications())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 }

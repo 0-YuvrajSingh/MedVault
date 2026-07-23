@@ -14,3 +14,7 @@ spring:
 jwt:
   secret: YourSuperSecretKeyForJwtAuthenticationWhichMustBeLongEnough123!
   expiration: 86400000
+
+rate-limiting:
+  login:
+    max-requests-per-minute: 100
