@@ -28,7 +28,7 @@ server:
   port: 8080
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:dev-secret-key-at-least-32-characters-long-for-hmac-sha256}
   expiration: ${JWT_EXPIRATION:1800000} # 30 minutes in ms
 
 logging:

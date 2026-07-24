@@ -97,14 +97,14 @@ These screenshots cover the main user journeys. The workflow-specific views make
 
 ## API quick start
 
-The API base URL is `http://localhost:8080/api`. Explore the complete, interactive contract at [Swagger UI](http://localhost:8080/swagger-ui.html) after starting the backend.
+The API base URL is `http://localhost:8080/api`. Explore the complete, interactive contract at [Swagger UI](http://localhost:8080/swagger-ui/index.html) after starting the backend.
 
 ### 1. Authenticate
 
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"doctor@example.com","password":"your-password"}'
+  -d '{"email":"doctor@medvault.com","password":"password123"}'
 ```
 
 The response contains the JWT and the authenticated user's role:
@@ -114,7 +114,7 @@ The response contains the JWT and the authenticated user's role:
   "token": "eyJhbGciOi...",
   "userId": "9b5f7d39-4a09-43ca-a877-d0ddc094d992",
   "role": "DOCTOR",
-  "fullName": "Dr. Ada Lovelace"
+  "fullName": "Dr. John Doe"
 }
 ```
 
@@ -165,7 +165,7 @@ Useful endpoints at a glance:
 
 ### Docker (recommended)
 
-1. Copy `.env.example` to `.env.docker` and replace `JWT_SECRET` with a long, unique secret.
+1. Copy `.env.example` to `.env` and replace `JWT_SECRET` with a long, unique secret (Docker Compose auto-loads `.env`).
 2. Start the stack:
 
    ```bash
@@ -174,23 +174,83 @@ Useful endpoints at a glance:
 
 3. Open the frontend at `http://localhost:3000`; the API runs at `http://localhost:8080`.
 
-### Local development
+### Local development (H2 in-memory, no PostgreSQL needed)
 
-1. Start PostgreSQL and create a `medvault` database.
-2. Start the backend:
+1. Start the backend with the `local` profile (uses an embedded H2 database with seed data):
 
    ```bash
    cd backend
-   mvn spring-boot:run -Dspring-boot.run.profiles=dev
+   mvn spring-boot:run -Dspring-boot.run.profiles=local
    ```
 
-3. Start the frontend in another terminal:
+2. Start the frontend in another terminal:
 
    ```bash
    cd frontend
    npm install
    npm run dev
    ```
+
+3. Open `http://localhost:5173`; the API is proxied through Vite.
+
+### Local development with PostgreSQL
+
+1. Start PostgreSQL and create a `medvault` database.
+2. Start the backend (uses the default `dev` profile):
+
+   ```bash
+   cd backend
+   mvn spring-boot:run
+   ```
+
+3. Start the frontend:
+
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+## Deploy to production
+
+### Vercel (frontend) + Render (backend) + Neon (PostgreSQL)
+
+#### 1. Set up Neon (database)
+
+1. Create a free [Neon](https://neon.tech) project and copy the PostgreSQL connection string.
+2. The backend uses Flyway migrations — tables are created automatically on first startup.
+
+#### 2. Deploy the backend on Render
+
+1. Create a new **Web Service** on [Render](https://render.com) and connect your repository.
+2. Use the following settings:
+   - **Root Directory:** `backend`
+   - **Build Command:** `./mvnw clean package -DskipTests`
+   - **Start Command:** `java -jar target/*.jar --spring.profiles.active=prod`
+3. Add the following environment variables in Render:
+
+   | Variable | Value |
+   | --- | --- |
+   | `SPRING_PROFILES_ACTIVE` | `prod` |
+   | `SPRING_DATASOURCE_URL` | Your Neon connection string (e.g., `jdbc:postgresql://ep-xxx.us-east-2.aws.neon.tech/medvault?sslmode=require`) |
+   | `SPRING_DATASOURCE_USERNAME` | Neon database username |
+   | `SPRING_DATASOURCE_PASSWORD` | Neon database password |
+   | `JWT_SECRET` | A long, random secret key (at least 32 characters) |
+   | `JWT_EXPIRATION` | `1800000` (30 minutes) |
+
+#### 3. Deploy the frontend on Vercel
+
+1. Import your repository into [Vercel](https://vercel.com).
+2. Vercel auto-detects Vite — no build configuration needed.
+3. Add the environment variable:
+
+   | Variable | Value |
+   | --- | --- |
+   | `VITE_API_BASE_URL` | `https://your-render-backend.onrender.com/api` |
+
+4. Deploy — Vercel's `vercel.json` (included in the project) handles SPA routing automatically.
+
+> **CORS:** The backend is configured to allow requests from any origin (`allowedOriginPatterns("*")`), so your Vercel domain is automatically permitted. For stricter security, update `CorsConfig.java` with a domain whitelist.
 
 ## Test
 

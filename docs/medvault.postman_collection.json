@@ -21,7 +21,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"fullName\": \"Jane Doe\",\n    \"email\": \"jane@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"ROLE_PATIENT\"\n}"
+              "raw": "{\n    \"fullName\": \"New Patient\",\n    \"email\": \"patient@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"ROLE_PATIENT\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
@@ -49,7 +49,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"jane@example.com\",\n    \"password\": \"password123\"\n}"
+              "raw": "{\n    \"email\": \"patient@medvault.com\",\n    \"password\": \"password123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
