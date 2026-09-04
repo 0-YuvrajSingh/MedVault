@@ -255,7 +255,117 @@ cd backend
 
 ---
 
-## 10. Scope Boundaries & Future Roadmap
+## 10. Entity-Relationship Diagram (ERD)
+
+```mermaid
+erDiagram
+    USERS ||--o{ PATIENT_DOCTOR_ASSIGNMENTS : "patient"
+    USERS ||--o{ PATIENT_DOCTOR_ASSIGNMENTS : "doctor"
+    USERS ||--o{ MEDICAL_RECORDS : "patient"
+    USERS ||--o{ MEDICAL_RECORDS : "doctor"
+    USERS ||--o{ NOTIFICATIONS : "user"
+    USERS ||--o{ TIMELINE_EVENTS : "user"
+    USERS ||--o{ REVIEWS : "patient"
+    USERS ||--o{ REVIEWS : "doctor"
+    USERS ||--o{ PLATFORM_AUDIT_LOG : "actor"
+    MEDICAL_RECORDS ||--o{ AUDIT_LOG : "record"
+    USERS ||--o{ AUDIT_LOG : "performed_by"
+
+    USERS {
+        uuid id PK
+        varchar full_name
+        varchar email UK
+        varchar password_hash
+        varchar role
+        boolean is_active
+        timestamp created_at
+    }
+
+    PATIENT_DOCTOR_ASSIGNMENTS {
+        uuid id PK
+        uuid patient_id FK
+        uuid doctor_id FK
+        boolean is_active
+        timestamp assigned_at
+    }
+
+    MEDICAL_RECORDS {
+        uuid id PK
+        uuid patient_id FK
+        uuid doctor_id FK
+        varchar diagnosis
+        varchar prescription
+        text notes
+        date record_date
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    AUDIT_LOG {
+        uuid id PK
+        uuid record_id FK
+        varchar action
+        uuid performed_by FK
+        text detail_snapshot
+        timestamp performed_at
+    }
+
+    PLATFORM_AUDIT_LOG {
+        uuid id PK
+        uuid actor_id FK
+        varchar action
+        varchar entity_type
+        uuid entity_id
+        text detail
+        timestamp performed_at
+    }
+
+    REVIEWS {
+        uuid id PK
+        uuid patient_id FK
+        uuid doctor_id FK
+        int rating
+        text comment
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    NOTIFICATIONS {
+        uuid id PK
+        uuid user_id FK
+        varchar title
+        text message
+        varchar type
+        boolean is_read
+        timestamp created_at
+    }
+
+    TIMELINE_EVENTS {
+        uuid id PK
+        uuid user_id FK
+        varchar title
+        text description
+        varchar event_type
+        date event_date
+        timestamp created_at
+    }
+```
+
+---
+
+## 11. Application Screenshots
+
+| Portal / View | Screenshot |
+| --- | --- |
+| **Landing Page** | ![Homepage](screenshots/homepage.png) |
+| **Authentication** | ![Login](screenshots/login.png) |
+| **Admin Portal** | ![Admin](screenshots/admin.png) |
+| **Doctor Portal** | ![Doctor](screenshots/doctor.png) |
+| **Patient Portal** | ![Patient](screenshots/patient.png) |
+
+---
+
+## 12. Scope Boundaries & Future Roadmap
 
 ### Explicitly Out of Scope in V1:
 - Appointments, doctor scheduling, and calendar views
