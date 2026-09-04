@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRegister } from '../../hooks/useAuthQuery';
-import { Mail, Lock, User, Shield, Stethoscope } from 'lucide-react';
+import { Mail, Lock, User, Shield, Stethoscope, Clock } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
 import { jwtDecode } from 'jwt-decode';
@@ -11,6 +11,7 @@ const RegisterPage: React.FC = () => {
   const [role, setRole] = useState('ROLE_PATIENT');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [pendingApproval, setPendingApproval] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -44,26 +45,57 @@ const RegisterPage: React.FC = () => {
 
     try {
       const res = await registerMutation.mutateAsync({ ...formData, role });
+
       if (role === 'ROLE_DOCTOR') {
-        setSuccess('Registration successful! Your account requires admin approval before you can log in.');
+        // Doctor registration: token is null — show pending approval state
+        // Do NOT call login() and do NOT navigate to dashboard
+        setPendingApproval(true);
+        return;
+      }
+
+      // Patient registration: token should be present
+      const token = res.token;
+      if (token) {
+        login(token, res.fullName);
+        const decoded: any = jwtDecode(token);
+        const r = decoded.role;
+        if (r === 'ROLE_ADMIN') navigate('/admin');
+        else if (r === 'ROLE_DOCTOR') navigate('/doctor');
+        else navigate('/patient');
       } else {
-        const token = res.token;
-        if (token) {
-          login(token, res.fullName);
-          const decoded: any = jwtDecode(token);
-          const r = decoded.role;
-          if (r === 'ROLE_ADMIN') navigate('/admin');
-          else if (r === 'ROLE_DOCTOR') navigate('/doctor');
-          else navigate('/patient');
-        } else {
-          setSuccess('Registration successful! Redirecting to login...');
-          setTimeout(() => navigate('/login'), 2000);
-        }
+        setSuccess(res.message || 'Registration successful! Please log in.');
+        setTimeout(() => navigate('/login'), 2000);
       }
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Registration failed');
     }
   };
+
+  if (pendingApproval) {
+    return (
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 text-center">
+          <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Clock className="w-8 h-8 text-amber-500" />
+          </div>
+          <h1 className="text-xl font-bold text-slate-900 mb-2">Pending Approval</h1>
+          <p className="text-sm text-slate-600 mb-6">
+            Your doctor account has been created and is awaiting administrator approval. You will be able
+            to log in once your account has been approved.
+          </p>
+          <p className="text-xs text-slate-400 mb-6">
+            Please do not attempt to log in until you receive confirmation.
+          </p>
+          <Link
+            to="/login"
+            className="inline-block px-6 py-2.5 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Back to Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-md">
@@ -172,8 +204,9 @@ const RegisterPage: React.FC = () => {
           </div>
 
           {role === 'ROLE_DOCTOR' && (
-            <div className="p-3 bg-warning-50 border border-warning-100 rounded-lg text-xs text-warning-700 font-medium">
-              Doctor accounts require admin approval before login is permitted.
+            <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg text-xs text-amber-700 font-medium">
+              Doctor accounts require administrator approval before login is permitted. You will not
+              receive a login token until your account is approved.
             </div>
           )}
 

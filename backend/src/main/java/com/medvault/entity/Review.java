@@ -3,12 +3,17 @@ package com.medvault.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "reviews")
+@Table(name = "reviews",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_review_patient_doctor",
+                columnNames = {"patient_id", "doctor_id"}
+        ))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,4 +40,8 @@ public class Review {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

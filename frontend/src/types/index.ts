@@ -17,6 +17,7 @@ export interface MedicalRecord {
   patientName?: string;
   doctorId?: string;
   doctorName?: string;
+  recordDate?: string;
   createdAt: string;
 }
 
@@ -34,17 +35,12 @@ export interface UserProfile {
   role: string;
   active: boolean;
   profilePhoto?: string;
-  emailNotifications?: boolean;
   createdAt: string;
 }
 
 export interface ChangePasswordData {
   currentPassword: string;
   newPassword: string;
-}
-
-export interface NotificationPreferences {
-  emailNotifications: boolean;
 }
 
 export interface DoctorInfo {
@@ -71,6 +67,7 @@ export interface AssignmentResponse {
   doctorId: string;
   doctorName: string;
   assignedAt: string;
+  isActive: boolean;
 }
 
 export interface AuditLogEntry {
@@ -78,6 +75,18 @@ export interface AuditLogEntry {
   action: string;
   recordId: string;
   performedByName: string;
+  performedAt: string;
+  detailSnapshot?: string;
+}
+
+export interface PlatformAuditLog {
+  id: string;
+  actorId?: string;
+  actorName: string;
+  action: string;
+  entityType?: string;
+  entityId?: string;
+  detail?: string;
   performedAt: string;
 }
 
@@ -98,4 +107,19 @@ export interface PageResponse<T> {
   totalPages: number;
   last: boolean;
   first: boolean;
+}
+
+export interface ReviewResponse {
+  id: string;
+  doctorId: string;
+  patientId: string;
+  patientName: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+}
+
+export interface CreateReviewData {
+  rating: number;
+  comment?: string;
 }

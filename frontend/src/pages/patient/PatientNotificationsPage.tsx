@@ -82,7 +82,7 @@ const PatientNotificationsPage: React.FC = () => {
         <p>
           {unreadCount > 0
             ? `You have ${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`
-            : 'Updates on your medical records and appointments'}
+            : 'Updates on your medical records and care status'}
         </p>
       </div>
 

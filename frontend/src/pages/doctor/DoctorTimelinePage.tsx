@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from '../../components/ui/Card';
-import { Calendar, Stethoscope, FileText, Clock } from 'lucide-react';
+import { Calendar, UserCheck, RefreshCw, UserMinus, FileText, Star, Clock } from 'lucide-react';
 import { useTimelineEvents } from '../../hooks/useTimelineQuery';
 import type { TimelineEvent } from '../../api/timeline';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -8,9 +8,12 @@ import { Badge } from '../../components/ui/Badge';
 import { DashboardSkeleton } from '../../components/ui/Skeleton';
 
 const eventConfig: Record<string, { icon: React.ReactNode; color: string; badge: 'info' | 'success' | 'warning' | 'neutral' }> = {
-  APPOINTMENT: { icon: <Stethoscope className="w-4 h-4" />, color: 'text-blue-600', badge: 'info' },
+  ASSIGNED: { icon: <UserCheck className="w-4 h-4" />, color: 'text-blue-600', badge: 'info' },
+  REASSIGNED: { icon: <RefreshCw className="w-4 h-4" />, color: 'text-indigo-600', badge: 'info' },
+  UNASSIGNED: { icon: <UserMinus className="w-4 h-4" />, color: 'text-amber-600', badge: 'warning' },
   RECORD_CREATED: { icon: <FileText className="w-4 h-4" />, color: 'text-green-600', badge: 'success' },
   RECORD_UPDATED: { icon: <FileText className="w-4 h-4" />, color: 'text-amber-600', badge: 'warning' },
+  REVIEW_CREATED: { icon: <Star className="w-4 h-4" />, color: 'text-yellow-600', badge: 'success' },
   OTHER: { icon: <Clock className="w-4 h-4" />, color: 'text-slate-600', badge: 'neutral' },
 };
 

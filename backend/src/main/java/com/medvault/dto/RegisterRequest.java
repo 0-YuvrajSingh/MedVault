@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.Set;
+
 @Data
 public class RegisterRequest {
 
@@ -21,4 +23,11 @@ public class RegisterRequest {
 
     @NotBlank(message = "Role is required")
     private String role;
+
+    /** Allowed roles for public self-registration. */
+    private static final Set<String> ALLOWED_ROLES = Set.of("ROLE_PATIENT", "ROLE_DOCTOR");
+
+    public boolean isRoleAllowed() {
+        return role != null && ALLOWED_ROLES.contains(role);
+    }
 }

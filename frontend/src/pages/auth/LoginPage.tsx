@@ -23,6 +23,10 @@ const LoginPage: React.FC = () => {
     setError('');
     try {
       const data = await loginMutation.mutateAsync({ email, password });
+      if (!data.token) {
+        setError(data.message || 'Account approval required before login.');
+        return;
+      }
       login(data.token, data.fullName);
       const decoded: any = jwtDecode(data.token);
       const r = decoded.role;

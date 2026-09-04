@@ -1,14 +1,30 @@
 spring:
   datasource:
     url: jdbc:postgresql://db:5432/medvault
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    username: ${SPRING_DATASOURCE_USERNAME:medvault_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:medvault_password}
   jpa:
     hibernate:
       ddl-auto: validate
+    show-sql: false
   flyway:
     enabled: true
 
+server:
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+
 jwt:
-  secret: ${JWT_SECRET:dev-secret-key-at-least-32-characters-long-for-hmac-sha256}
-  expiration: ${JWT_EXPIRATION:86400000}
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:1800000}
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
+logging:
+  level:
+    com.medvault: INFO
+    org.springframework.web: WARN
+    org.hibernate: WARN

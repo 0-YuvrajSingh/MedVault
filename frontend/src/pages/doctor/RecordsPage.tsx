@@ -13,13 +13,17 @@ import { Textarea } from '../../components/ui/Input';
 import { Input } from '../../components/ui/Input';
 import { showToast } from '../../components/ui/Toast';
 
-const schema = yup.object().shape({
+interface RecordFormData {
+  diagnosis: string;
+  prescription: string;
+  notes?: string;
+}
+
+const schema: yup.ObjectSchema<RecordFormData> = yup.object({
   diagnosis: yup.string().required('Diagnosis is required').min(3, 'Diagnosis must be at least 3 characters'),
   prescription: yup.string().required('Prescription is required').min(3, 'Prescription must be at least 3 characters'),
   notes: yup.string().optional(),
 });
-
-type RecordFormData = yup.InferType<typeof schema>;
 
 const RecordsPage: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();

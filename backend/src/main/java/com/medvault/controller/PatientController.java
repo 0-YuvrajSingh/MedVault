@@ -1,22 +1,22 @@
 package com.medvault.controller;
 
+import com.medvault.dto.CreateReviewRequest;
 import com.medvault.dto.DoctorResponse;
 import com.medvault.dto.MedicalRecordResponse;
+import com.medvault.dto.ReviewResponse;
 import com.medvault.service.PatientService;
+import com.medvault.service.ReviewService;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("/api/patient")
@@ -24,9 +24,11 @@ import org.springframework.data.domain.Sort;
 public class PatientController {
 
     private final PatientService patientService;
+    private final ReviewService reviewService;
 
-    public PatientController(PatientService patientService) {
+    public PatientController(PatientService patientService, ReviewService reviewService) {
         this.patientService = patientService;
+        this.reviewService = reviewService;
     }
 
     @GetMapping("/records")
@@ -37,7 +39,8 @@ public class PatientController {
     }
 
     @GetMapping("/records/{recordId}")
-    public ResponseEntity<MedicalRecordResponse> getRecord(@PathVariable UUID recordId, Authentication authentication) {
+    public ResponseEntity<MedicalRecordResponse> getRecord(
+            @PathVariable UUID recordId, Authentication authentication) {
         return ResponseEntity.ok(patientService.getRecord(recordId, UUID.fromString(authentication.getName())));
     }
 
@@ -49,5 +52,17 @@ public class PatientController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(doctor);
+    }
+
+    /**
+     * Patient creates or updates a review for their currently assigned doctor.
+     * The doctor is determined server-side from the active assignment — the patient
+     * cannot inject an arbitrary doctorId.
+     */
+    @PostMapping("/reviews")
+    public ResponseEntity<ReviewResponse> createOrUpdateReview(
+            @Valid @RequestBody CreateReviewRequest request, Authentication authentication) {
+        UUID patientId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(reviewService.createOrUpdateReview(patientId, request));
     }
 }

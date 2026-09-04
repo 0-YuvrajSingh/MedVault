@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { patientAPI } from '../api/patient';
-import type { PageResponse, MedicalRecord, DoctorInfo } from '../types';
+import type { PageResponse, MedicalRecord, DoctorInfo, CreateReviewData, ReviewResponse } from '../types';
 
 export function usePatientRecords(page: number) {
   return useQuery<PageResponse<MedicalRecord>>({
@@ -14,5 +14,16 @@ export function useMyDoctor() {
     queryKey: ['patient', 'my-doctor'],
     queryFn: () => patientAPI.getMyDoctor().then(r => r.data),
     retry: false,
+  });
+}
+
+export function useSubmitReview() {
+  const qc = useQueryClient();
+  return useMutation<ReviewResponse, Error, CreateReviewData>({
+    mutationFn: (data: CreateReviewData) => patientAPI.submitReview(data).then(r => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['patient', 'my-doctor'] });
+      qc.invalidateQueries({ queryKey: ['patient', 'timeline'] });
+    },
   });
 }

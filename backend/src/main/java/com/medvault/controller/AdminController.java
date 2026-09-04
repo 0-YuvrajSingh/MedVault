@@ -1,14 +1,17 @@
 package com.medvault.controller;
 
-import com.medvault.dto.AssignDoctorRequest;
-import com.medvault.dto.AssignmentResponse;
-import com.medvault.dto.UserResponse;
+import com.medvault.dto.*;
 import com.medvault.service.AdminService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,25 +26,62 @@ public class AdminController {
         this.adminService = adminService;
     }
 
+    // ─── User listings ──────────────────────────────────────────────────────
+
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getUsers() {
-        return ResponseEntity.ok(adminService.getUsers());
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
+        return ResponseEntity.ok(adminService.getAllUsers());
     }
 
-    @PatchMapping("/doctors/{id}/activate")
-    public ResponseEntity<UserResponse> activateDoctor(@PathVariable UUID id) {
-        return ResponseEntity.ok(adminService.toggleAccountStatus(id, true));
+    @GetMapping("/doctors")
+    public ResponseEntity<List<UserResponse>> getDoctors() {
+        return ResponseEntity.ok(adminService.getDoctors());
     }
 
-    @PatchMapping("/doctors/{id}/deactivate")
-    public ResponseEntity<UserResponse> deactivateDoctor(@PathVariable UUID id) {
-        return ResponseEntity.ok(adminService.toggleAccountStatus(id, false));
+    @GetMapping("/patients")
+    public ResponseEntity<List<UserResponse>> getPatients() {
+        return ResponseEntity.ok(adminService.getPatients());
     }
+
+    // ─── Doctor workflow ────────────────────────────────────────────────────
+
+    @PostMapping("/doctors/{id}/approve")
+    public ResponseEntity<UserResponse> approveDoctor(@PathVariable UUID id, Principal principal) {
+        return ResponseEntity.ok(adminService.approveDoctor(id, UUID.fromString(principal.getName())));
+    }
+
+    @PostMapping("/doctors/{id}/reject")
+    public ResponseEntity<UserResponse> rejectDoctor(@PathVariable UUID id, Principal principal) {
+        return ResponseEntity.ok(adminService.rejectDoctor(id, UUID.fromString(principal.getName())));
+    }
+
+    @PostMapping("/doctors/{id}/deactivate")
+    public ResponseEntity<UserResponse> deactivateDoctor(@PathVariable UUID id, Principal principal) {
+        return ResponseEntity.ok(adminService.deactivateDoctor(id, UUID.fromString(principal.getName())));
+    }
+
+    // ─── Assignments ────────────────────────────────────────────────────────
 
     @PostMapping("/assignments")
-    public ResponseEntity<Void> assignDoctor(@Valid @RequestBody AssignDoctorRequest request) {
-        adminService.assignDoctorToPatient(request);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<AssignmentResponse> assignDoctor(
+            @Valid @RequestBody AssignDoctorRequest request, Principal principal) {
+        return ResponseEntity.ok(adminService.assignDoctorToPatient(request, UUID.fromString(principal.getName())));
+    }
+
+    @PutMapping("/assignments/{assignmentId}")
+    public ResponseEntity<AssignmentResponse> reassignPatient(
+            @PathVariable UUID assignmentId,
+            @Valid @RequestBody ReassignPatientRequest request,
+            Principal principal) {
+        return ResponseEntity.ok(
+                adminService.reassignPatient(assignmentId, request.getNewDoctorId(), UUID.fromString(principal.getName()))
+        );
+    }
+
+    @DeleteMapping("/assignments/{assignmentId}")
+    public ResponseEntity<Void> unassignPatient(@PathVariable UUID assignmentId, Principal principal) {
+        adminService.unassignPatient(assignmentId, UUID.fromString(principal.getName()));
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/assignments")
@@ -49,15 +89,25 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getAllActiveAssignments());
     }
 
-    @GetMapping("/records/{recordId}/audit")
-    public ResponseEntity<List<com.medvault.dto.AuditLogResponse>> getAuditLog(@PathVariable UUID recordId) {
-        return ResponseEntity.ok(adminService.getAuditLog(recordId));
+    // ─── Audit ──────────────────────────────────────────────────────────────
+
+    @GetMapping("/audit-logs")
+    public ResponseEntity<Page<PlatformAuditLogResponse>> getPlatformAuditLogs(
+            @PageableDefault(size = 20, sort = "performedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(adminService.getPlatformAuditLogs(pageable));
     }
 
+    @GetMapping("/records/{recordId}/audit")
+    public ResponseEntity<List<AuditLogResponse>> getRecordAuditLog(@PathVariable UUID recordId) {
+        return ResponseEntity.ok(adminService.getRecordAuditLog(recordId));
+    }
+
+    // ─── Patient records (admin visibility) ─────────────────────────────────
+
     @GetMapping("/patients/{patientId}/records")
-    public ResponseEntity<org.springframework.data.domain.Page<com.medvault.dto.MedicalRecordResponse>> getPatientRecords(
+    public ResponseEntity<Page<MedicalRecordResponse>> getPatientRecords(
             @PathVariable UUID patientId,
-            @org.springframework.data.web.PageableDefault(size = 10, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(adminService.getPatientRecords(patientId, pageable));
     }
 }

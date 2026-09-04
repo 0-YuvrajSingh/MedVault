@@ -1,13 +1,32 @@
 import api from './axios';
-import type { UserResponse, AssignmentResponse, AuditLogEntry, MedicalRecord, PageResponse } from '../types';
+import type { UserResponse, AssignmentResponse, AuditLogEntry, MedicalRecord, PageResponse, PlatformAuditLog } from '../types';
 
 export const adminAPI = {
+  // User listings
   getUsers: () => api.get<UserResponse[]>('/admin/users'),
-  activateDoctor: (id: string) => api.patch<UserResponse>(`/admin/doctors/${id}/activate`),
-  deactivateDoctor: (id: string) => api.patch<UserResponse>(`/admin/doctors/${id}/deactivate`),
+  getDoctors: () => api.get<UserResponse[]>('/admin/doctors'),
+  getPatients: () => api.get<UserResponse[]>('/admin/patients'),
+
+  // Doctor workflow
+  approveDoctor: (id: string) => api.post<UserResponse>(`/admin/doctors/${id}/approve`),
+  rejectDoctor: (id: string) => api.post<UserResponse>(`/admin/doctors/${id}/reject`),
+  deactivateDoctor: (id: string) => api.post<UserResponse>(`/admin/doctors/${id}/deactivate`),
+
+  // Assignment management
   createAssignment: (data: { patientId: string; doctorId: string }) =>
-    api.post('/admin/assignments', data),
+    api.post<AssignmentResponse>('/admin/assignments', data),
+  reassignPatient: (assignmentId: string, newDoctorId: string) =>
+    api.put<AssignmentResponse>(`/admin/assignments/${assignmentId}`, { newDoctorId }),
+  unassignPatient: (assignmentId: string) =>
+    api.delete(`/admin/assignments/${assignmentId}`),
   getAssignments: () => api.get<AssignmentResponse[]>('/admin/assignments'),
-  getPatientRecords: (patientId: string, page = 0, size = 10) => api.get<PageResponse<MedicalRecord>>(`/admin/patients/${patientId}/records?page=${page}&size=${size}`),
+
+  // Audit
+  getPlatformAuditLogs: (page = 0, size = 20) =>
+    api.get<PageResponse<PlatformAuditLog>>(`/admin/audit-logs?page=${page}&size=${size}`),
   getAuditLog: (recordId: string) => api.get<AuditLogEntry[]>(`/admin/records/${recordId}/audit`),
+
+  // Patient records (admin visibility)
+  getPatientRecords: (patientId: string, page = 0, size = 10) =>
+    api.get<PageResponse<MedicalRecord>>(`/admin/patients/${patientId}/records?page=${page}&size=${size}`),
 };

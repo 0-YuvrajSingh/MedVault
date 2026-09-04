@@ -1,10 +1,13 @@
 package com.medvault.service;
 
 import com.medvault.dto.TimelineEventResponse;
+import com.medvault.entity.EventType;
+import com.medvault.entity.TimelineEvent;
 import com.medvault.repository.TimelineEventRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -31,5 +34,21 @@ public class TimelineEventService {
                         .createdAt(e.getCreatedAt())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Creates and persists a timeline event for the given user.
+     * Called within the same transaction as the triggering business operation.
+     */
+    @Transactional
+    public void createEvent(UUID userId, String title, String description, EventType eventType) {
+        TimelineEvent event = TimelineEvent.builder()
+                .userId(userId)
+                .title(title)
+                .description(description)
+                .eventType(eventType)
+                .eventDate(LocalDate.now())
+                .build();
+        timelineEventRepository.save(event);
     }
 }

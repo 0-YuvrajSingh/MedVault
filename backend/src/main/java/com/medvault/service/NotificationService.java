@@ -2,6 +2,8 @@ package com.medvault.service;
 
 import com.medvault.dto.NotificationResponse;
 import com.medvault.entity.Notification;
+import com.medvault.entity.NotificationType;
+import com.medvault.exception.AccessDeniedException;
 import com.medvault.exception.ResourceNotFoundException;
 import com.medvault.repository.NotificationRepository;
 import org.springframework.stereotype.Service;
@@ -33,9 +35,24 @@ public class NotificationService {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
         if (!notification.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("Notification does not belong to this user");
+            throw new AccessDeniedException("Notification does not belong to this user");
         }
         notification.setRead(true);
+        notificationRepository.save(notification);
+    }
+
+    /**
+     * Creates and persists a notification for the given user.
+     * Called within the same transaction as the triggering business operation.
+     */
+    @Transactional
+    public void createNotification(UUID userId, String title, String message, NotificationType type) {
+        Notification notification = Notification.builder()
+                .userId(userId)
+                .title(title)
+                .message(message)
+                .type(type)
+                .build();
         notificationRepository.save(notification);
     }
 

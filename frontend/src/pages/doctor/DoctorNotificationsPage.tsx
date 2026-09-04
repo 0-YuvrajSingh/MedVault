@@ -15,7 +15,8 @@ const typeConfig: Record<string, { icon: React.ReactNode; color: string }> = {
 };
 
 const NotificationCard: React.FC<{ notification: NotificationItem; onMarkRead: (id: string) => void }> = ({ notification, onMarkRead }) => {
-  const config = typeConfig[notification.type] || typeConfig.INFO;
+  const notifType = notification.type || 'INFO';
+  const config = typeConfig[notifType] || typeConfig.INFO;
 
   return (
     <Card className={`p-4 ${!notification.read ? 'border-primary-200 bg-primary-50/30' : ''}`}>

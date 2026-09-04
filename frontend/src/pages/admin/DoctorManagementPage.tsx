@@ -1,22 +1,50 @@
 import React from 'react';
-import { useUsers, useActivateDoctor, useDeactivateDoctor } from '../../hooks/useAdminQuery';
+import { useDoctors, useApproveDoctor, useRejectDoctor, useDeactivateDoctor } from '../../hooks/useAdminQuery';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { UserCheck } from 'lucide-react';
 import { DashboardSkeleton } from '../../components/ui/Skeleton';
+import { showToast } from '../../components/ui/Toast';
 
 const DoctorManagementPage: React.FC = () => {
-  const { data: users = [], isLoading } = useUsers();
-  const activate = useActivateDoctor();
+  const { data: doctors = [], isLoading } = useDoctors();
+  const approve = useApproveDoctor();
+  const reject = useRejectDoctor();
   const deactivate = useDeactivateDoctor();
 
-  const doctors = users.filter(u => u.role === 'ROLE_DOCTOR');
   const pending = doctors.filter(d => !d.active);
   const active = doctors.filter(d => d.active);
 
   if (isLoading) return <DashboardSkeleton />;
+
+  const handleApprove = async (id: string, name: string) => {
+    try {
+      await approve.mutateAsync(id);
+      showToast('success', 'Doctor Approved', `Dr. ${name} has been approved and activated.`);
+    } catch (e: any) {
+      showToast('error', 'Action Failed', e.response?.data?.message || 'Error approving doctor');
+    }
+  };
+
+  const handleReject = async (id: string, name: string) => {
+    try {
+      await reject.mutateAsync(id);
+      showToast('info', 'Doctor Rejected', `Registration for Dr. ${name} was rejected.`);
+    } catch (e: any) {
+      showToast('error', 'Action Failed', e.response?.data?.message || 'Error rejecting doctor');
+    }
+  };
+
+  const handleDeactivate = async (id: string, name: string) => {
+    try {
+      await deactivate.mutateAsync(id);
+      showToast('warning', 'Doctor Deactivated', `Dr. ${name} has been deactivated.`);
+    } catch (e: any) {
+      showToast('error', 'Action Failed', e.response?.data?.message || 'Error deactivating doctor');
+    }
+  };
 
   return (
     <div className="space-y-6 pb-12">
@@ -46,14 +74,23 @@ const DoctorManagementPage: React.FC = () => {
                   <tr key={d.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-5 py-3.5 font-medium text-slate-900">{d.fullName}</td>
                     <td className="px-5 py-3.5 text-slate-500">{d.email}</td>
-                    <td className="px-5 py-3.5 text-right">
+                    <td className="px-5 py-3.5 text-right space-x-2">
                       <Button
                         size="sm"
-                        onClick={() => activate.mutate(d.id)}
-                        disabled={activate.isPending && activate.variables === d.id}
-                        loading={activate.isPending && activate.variables === d.id}
+                        onClick={() => handleApprove(d.id, d.fullName)}
+                        disabled={approve.isPending && approve.variables === d.id}
+                        loading={approve.isPending && approve.variables === d.id}
                       >
                         Approve
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleReject(d.id, d.fullName)}
+                        disabled={reject.isPending && reject.variables === d.id}
+                        loading={reject.isPending && reject.variables === d.id}
+                      >
+                        Reject
                       </Button>
                     </td>
                   </tr>
@@ -94,7 +131,7 @@ const DoctorManagementPage: React.FC = () => {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => deactivate.mutate(d.id)}
+                        onClick={() => handleDeactivate(d.id, d.fullName)}
                         disabled={deactivate.isPending && deactivate.variables === d.id}
                         loading={deactivate.isPending && deactivate.variables === d.id}
                       >
