@@ -8,6 +8,8 @@ import com.medvault.exception.ResourceNotFoundException;
 import com.medvault.repository.PatientDoctorAssignmentRepository;
 import com.medvault.repository.ReviewRepository;
 import com.medvault.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +56,22 @@ public class ReviewService {
         return reviews.stream()
                 .map(r -> toResponse(r, patientNames.getOrDefault(r.getPatientId(), "Unknown")))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getReviewsByDoctor(UUID doctorId, Pageable pageable) {
+        Page<Review> page = reviewRepository.findByDoctorIdOrderByCreatedAtDesc(doctorId, pageable);
+
+        // Avoid N+1: collect all distinct patient IDs on this page and load in a single query
+        List<UUID> patientIds = page.getContent().stream()
+                .map(Review::getPatientId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        java.util.Map<UUID, String> patientNames = userRepository.findAllById(patientIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getFullName));
+
+        return page.map(r -> toResponse(r, patientNames.getOrDefault(r.getPatientId(), "Unknown")));
     }
 
     /**

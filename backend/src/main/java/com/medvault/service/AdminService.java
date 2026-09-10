@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -48,24 +49,21 @@ public class AdminService {
     // ─── User listings ───────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public List<UserResponse> getAllUsers() {
-        return userRepository.findAll().stream()
-                .map(this::mapToUserResponse)
-                .collect(Collectors.toList());
+    public Page<UserResponse> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(this::mapToUserResponse);
     }
 
     @Transactional(readOnly = true)
-    public List<UserResponse> getDoctors() {
-        return userRepository.findByRole("ROLE_DOCTOR").stream()
-                .map(this::mapToUserResponse)
-                .collect(Collectors.toList());
+    public Page<UserResponse> getDoctors(Pageable pageable) {
+        return userRepository.findByRole("ROLE_DOCTOR", pageable)
+                .map(this::mapToUserResponse);
     }
 
     @Transactional(readOnly = true)
-    public List<UserResponse> getPatients() {
-        return userRepository.findByRole("ROLE_PATIENT").stream()
-                .map(this::mapToUserResponse)
-                .collect(Collectors.toList());
+    public Page<UserResponse> getPatients(Pageable pageable) {
+        return userRepository.findByRole("ROLE_PATIENT", pageable)
+                .map(this::mapToUserResponse);
     }
 
     // ─── Doctor workflow ──────────────────────────────────────────────────────
@@ -269,19 +267,25 @@ public class AdminService {
     // ─── Listings ─────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public List<AssignmentResponse> getAllActiveAssignments() {
-        return assignmentRepository.findAllActiveWithDetails().stream()
-                .map(this::mapToAssignmentResponse)
-                .collect(Collectors.toList());
+    public Page<AssignmentResponse> getAllActiveAssignments(Pageable pageable) {
+        return assignmentRepository.findAllActiveWithDetails(pageable)
+                .map(this::mapToAssignmentResponse);
     }
 
     @Transactional(readOnly = true)
     public Page<PlatformAuditLogResponse> getPlatformAuditLogs(Pageable pageable) {
-        return auditService.getPlatformAuditLogs(pageable)
-                .map(log -> {
+        Page<PlatformAuditLog> page = auditService.getPlatformAuditLogs(pageable);
+        // Avoid N+1: load all distinct actor names in a single query.
+        List<UUID> actorIds = page.getContent().stream()
+                .map(PlatformAuditLog::getActorId)
+                .filter(id -> id != null)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<UUID, String> actorNames = userRepository.findAllById(actorIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getFullName));
+        return page.map(log -> {
                     String actorName = log.getActorId() != null
-                            ? userRepository.findById(log.getActorId())
-                            .map(User::getFullName).orElse("Unknown")
+                            ? actorNames.getOrDefault(log.getActorId(), "Unknown")
                             : "System";
                     return PlatformAuditLogResponse.builder()
                             .id(log.getId())
@@ -297,9 +301,8 @@ public class AdminService {
     }
 
     @Transactional(readOnly = true)
-    public List<com.medvault.dto.AuditLogResponse> getRecordAuditLog(UUID recordId) {
-        return auditLogRepository.findByRecordIdOrderByPerformedAtDesc(recordId)
-                .stream()
+    public Page<com.medvault.dto.AuditLogResponse> getRecordAuditLog(UUID recordId, Pageable pageable) {
+        return auditLogRepository.findByRecordIdOrderByPerformedAtDesc(recordId, pageable)
                 .map(log -> new com.medvault.dto.AuditLogResponse(
                         log.getId(),
                         log.getRecord().getId(),
@@ -307,8 +310,7 @@ public class AdminService {
                         log.getPerformedBy().getFullName(),
                         log.getPerformedAt(),
                         log.getDetailSnapshot()
-                ))
-                .collect(Collectors.toList());
+                ));
     }
 
     @Transactional(readOnly = true)

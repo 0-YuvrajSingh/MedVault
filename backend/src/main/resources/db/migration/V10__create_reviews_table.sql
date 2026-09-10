@@ -9,11 +9,10 @@ CREATE TABLE reviews (
 
 CREATE INDEX idx_reviews_doctor_id ON reviews(doctor_id);
 
--- Seed reviews for Dr. John Doe (from Jane Patient)
+-- Seed one review for Dr. John Doe (from Jane Patient).
+-- NOTE: exactly one row per (patient_id, doctor_id) — V13/V15 enforce
+-- UNIQUE(patient_id, doctor_id). Do not add a second seed row for the same pair.
 INSERT INTO reviews (id, doctor_id, patient_id, rating, comment, created_at)
 SELECT gen_random_uuid(), d.id, p.id, 5, 'Dr. Doe is very thorough and caring. He took the time to explain everything clearly.', NOW() - INTERVAL '10 days'
-FROM users d, users p WHERE d.email = 'doctor@medvault.com' AND p.email = 'patient@medvault.com';
-
-INSERT INTO reviews (id, doctor_id, patient_id, rating, comment, created_at)
-SELECT gen_random_uuid(), d.id, p.id, 4, 'Professional and knowledgeable. The waiting time was a bit long but the care was excellent.', NOW() - INTERVAL '5 days'
-FROM users d, users p WHERE d.email = 'doctor@medvault.com' AND p.email = 'patient@medvault.com';
+FROM users d, users p WHERE d.email = 'doctor@medvault.com' AND p.email = 'patient@medvault.com'
+ON CONFLICT DO NOTHING;

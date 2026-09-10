@@ -18,3 +18,4 @@ jwt:
 rate-limiting:
   login:
     max-requests-per-minute: 100
+  trust-forwarded-headers: false

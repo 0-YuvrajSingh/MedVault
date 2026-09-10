@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationsAPI } from '../api/notifications';
+import { unwrapPage } from '../api/axios';
 import type { NotificationItem } from '../api/notifications';
 
 export function useNotifications(role: string) {
   return useQuery<NotificationItem[]>({
     queryKey: [role, 'notifications'],
-    queryFn: () => notificationsAPI.getNotifications(role).then(r => r.data),
+    queryFn: () => notificationsAPI.getNotifications(role).then(r => unwrapPage(r.data)),
   });
 }
 

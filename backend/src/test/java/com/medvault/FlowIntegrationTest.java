@@ -128,7 +128,7 @@ public class FlowIntegrationTest {
         // Token must be null in response
         assertTrue(objectMapper.readTree(res).get("token").isNull());
 
-        // Login before approval must fail (403 forbidden - account inactive)
+        // Login before approval must fail with uniform 401 (no account-state oracle)
         Map<String, String> loginReq = new HashMap<>();
         loginReq.put("email", "drbob@example.com");
         loginReq.put("password", "password123");
@@ -136,7 +136,7 @@ public class FlowIntegrationTest {
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginReq)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     // 3. Admin approval activates doctor, who can then authenticate
@@ -196,7 +196,7 @@ public class FlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(false));
 
-        // Still cannot log in
+        // Still cannot log in (uniform 401 — existence/state not revealed)
         Map<String, String> loginReq = new HashMap<>();
         loginReq.put("email", "dan@example.com");
         loginReq.put("password", "password123");
@@ -204,7 +204,7 @@ public class FlowIntegrationTest {
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginReq)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     // 5. Deactivated doctor's old JWT is immediately rejected
@@ -482,12 +482,12 @@ public class FlowIntegrationTest {
                 .andExpect(jsonPath("$.rating").value(5))
                 .andExpect(jsonPath("$.patientName").value("Rev Patient"));
 
-        // Doctor can read review
+        // Doctor can read review (paginated)
         String docToken = jwtUtil.generateToken(doctor);
         mockMvc.perform(get("/api/doctor/reviews")
                         .header("Authorization", "Bearer " + docToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].rating").value(5));
+                .andExpect(jsonPath("$.content[0].rating").value(5));
 
         // Duplicate review by same patient updates existing review (upsert)
         revReq.setRating(4);
@@ -561,5 +561,47 @@ public class FlowIntegrationTest {
                         .header("Authorization", "Bearer " + getAdminToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray());
+    }
+
+    // 17. Login failures are uniform: unknown email, inactive account, and wrong
+    // password all return 401 with the same message (no account-state oracle).
+    @Test
+    void testLoginFailuresAreUniform() throws Exception {
+        User inactive = User.builder().fullName("Inactive Doc").email("inactive_enum@ex.com")
+                .passwordHash(passwordEncoder.encode("correctpw1")).role("ROLE_DOCTOR").active(false).build();
+        User active = User.builder().fullName("Active Pat").email("active_enum@ex.com")
+                .passwordHash(passwordEncoder.encode("correctpw1")).role("ROLE_PATIENT").active(true).build();
+        userRepository.save(inactive);
+        userRepository.save(active);
+
+        String unknownBody = loginBody("nobody_enum@ex.com", "whatever123");
+        String inactiveBody = loginBody("inactive_enum@ex.com", "correctpw1");
+        String wrongPwBody = loginBody("active_enum@ex.com", "wrongpw123");
+
+        String r1 = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON).content(unknownBody))
+                .andExpect(status().isUnauthorized())
+                .andReturn().getResponse().getContentAsString();
+        String r2 = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON).content(inactiveBody))
+                .andExpect(status().isUnauthorized())
+                .andReturn().getResponse().getContentAsString();
+        String r3 = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON).content(wrongPwBody))
+                .andExpect(status().isUnauthorized())
+                .andReturn().getResponse().getContentAsString();
+
+        String m1 = objectMapper.readTree(r1).get("message").asText();
+        String m2 = objectMapper.readTree(r2).get("message").asText();
+        String m3 = objectMapper.readTree(r3).get("message").asText();
+        assertEquals(m1, m2);
+        assertEquals(m1, m3);
+    }
+
+    private String loginBody(String email, String password) throws Exception {
+        Map<String, String> m = new HashMap<>();
+        m.put("email", email);
+        m.put("password", password);
+        return objectMapper.writeValueAsString(m);
     }
 }

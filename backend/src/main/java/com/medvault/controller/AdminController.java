@@ -29,18 +29,21 @@ public class AdminController {
     // ─── User listings ──────────────────────────────────────────────────────
 
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        return ResponseEntity.ok(adminService.getAllUsers());
+    public ResponseEntity<Page<UserResponse>> getAllUsers(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(adminService.getAllUsers(pageable));
     }
 
     @GetMapping("/doctors")
-    public ResponseEntity<List<UserResponse>> getDoctors() {
-        return ResponseEntity.ok(adminService.getDoctors());
+    public ResponseEntity<Page<UserResponse>> getDoctors(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(adminService.getDoctors(pageable));
     }
 
     @GetMapping("/patients")
-    public ResponseEntity<List<UserResponse>> getPatients() {
-        return ResponseEntity.ok(adminService.getPatients());
+    public ResponseEntity<Page<UserResponse>> getPatients(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(adminService.getPatients(pageable));
     }
 
     // ─── Doctor workflow ────────────────────────────────────────────────────
@@ -85,8 +88,9 @@ public class AdminController {
     }
 
     @GetMapping("/assignments")
-    public ResponseEntity<List<AssignmentResponse>> getActiveAssignments() {
-        return ResponseEntity.ok(adminService.getAllActiveAssignments());
+    public ResponseEntity<Page<AssignmentResponse>> getActiveAssignments(
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(adminService.getAllActiveAssignments(pageable));
     }
 
     // ─── Audit ──────────────────────────────────────────────────────────────
@@ -98,8 +102,10 @@ public class AdminController {
     }
 
     @GetMapping("/records/{recordId}/audit")
-    public ResponseEntity<List<AuditLogResponse>> getRecordAuditLog(@PathVariable UUID recordId) {
-        return ResponseEntity.ok(adminService.getRecordAuditLog(recordId));
+    public ResponseEntity<Page<AuditLogResponse>> getRecordAuditLog(
+            @PathVariable UUID recordId,
+            @PageableDefault(size = 20, sort = "performedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(adminService.getRecordAuditLog(recordId, pageable));
     }
 
     // ─── Patient records (admin visibility) ─────────────────────────────────

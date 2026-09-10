@@ -6,10 +6,10 @@ import com.medvault.dto.RegisterRequest;
 import com.medvault.entity.User;
 import com.medvault.repository.UserRepository;
 import com.medvault.security.JwtUtil;
-import com.medvault.exception.AccountNotActiveException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -87,19 +87,41 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+        // Uniform credential failure: never reveal whether the email exists or whether
+        // the account is inactive/pending. Internal reasons stay in server logs only.
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
 
-        if (!user.isActive()) {
-            throw new AccountNotActiveException("Account is not active. Please wait for administrator approval or contact support.");
+        if (user != null) {
+            try {
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                request.getEmail(),
+                                request.getPassword()
+                        )
+                );
+            } catch (Exception e) {
+                log.debug("Login failed for {}", request.getEmail());
+                throw new BadCredentialsException("Invalid email or password");
+            }
+            if (!user.isActive()) {
+                log.debug("Login rejected for inactive account {}", request.getEmail());
+                throw new BadCredentialsException("Invalid email or password");
+            }
+        } else {
+            // Unknown email: run a dummy verification so timing is comparable, then fail identically.
+            try {
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                request.getEmail(),
+                                request.getPassword()
+                        )
+                );
+            } catch (Exception ignored) {
+                // fall through to uniform failure below
+            }
+            log.debug("Login failed for unknown email");
+            throw new BadCredentialsException("Invalid email or password");
         }
-
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
 
         auditService.logPlatformEvent(user.getId(), "LOGIN", "User", user.getId(), "User logged in: " + user.getEmail());
 

@@ -13,10 +13,8 @@ export interface MedicalRecord {
   diagnosis: string;
   prescription: string;
   notes: string;
-  patientId?: string;
-  patientName?: string;
-  doctorId?: string;
-  doctorName?: string;
+  patientId: string;
+  doctorName: string;
   recordDate?: string;
   createdAt: string;
 }
@@ -93,7 +91,7 @@ export interface PlatformAuditLog {
 export interface DecodedToken {
   sub: string;
   role: string;
-  userId: string;
+  userId?: string;
   exp: number;
 }
 

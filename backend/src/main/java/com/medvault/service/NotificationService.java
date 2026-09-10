@@ -6,6 +6,8 @@ import com.medvault.entity.NotificationType;
 import com.medvault.exception.AccessDeniedException;
 import com.medvault.exception.ResourceNotFoundException;
 import com.medvault.repository.NotificationRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,12 @@ public class NotificationService {
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<NotificationResponse> getNotifications(UUID userId, Pageable pageable) {
+        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)
+                .map(this::toResponse);
     }
 
     @Transactional

@@ -4,6 +4,8 @@ import com.medvault.dto.TimelineEventResponse;
 import com.medvault.entity.EventType;
 import com.medvault.entity.TimelineEvent;
 import com.medvault.repository.TimelineEventRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,9 +24,8 @@ public class TimelineEventService {
     }
 
     @Transactional(readOnly = true)
-    public List<TimelineEventResponse> getEvents(UUID userId) {
-        return timelineEventRepository.findByUserIdOrderByEventDateDescCreatedAtDesc(userId)
-                .stream()
+    public Page<TimelineEventResponse> getEvents(UUID userId, Pageable pageable) {
+        return timelineEventRepository.findByUserIdOrderByEventDateDescCreatedAtDesc(userId, pageable)
                 .map(e -> TimelineEventResponse.builder()
                         .id(e.getId())
                         .title(e.getTitle())
@@ -32,8 +33,7 @@ public class TimelineEventService {
                         .eventDate(e.getEventDate())
                         .eventType(e.getEventType().name())
                         .createdAt(e.getCreatedAt())
-                        .build())
-                .collect(Collectors.toList());
+                        .build());
     }
 
     /**

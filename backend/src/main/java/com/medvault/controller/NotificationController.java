@@ -2,12 +2,15 @@ package com.medvault.controller;
 
 import com.medvault.dto.NotificationResponse;
 import com.medvault.service.NotificationService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -22,14 +25,18 @@ public class NotificationController {
 
     @GetMapping("/doctor/notifications")
     @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<List<NotificationResponse>> getDoctorNotifications(Principal principal) {
-        return ResponseEntity.ok(notificationService.getNotifications(UUID.fromString(principal.getName())));
+    public ResponseEntity<Page<NotificationResponse>> getDoctorNotifications(
+            Principal principal,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(notificationService.getNotifications(UUID.fromString(principal.getName()), pageable));
     }
 
     @GetMapping("/patient/notifications")
     @PreAuthorize("hasRole('PATIENT')")
-    public ResponseEntity<List<NotificationResponse>> getPatientNotifications(Principal principal) {
-        return ResponseEntity.ok(notificationService.getNotifications(UUID.fromString(principal.getName())));
+    public ResponseEntity<Page<NotificationResponse>> getPatientNotifications(
+            Principal principal,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(notificationService.getNotifications(UUID.fromString(principal.getName()), pageable));
     }
 
     @PatchMapping("/notifications/{id}/read")

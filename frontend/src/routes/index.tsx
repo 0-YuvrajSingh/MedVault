@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import PublicLayout from '../layouts/PublicLayout';
 import AuthLayout from '../layouts/AuthLayout';
@@ -6,54 +6,59 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import ProtectedRoute from './ProtectedRoute';
 import RoleRedirect from './RoleRedirect';
 
-// Public pages
-import HomePage from '../pages/public/HomePage';
+// Route-level code splitting: each portal page loads on demand.
+const HomePage = lazy(() => import('../pages/public/HomePage'));
 
-// Auth pages
-import LoginPage from '../pages/auth/LoginPage';
-import RegisterPage from '../pages/auth/RegisterPage';
+const LoginPage = lazy(() => import('../pages/auth/LoginPage'));
+const RegisterPage = lazy(() => import('../pages/auth/RegisterPage'));
 
-// Admin pages
-import AdminDashboard from '../pages/admin/AdminDashboard';
-import UsersPage from '../pages/admin/UsersPage';
-import DoctorManagementPage from '../pages/admin/DoctorManagementPage';
-import AssignmentsPage from '../pages/admin/AssignmentsPage';
-import AuditLogsPage from '../pages/admin/AuditLogsPage';
-import SystemHealthPage from '../pages/admin/SystemHealthPage';
-import AdminPatientRecordsPage from '../pages/admin/AdminPatientRecordsPage';
+const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard'));
+const UsersPage = lazy(() => import('../pages/admin/UsersPage'));
+const DoctorManagementPage = lazy(() => import('../pages/admin/DoctorManagementPage'));
+const AssignmentsPage = lazy(() => import('../pages/admin/AssignmentsPage'));
+const AuditLogsPage = lazy(() => import('../pages/admin/AuditLogsPage'));
+const SystemHealthPage = lazy(() => import('../pages/admin/SystemHealthPage'));
+const AdminPatientRecordsPage = lazy(() => import('../pages/admin/AdminPatientRecordsPage'));
 
-// Doctor pages
-import DoctorDashboard from '../pages/doctor/DoctorDashboard';
-import PatientsPage from '../pages/doctor/PatientsPage';
-import RecordsPage from '../pages/doctor/RecordsPage';
-import DoctorReviewsPage from '../pages/doctor/DoctorReviewsPage';
-import DoctorTimelinePage from '../pages/doctor/DoctorTimelinePage';
-import DoctorNotificationsPage from '../pages/doctor/DoctorNotificationsPage';
+const DoctorDashboard = lazy(() => import('../pages/doctor/DoctorDashboard'));
+const PatientsPage = lazy(() => import('../pages/doctor/PatientsPage'));
+const RecordsPage = lazy(() => import('../pages/doctor/RecordsPage'));
+const DoctorReviewsPage = lazy(() => import('../pages/doctor/DoctorReviewsPage'));
+const DoctorTimelinePage = lazy(() => import('../pages/doctor/DoctorTimelinePage'));
+const DoctorNotificationsPage = lazy(() => import('../pages/doctor/DoctorNotificationsPage'));
 
-// Patient pages
-import PatientDashboard from '../pages/patient/PatientDashboard';
-import MedicalRecordsPage from '../pages/patient/MedicalRecordsPage';
-import PatientTimelinePage from '../pages/patient/PatientTimelinePage';
-import MyDoctorPage from '../pages/patient/MyDoctorPage';
-import PatientNotificationsPage from '../pages/patient/PatientNotificationsPage';
+const PatientDashboard = lazy(() => import('../pages/patient/PatientDashboard'));
+const MedicalRecordsPage = lazy(() => import('../pages/patient/MedicalRecordsPage'));
+const PatientTimelinePage = lazy(() => import('../pages/patient/PatientTimelinePage'));
+const MyDoctorPage = lazy(() => import('../pages/patient/MyDoctorPage'));
+const PatientNotificationsPage = lazy(() => import('../pages/patient/PatientNotificationsPage'));
 
-// Shared
-import SettingsPage from '../pages/shared/SettingsPage';
+const SettingsPage = lazy(() => import('../pages/shared/SettingsPage'));
+
+const PageFallback: React.FC = () => (
+  <div className="flex items-center justify-center min-h-[40vh] text-sm text-slate-500">
+    Loading…
+  </div>
+);
+
+const withSuspense = (node: React.ReactNode) => (
+  <Suspense fallback={<PageFallback />}>{node}</Suspense>
+);
 
 const router = createBrowserRouter([
   // Public routes
   {
     element: <PublicLayout />,
     children: [
-      { path: '/', element: <HomePage /> },
+      { path: '/', element: withSuspense(<HomePage />) },
     ],
   },
   // Auth routes
   {
     element: <AuthLayout />,
     children: [
-      { path: '/login', element: <LoginPage /> },
-      { path: '/register', element: <RegisterPage /> },
+      { path: '/login', element: withSuspense(<LoginPage />) },
+      { path: '/register', element: withSuspense(<RegisterPage />) },
     ],
   },
   // Dashboard redirect
@@ -68,14 +73,14 @@ const router = createBrowserRouter([
       {
         element: <DashboardLayout />,
         children: [
-          { path: '/admin', element: <AdminDashboard /> },
-          { path: '/admin/users', element: <UsersPage /> },
-          { path: '/admin/patients/:id/records', element: <AdminPatientRecordsPage /> },
-          { path: '/admin/approvals', element: <DoctorManagementPage /> },
-          { path: '/admin/assignments', element: <AssignmentsPage /> },
-          { path: '/admin/audit-logs', element: <AuditLogsPage /> },
-          { path: '/admin/system-health', element: <SystemHealthPage /> },
-          { path: '/admin/settings', element: <SettingsPage /> },
+          { path: '/admin', element: withSuspense(<AdminDashboard />) },
+          { path: '/admin/users', element: withSuspense(<UsersPage />) },
+          { path: '/admin/patients/:id/records', element: withSuspense(<AdminPatientRecordsPage />) },
+          { path: '/admin/approvals', element: withSuspense(<DoctorManagementPage />) },
+          { path: '/admin/assignments', element: withSuspense(<AssignmentsPage />) },
+          { path: '/admin/audit-logs', element: withSuspense(<AuditLogsPage />) },
+          { path: '/admin/system-health', element: withSuspense(<SystemHealthPage />) },
+          { path: '/admin/settings', element: withSuspense(<SettingsPage />) },
         ],
       },
     ],
@@ -87,14 +92,14 @@ const router = createBrowserRouter([
       {
         element: <DashboardLayout />,
         children: [
-          { path: '/doctor', element: <DoctorDashboard /> },
-          { path: '/doctor/patients', element: <PatientsPage /> },
-          { path: '/doctor/records', element: <RecordsPage /> },
-          { path: '/doctor/patients/:patientId/records', element: <RecordsPage /> },
-          { path: '/doctor/reviews', element: <DoctorReviewsPage /> },
-          { path: '/doctor/timeline', element: <DoctorTimelinePage /> },
-          { path: '/doctor/notifications', element: <DoctorNotificationsPage /> },
-          { path: '/doctor/settings', element: <SettingsPage /> },
+          { path: '/doctor', element: withSuspense(<DoctorDashboard />) },
+          { path: '/doctor/patients', element: withSuspense(<PatientsPage />) },
+          { path: '/doctor/records', element: withSuspense(<RecordsPage />) },
+          { path: '/doctor/patients/:patientId/records', element: withSuspense(<RecordsPage />) },
+          { path: '/doctor/reviews', element: withSuspense(<DoctorReviewsPage />) },
+          { path: '/doctor/timeline', element: withSuspense(<DoctorTimelinePage />) },
+          { path: '/doctor/notifications', element: withSuspense(<DoctorNotificationsPage />) },
+          { path: '/doctor/settings', element: withSuspense(<SettingsPage />) },
         ],
       },
     ],
@@ -106,12 +111,12 @@ const router = createBrowserRouter([
       {
         element: <DashboardLayout />,
         children: [
-          { path: '/patient', element: <PatientDashboard /> },
-          { path: '/patient/records', element: <MedicalRecordsPage /> },
-          { path: '/patient/my-doctor', element: <MyDoctorPage /> },
-          { path: '/patient/timeline', element: <PatientTimelinePage /> },
-          { path: '/patient/notifications', element: <PatientNotificationsPage /> },
-          { path: '/patient/settings', element: <SettingsPage /> },
+          { path: '/patient', element: withSuspense(<PatientDashboard />) },
+          { path: '/patient/records', element: withSuspense(<MedicalRecordsPage />) },
+          { path: '/patient/my-doctor', element: withSuspense(<MyDoctorPage />) },
+          { path: '/patient/timeline', element: withSuspense(<PatientTimelinePage />) },
+          { path: '/patient/notifications', element: withSuspense(<PatientNotificationsPage />) },
+          { path: '/patient/settings', element: withSuspense(<SettingsPage />) },
         ],
       },
     ],

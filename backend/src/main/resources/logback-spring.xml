@@ -80,7 +80,6 @@
     </springProfile>
 
     <!-- Specific logger levels for different packages -->
-    <logger name="com.medvault.scheduler" level="INFO"/>
     <logger name="com.medvault.security" level="INFO"/>
     <logger name="com.medvault.service" level="INFO"/>
     <logger name="com.medvault.controller" level="INFO"/>

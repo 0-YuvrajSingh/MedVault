@@ -1,32 +1,33 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../api/admin';
+import { unwrapPage } from '../api/axios';
 import type { UserResponse, AssignmentResponse, AuditLogEntry, PageResponse, MedicalRecord, PlatformAuditLog } from '../types';
 
 export function useUsers() {
   return useQuery<UserResponse[]>({
     queryKey: ['admin', 'users'],
-    queryFn: () => adminAPI.getUsers().then(r => r.data),
+    queryFn: () => adminAPI.getUsers().then(r => unwrapPage(r.data)),
   });
 }
 
 export function useDoctors() {
   return useQuery<UserResponse[]>({
     queryKey: ['admin', 'doctors'],
-    queryFn: () => adminAPI.getDoctors().then(r => r.data),
+    queryFn: () => adminAPI.getDoctors().then(r => unwrapPage(r.data)),
   });
 }
 
 export function useAdminPatients() {
   return useQuery<UserResponse[]>({
     queryKey: ['admin', 'patients'],
-    queryFn: () => adminAPI.getPatients().then(r => r.data),
+    queryFn: () => adminAPI.getPatients().then(r => unwrapPage(r.data)),
   });
 }
 
 export function useAssignments() {
   return useQuery<AssignmentResponse[]>({
     queryKey: ['admin', 'assignments'],
-    queryFn: () => adminAPI.getAssignments().then(r => r.data),
+    queryFn: () => adminAPI.getAssignments().then(r => unwrapPage(r.data)),
   });
 }
 
@@ -113,7 +114,7 @@ export function usePatientRecords(patientId: string, page: number) {
 export function useAuditLog(recordId: string) {
   return useQuery<AuditLogEntry[]>({
     queryKey: ['admin', 'audit-log', recordId],
-    queryFn: () => adminAPI.getAuditLog(recordId).then(r => r.data),
+    queryFn: () => adminAPI.getAuditLog(recordId).then(r => unwrapPage(r.data)),
     enabled: !!recordId,
   });
 }

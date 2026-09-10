@@ -10,10 +10,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     List<Review> findByDoctorIdOrderByCreatedAtDesc(UUID doctorId);
+
+    Page<Review> findByDoctorIdOrderByCreatedAtDesc(UUID doctorId, Pageable pageable);
 
     Optional<Review> findByPatientIdAndDoctorId(UUID patientId, UUID doctorId);
 

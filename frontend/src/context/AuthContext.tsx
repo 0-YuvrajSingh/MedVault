@@ -76,11 +76,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [token, logout]);
 
-  // Listen for global 401 events
+  // Listen for global 401 (bad/expired token) and body-less 403 (dead session:
+  // deactivated/deleted account) events. Domain 403s carry a message and never fire these.
   useEffect(() => {
     const handleUnauthorized = () => logout();
     window.addEventListener('auth:unauthorized', handleUnauthorized);
-    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    window.addEventListener('auth:forbidden', handleUnauthorized);
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+      window.removeEventListener('auth:forbidden', handleUnauthorized);
+    };
   }, [logout]);
 
   return (

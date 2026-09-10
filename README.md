@@ -41,7 +41,7 @@ flowchart TB
 ## 2. Technology Stack
 
 - **Backend:** Java 21, Spring Boot 3.2.5 (Spring Web, Spring Security, Spring Data JPA, Bean Validation), JJWT 0.11.5, Bucket4j rate-limiting
-- **Database & Migrations:** PostgreSQL 15, Flyway 10.10.0 (versioned migrations V1–V14)
+- **Database & Migrations:** PostgreSQL 15, Flyway 10.10.0 (versioned migrations V1-V16)
 - **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, TanStack React Query, Lucide Icons
 - **Infrastructure:** Docker, Docker Compose, Nginx (frontend container)
 
@@ -75,7 +75,7 @@ MedVault enforces strict role-based access control (RBAC) at both the HTTP secur
 ### Doctor Registration & Approval
 1. Doctor registers via `POST /api/auth/register` with `role: "ROLE_DOCTOR"`.
 2. The account is created with `active = false`. The API returns HTTP 200 with `token = null` and a message stating approval is required.
-3. The pending doctor cannot log in (`POST /api/auth/login` returns HTTP 403 Account Inactive).
+3. The pending doctor cannot log in: `POST /api/auth/login` returns HTTP 401 with a generic `Invalid email or password` message (unknown email, wrong password, and inactive accounts all return the identical response so account state is not leaked).
 4. Administrator reviews pending doctors on `POST /api/admin/doctors/{id}/approve` (or `reject`).
 5. Upon approval, the doctor is activated, a `DOCTOR_APPROVED` platform audit log is created, and an in-app notification is sent.
 6. The approved doctor can now authenticate and receive a JWT.
@@ -112,26 +112,26 @@ MedVault enforces strict role-based access control (RBAC) at both the HTTP secur
 - `POST /api/auth/register` — Public self-registration (ROLE_PATIENT or ROLE_DOCTOR only).
 - `POST /api/auth/login` — Authenticate and receive JWT (active users only).
 
-### Administration (`/api/admin`)
-- `GET /api/admin/users` — List all registered system accounts.
-- `GET /api/admin/doctors` — List all doctor accounts.
-- `GET /api/admin/patients` — List all patient accounts.
+### Administration (`/api/admin`, paginated `Page<T>` unless noted)
+- `GET /api/admin/users` — Paginated list of all registered system accounts.
+- `GET /api/admin/doctors` — Paginated list of all doctor accounts.
+- `GET /api/admin/patients` — Paginated list of all patient accounts.
 - `POST /api/admin/doctors/{id}/approve` — Approve and activate a pending doctor.
 - `POST /api/admin/doctors/{id}/reject` — Reject a pending doctor registration.
 - `POST /api/admin/doctors/{id}/deactivate` — Deactivate an active doctor account.
-- `GET /api/admin/assignments` — List all active patient-doctor assignments.
+- `GET /api/admin/assignments` — Paginated list of active patient-doctor assignments.
 - `POST /api/admin/assignments` — Assign patient to doctor.
 - `PUT /api/admin/assignments/{id}` — Reassign patient to a different doctor.
 - `DELETE /api/admin/assignments/{id}` — Unassign patient.
 - `GET /api/admin/audit-logs` — Paginated platform audit trail (`Page<PlatformAuditLogResponse>`).
-- `GET /api/admin/records/{recordId}/audit` — Record-level audit history.
-- `GET /api/admin/patients/{patientId}/records` — View patient records for oversight.
+- `GET /api/admin/records/{recordId}/audit` — Paginated record-level audit history.
+- `GET /api/admin/patients/{patientId}/records` — Paginated patient records for oversight.
 
 ### Doctor Portal (`/api/doctor`)
 - `GET /api/doctor/patients` — List patients actively assigned to the calling doctor.
-- `GET /api/doctor/patients/{patientId}/records` — View assigned patient's records.
+- `GET /api/doctor/patients/{patientId}/records` — Paginated view of assigned patient's records.
 - `POST /api/doctor/patients/{patientId}/records` — Create clinical record for assigned patient.
-- `GET /api/doctor/reviews` — View reviews received by the doctor.
+- `GET /api/doctor/reviews` — Paginated reviews received by the doctor.
 
 ### Patient Portal (`/api/patient`)
 - `GET /api/patient/records` — Paginated list of patient's own clinical records.
@@ -139,12 +139,12 @@ MedVault enforces strict role-based access control (RBAC) at both the HTTP secur
 - `GET /api/patient/my-doctor` — Information on actively assigned doctor.
 - `POST /api/patient/reviews` — Submit or update rating (1–5) and review for assigned doctor.
 
-### Notifications & Timeline (Shared)
-- `GET /api/notifications/doctor` or `GET /api/notifications/patient` — List user notifications.
+### Notifications & Timeline (Shared, paginated `Page<T>`: default 20, max 100)
+- `GET /api/doctor/notifications` or `GET /api/patient/notifications` — List own notifications (newest first).
 - `PATCH /api/notifications/{id}/read` — Mark own notification as read.
-- `GET /api/timeline/doctor` or `GET /api/timeline/patient` — List chronological activity timeline.
-- `GET /api/profile` / `PUT /api/profile` — View or update user profile name.
-- `POST /api/profile/change-password` — Change account password.
+- `GET /api/doctor/timeline` or `GET /api/patient/timeline` — List chronological activity timeline.
+- `GET /api/user/profile` / `PATCH /api/user/profile` — View or update own profile name.
+- `POST /api/user/change-password` — Change account password.
 
 ---
 
@@ -157,15 +157,22 @@ MedVault uses sequential Flyway SQL migrations located in `backend/src/main/reso
 - `V3__medical_records.sql`: Clinical records table.
 - `V4__audit_log.sql`: Medical-record-specific audit table.
 - `V5__indexes.sql`: Foreign key and query optimization indexes.
-- `V6__seed_users.sql`: Initial seed data for development.
+- `V6__seed_users.sql`: Placeholder — intentionally contains NO user seeds. Development
+  credentials must never ship in universal migrations (see `DatabaseSeeder`, active only on
+  `local`/`dev` profiles). Note: databases migrated with the old V6/V10/V13 files need
+  `flyway repair` or a fresh volume after this fix.
 - `V7__add_user_profile_fields.sql`: Profile fields.
 - `V8__create_notifications_table.sql`: In-app notification store.
 - `V9__create_timeline_events_table.sql`: Timeline event store.
-- `V10__create_reviews_table.sql`: Doctor review store.
+- `V10__create_reviews_table.sql`: Doctor review store (exactly one seed review per
+  patient-doctor pair, matching the V13/V15 unique rule).
 - `V11__platform_audit_log.sql`: Platform-wide business and security audit store.
 - `V12__assignment_isactive_and_unique.sql`: Enforces `is_active` column and partial unique index on active patient assignments.
-- `V13__review_unique_patient_doctor.sql`: Enforces one review per patient-doctor relationship.
+- `V13__review_unique_patient_doctor.sql`: Dedupes legacy rows, then enforces one review per patient-doctor relationship.
 - `V14__remove_ooscope_seed_data.sql`: Removes out-of-scope appointment seed items.
+- `V15__deduplicate_reviews_before_unique_constraint.sql`: Safety net — removes any remaining
+  duplicate `(patient_id, doctor_id)` reviews and guarantees the unique index exists.
+- `V16__remove_ooscope_lab_seed_data.sql`: Removes leftover lab/prescription-themed seeds missed by V14.
 
 ---
 
@@ -175,14 +182,19 @@ Copy `.env.example` to `.env` to configure your environment:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `JWT_SECRET` | *(Required in Prod)* | HMAC-SHA256 secret key (minimum 32 characters). |
+| `JWT_SECRET` | *(Required — no default; startup fails without it)* | HMAC-SHA256 secret key (minimum 32 characters). Generate with `openssl rand -hex 32`. Never commit the real value. |
 | `JWT_EXPIRATION` | `1800000` (30 min) | Token validity duration in milliseconds. |
-| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/medvault` | PostgreSQL connection URL. |
-| `SPRING_DATASOURCE_USERNAME` | `medvault_user` | Database user. |
-| `SPRING_DATASOURCE_PASSWORD` | `medvault_password` | Database password. |
-| `CORS_ALLOWED_ORIGINS` | `http://localhost:3000,http://localhost:5173` | Allowed origins whitelist for CORS (comma-separated). |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/medvault` (dev) | PostgreSQL connection URL. Required in prod. |
+| `SPRING_DATASOURCE_USERNAME` | `medvault_user` (dev/docker) | Database user. Required in prod. |
+| `SPRING_DATASOURCE_PASSWORD` | `medvault_password` (dev/docker) | Database password. Required in prod. |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:3000,http://localhost:5173` | Allowed origins whitelist for CORS (comma-separated). Required in prod. |
+| `RATE_LIMIT_TRUST_PROXY` | `false` | Set `true` only behind a trusted proxy that sanitizes `X-Forwarded-For`. |
 | `PORT` | `8080` | Backend listening port. |
 | `VITE_API_BASE_URL` | `/api` | Base URL used by the frontend client. |
+
+> Production starts with **no default users and no usable default JWT secret**.
+> Set `JWT_SECRET` and run migrations on an empty database; create the first admin
+> via the `local`/`dev` seeder flow or a controlled bootstrap, then rotate credentials.
 
 ---
 
@@ -219,7 +231,7 @@ cd backend
 **2. Frontend:**
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 Open `http://localhost:5173` in your browser.
@@ -228,7 +240,7 @@ Open `http://localhost:5173` in your browser.
 
 ## 9. Verification & Automated Testing
 
-The backend test suite validates all 24 required V1 security, domain, and integration scenarios:
+The backend test suite validates all 26 required V1 security, domain, and integration scenarios:
 
 ```bash
 cd backend
@@ -238,7 +250,8 @@ cd backend
 ### Verified Scenarios:
 - [x] Patient registration and immediate token issuance
 - [x] Doctor registration with null token & pending approval restriction
-- [x] Account-inactive login prevention (403)
+- [x] Account-inactive login prevention (uniform 401, no state oracle)
+- [x] Uniform login failures: unknown email, inactive account, and wrong password are indistinguishable
 - [x] Admin approval workflow (doctor activation)
 - [x] Admin rejection workflow (remains inactive)
 - [x] Instant invalidation of JWT upon doctor deactivation

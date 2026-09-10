@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "c1f8a846-5e58-4b2a-8924-f7df43e9a4e3",
     "name": "MedVault API",
-    "description": "API Collection for the MedVault healthcare application.",
+    "description": "API Collection for the MedVault V1 healthcare application. List endpoints return Spring Page<T> (default size 20, max 100).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -10,30 +10,28 @@
       "name": "Authentication",
       "item": [
         {
-          "name": "Register",
+          "name": "Register Patient",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"fullName\": \"New Patient\",\n    \"email\": \"patient@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"ROLE_PATIENT\"\n}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "register"
-              ]
-            }
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Register Doctor (pending, token=null)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"fullName\": \"Dr. Jane\",\n    \"email\": \"doctor@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"ROLE_DOCTOR\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] }
           },
           "response": []
         },
@@ -41,27 +39,12 @@
           "name": "Login",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"patient@medvault.com\",\n    \"password\": \"password123\"\n}"
+              "raw": "{\n    \"email\": \"patient@example.com\",\n    \"password\": \"password123\"\n}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
-            }
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
           },
           "response": []
         }
@@ -71,26 +54,301 @@
       "name": "Admin",
       "item": [
         {
-          "name": "Get Users",
+          "name": "List Users (paginated)",
           "request": {
             "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/users?page=0&size=20", "host": ["{{baseUrl}}"], "path": ["api", "admin", "users"] }
+          },
+          "response": []
+        },
+        {
+          "name": "List Doctors (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/doctors?page=0&size=20", "host": ["{{baseUrl}}"], "path": ["api", "admin", "doctors"] }
+          },
+          "response": []
+        },
+        {
+          "name": "List Patients (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/patients?page=0&size=20", "host": ["{{baseUrl}}"], "path": ["api", "admin", "patients"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Doctor",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/doctors/:id/approve", "host": ["{{baseUrl}}"], "path": ["api", "admin", "doctors", ":id", "approve"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Doctor",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/doctors/:id/reject", "host": ["{{baseUrl}}"], "path": ["api", "admin", "doctors", ":id", "reject"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate Doctor",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/doctors/:id/deactivate", "host": ["{{baseUrl}}"], "path": ["api", "admin", "doctors", ":id", "deactivate"] }
+          },
+          "response": []
+        },
+        {
+          "name": "List Assignments (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/assignments?page=0&size=20", "host": ["{{baseUrl}}"], "path": ["api", "admin", "assignments"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Patient",
+          "request": {
+            "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/users",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "users"
-              ]
-            }
+            "body": { "mode": "raw", "raw": "{\n    \"patientId\": \"PATIENT_UUID\",\n    \"doctorId\": \"DOCTOR_UUID\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/admin/assignments", "host": ["{{baseUrl}}"], "path": ["api", "admin", "assignments"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Reassign Patient",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n    \"newDoctorId\": \"DOCTOR_UUID\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/admin/assignments/:assignmentId", "host": ["{{baseUrl}}"], "path": ["api", "admin", "assignments", ":assignmentId"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Unassign Patient",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/assignments/:assignmentId", "host": ["{{baseUrl}}"], "path": ["api", "admin", "assignments", ":assignmentId"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Platform Audit Logs (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/audit-logs?page=0&size=20", "host": ["{{baseUrl}}"], "path": ["api", "admin", "audit-logs"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Record Audit History (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/records/:recordId/audit", "host": ["{{baseUrl}}"], "path": ["api", "admin", "records", ":recordId", "audit"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Patient Records Oversight (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/patients/:patientId/records", "host": ["{{baseUrl}}"], "path": ["api", "admin", "patients", ":patientId", "records"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Doctor",
+      "item": [
+        {
+          "name": "List Assigned Patients",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/doctor/patients", "host": ["{{baseUrl}}"], "path": ["api", "doctor", "patients"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Patient Records (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/doctor/patients/:patientId/records", "host": ["{{baseUrl}}"], "path": ["api", "doctor", "patients", ":patientId", "records"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n    \"diagnosis\": \"Hypertension\",\n    \"prescription\": \"Lisinopril 10mg\",\n    \"notes\": \"Follow-up in 4 weeks\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/doctor/patients/:patientId/records", "host": ["{{baseUrl}}"], "path": ["api", "doctor", "patients", ":patientId", "records"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Received Reviews (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/doctor/reviews", "host": ["{{baseUrl}}"], "path": ["api", "doctor", "reviews"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor Notifications (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/doctor/notifications", "host": ["{{baseUrl}}"], "path": ["api", "doctor", "notifications"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor Timeline (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/doctor/timeline", "host": ["{{baseUrl}}"], "path": ["api", "doctor", "timeline"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Patient",
+      "item": [
+        {
+          "name": "My Records (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/patient/records", "host": ["{{baseUrl}}"], "path": ["api", "patient", "records"] }
+          },
+          "response": []
+        },
+        {
+          "name": "My Doctor",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/patient/my-doctor", "host": ["{{baseUrl}}"], "path": ["api", "patient", "my-doctor"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n    \"rating\": 5,\n    \"comment\": \"Great physician!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/patient/reviews", "host": ["{{baseUrl}}"], "path": ["api", "patient", "reviews"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Patient Notifications (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/patient/notifications", "host": ["{{baseUrl}}"], "path": ["api", "patient", "notifications"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Patient Timeline (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/patient/timeline", "host": ["{{baseUrl}}"], "path": ["api", "patient", "timeline"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Shared",
+      "item": [
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/notifications/:id/read", "host": ["{{baseUrl}}"], "path": ["api", "notifications", ":id", "read"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/user/profile", "host": ["{{baseUrl}}"], "path": ["api", "user", "profile"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n    \"fullName\": \"Updated Name\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/user/profile", "host": ["{{baseUrl}}"], "path": ["api", "user", "profile"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n    \"currentPassword\": \"password123\",\n    \"newPassword\": \"newPassword123\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/user/change-password", "host": ["{{baseUrl}}"], "path": ["api", "user", "change-password"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/health", "host": ["{{baseUrl}}"], "path": ["api", "health"] }
           },
           "response": []
         }
@@ -98,13 +356,7 @@
     }
   ],
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:8080"
-    },
-    {
-      "key": "token",
-      "value": "YOUR_JWT_TOKEN"
-    }
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "YOUR_JWT_TOKEN" }
   ]
 }

@@ -102,9 +102,13 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- H2 is required at runtime by the documented `local` profile
+             (in-memory dev quickstart, Flyway disabled). It is never on the
+             connection path for docker/prod profiles, which use PostgreSQL. -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 
