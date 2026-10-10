@@ -124,7 +124,7 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "body": { "mode": "raw", "raw": "{\n    \"patientId\": \"PATIENT_UUID\",\n    \"doctorId\": \"DOCTOR_UUID\"\n}" },
+            "body": { "mode": "raw", "raw": "{\n    \"patientId\": \"PATIENT_UUID\",\n    \"doctorId\": \"DOCTOR_UUID\",\n    \"workspaceId\": \"WORKSPACE_UUID (required since D6; unknown IDs return 404)\"\n}" },
             "url": { "raw": "{{baseUrl}}/api/admin/assignments", "host": ["{{baseUrl}}"], "path": ["api", "admin", "assignments"] }
           },
           "response": []
@@ -161,20 +161,78 @@
           "response": []
         },
         {
-          "name": "Record Audit History (paginated)",
+          "name": "Record Audit Metadata (paginated, no clinical snapshot)",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/api/admin/records/:recordId/audit", "host": ["{{baseUrl}}"], "path": ["api", "admin", "records", ":recordId", "audit"] }
           },
           "response": []
+        }
+      ]
+    },
+    {
+      "name": "Workspaces (Admin)",
+      "item": [
+        {
+          "name": "Create Workspace",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n    \"name\": \"Cardiology\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/admin/workspaces", "host": ["{{baseUrl}}"], "path": ["api", "admin", "workspaces"] }
+          },
+          "response": []
         },
         {
-          "name": "Patient Records Oversight (paginated)",
+          "name": "List Workspaces (paginated)",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{baseUrl}}/api/admin/patients/:patientId/records", "host": ["{{baseUrl}}"], "path": ["api", "admin", "patients", ":patientId", "records"] }
+            "url": { "raw": "{{baseUrl}}/api/admin/workspaces?page=0&size=20", "host": ["{{baseUrl}}"], "path": ["api", "admin", "workspaces"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Workspace",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/workspaces/:workspaceId", "host": ["{{baseUrl}}"], "path": ["api", "admin", "workspaces", ":workspaceId"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Member",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n    \"userId\": \"USER_UUID\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/admin/workspaces/:workspaceId/members", "host": ["{{baseUrl}}"], "path": ["api", "admin", "workspaces", ":workspaceId", "members"] }
+          },
+          "response": []
+        },
+        {
+          "name": "List Members",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/workspaces/:workspaceId/members", "host": ["{{baseUrl}}"], "path": ["api", "admin", "workspaces", ":workspaceId", "members"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Member",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/workspaces/:workspaceId/members/:userId", "host": ["{{baseUrl}}"], "path": ["api", "admin", "workspaces", ":workspaceId", "members", ":userId"] }
           },
           "response": []
         }

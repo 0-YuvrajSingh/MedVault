@@ -15,7 +15,7 @@ MedVault is **not** an appointment platform, hospital ERP, billing engine, or te
 | **Controlled Care Assignment** | Doctors can only access patients explicitly assigned to them by an administrator. A patient can have at most one active doctor at any time (enforced at both service and database levels). |
 | **Transactional Business Events** | Clinical record changes, doctor approvals, and patient assignments atomically write audit logs, notifications, and timeline events in a single transaction. |
 | **Real-time Deactivation Invalidation** | JWT validation re-verifies user active status directly from the database on every authenticated request, immediately revoking access upon account deactivation. |
-| **Platform & Clinical Auditing** | Administrators have visibility into platform-level domain events (registrations, approvals, assignments) and record-level clinical audit trails. |
+| **Platform & Clinical Auditing** | Administrators have visibility into platform-level domain events (registrations, approvals, assignments) and record-level audit metadata (clinical snapshots withheld per least privilege — A28). |
 
 ```mermaid
 flowchart TB
@@ -41,7 +41,7 @@ flowchart TB
 ## 2. Technology Stack
 
 - **Backend:** Java 21, Spring Boot 3.2.5 (Spring Web, Spring Security, Spring Data JPA, Bean Validation), JJWT 0.11.5, Bucket4j rate-limiting
-- **Database & Migrations:** PostgreSQL 15, Flyway 10.10.0 (versioned migrations V1-V16)
+- **Database & Migrations:** PostgreSQL 15, Flyway 10.10.0 (versioned migrations V1-V17)
 - **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, TanStack React Query, Lucide Icons
 - **Infrastructure:** Docker, Docker Compose, Nginx (frontend container)
 
@@ -59,13 +59,14 @@ MedVault enforces strict role-based access control (RBAC) at both the HTTP secur
 | View Doctors / Patients List | ✅ | ❌ | ❌ |
 | Assign / Reassign / Unassign Patient | ✅ | ❌ | ❌ |
 | View Assigned Patients | ❌ | ✅ (Assigned only) | ❌ |
-| Read Clinical Records | ✅ (Administrative oversight) | ✅ (Assigned only) | ✅ (Own records only) |
+| Read Clinical Records | ❌ (least privilege — A28) | ✅ (Assigned only) | ✅ (Own records only) |
 | Create / Update Clinical Records | ❌ | ✅ (Assigned only) | ❌ |
 | Submit / Update Doctor Review | ❌ | ❌ | ✅ (Assigned doctor only) |
 | Read Doctor Reviews | ❌ | ✅ (Own received reviews) | ❌ |
 | View Notifications | ✅ (Own platform notifications) | ✅ (Own notifications) | ✅ (Own notifications) |
 | View Timeline Events | ❌ | ✅ (Own activity) | ✅ (Own activity) |
 | Platform & Record Audit Logs | ✅ | ❌ | ❌ |
+| Workspace / Membership Management | ✅ | ❌ | ❌ |
 | Profile / Password Management | ✅ (Own profile) | ✅ (Own profile) | ✅ (Own profile) |
 
 ---
@@ -81,10 +82,10 @@ MedVault enforces strict role-based access control (RBAC) at both the HTTP secur
 6. The approved doctor can now authenticate and receive a JWT.
 
 ### Patient Care Assignment & Reassignment
-1. Administrator assigns a patient to an approved doctor via `POST /api/admin/assignments`.
+1. Administrator assigns a patient to an approved doctor via `POST /api/admin/assignments` (requires `workspaceId` per D6; unknown workspace IDs return HTTP 404).
 2. Business rule: **A patient can have at most one active doctor assignment**. Attempting to assign an already-assigned patient returns HTTP 409 Conflict. A partial unique index (`idx_assignment_unique_active_patient WHERE is_active = true`) guarantees this at the database level.
 3. Upon assignment, `PATIENT_ASSIGNED` audit logs, notifications, and timeline events are generated for both the doctor and patient.
-4. When transferring care, administrator calls `PUT /api/admin/assignments/{id}`. The previous assignment is marked inactive (preserving history) and the new active relationship is created. The former doctor immediately loses clinical record access.
+4. When transferring care, administrator calls `PUT /api/admin/assignments/{id}`. The previous assignment is marked inactive (preserving history) and the new active relationship is created (inheriting the workspace; legacy null-workspace assignments return HTTP 409 Conflict per D6). The former doctor immediately loses clinical record access.
 5. To end care without reassigning, administrator calls `DELETE /api/admin/assignments/{id}` (`PATIENT_UNASSIGNED`).
 
 ### Clinical Records & Atomic Event Triad
@@ -120,12 +121,18 @@ MedVault enforces strict role-based access control (RBAC) at both the HTTP secur
 - `POST /api/admin/doctors/{id}/reject` — Reject a pending doctor registration.
 - `POST /api/admin/doctors/{id}/deactivate` — Deactivate an active doctor account.
 - `GET /api/admin/assignments` — Paginated list of active patient-doctor assignments.
-- `POST /api/admin/assignments` — Assign patient to doctor.
+- `POST /api/admin/assignments` — Assign patient to doctor (`workspaceId` required per D6).
 - `PUT /api/admin/assignments/{id}` — Reassign patient to a different doctor.
 - `DELETE /api/admin/assignments/{id}` — Unassign patient.
 - `GET /api/admin/audit-logs` — Paginated platform audit trail (`Page<PlatformAuditLogResponse>`).
-- `GET /api/admin/records/{recordId}/audit` — Paginated record-level audit history.
-- `GET /api/admin/patients/{patientId}/records` — Paginated patient records for oversight.
+- `GET /api/admin/records/{recordId}/audit` — Paginated record-level audit metadata
+  (action, actor, time; clinical snapshots withheld per least privilege).
+- `POST /api/admin/workspaces` — Create workspace (`{name}`).
+- `GET /api/admin/workspaces` — Paginated workspace list.
+- `GET /api/admin/workspaces/{id}` — Workspace details (404 if missing).
+- `POST /api/admin/workspaces/{id}/members` — Add member (`{userId}`, reactivates).
+- `GET /api/admin/workspaces/{id}/members` — List active members.
+- `DELETE /api/admin/workspaces/{id}/members/{userId}` — Deactivate membership.
 
 ### Doctor Portal (`/api/doctor`)
 - `GET /api/doctor/patients` — List patients actively assigned to the calling doctor.
@@ -173,6 +180,7 @@ MedVault uses sequential Flyway SQL migrations located in `backend/src/main/reso
 - `V15__deduplicate_reviews_before_unique_constraint.sql`: Safety net — removes any remaining
   duplicate `(patient_id, doctor_id)` reviews and guarantees the unique index exists.
 - `V16__remove_ooscope_lab_seed_data.sql`: Removes leftover lab/prescription-themed seeds missed by V14.
+- `V17__workspaces.sql`: Additive workspace and membership tables (`workspaces`, `workspace_memberships`) and nullable `workspace_id` FKs on assignments and medical records (see `docs/WORKSPACE_MIGRATION_V17.md`).
 
 ---
 
@@ -195,6 +203,16 @@ Copy `.env.example` to `.env` to configure your environment:
 > Production starts with **no default users and no usable default JWT secret**.
 > Set `JWT_SECRET` and run migrations on an empty database; create the first admin
 > via the `local`/`dev` seeder flow or a controlled bootstrap, then rotate credentials.
+>
+> No production demo credentials are provided, by design. First-admin setup for a real
+> deployment: `docs/FIRST_ADMIN_BOOTSTRAP.md` (direct, audited DB insert with a locally
+> generated BCrypt hash — execute only on the approved target with a backup).
+> MedVault is a portfolio project: use synthetic data only; no compliance claim.
+>
+> Access-token note (proposed, D5): V1 issues short-lived access JWTs only
+> (30 min default, no refresh tokens). Retaining 30 min bounds stolen-token exposure
+> without rotation complexity; shorter tightens security but adds login friction.
+> See `docs/DECISIONS.md`.
 
 ---
 
@@ -228,7 +246,7 @@ cd backend
 ./mvnw spring-boot:run
 ```
 
-**2. Frontend:**
+**2. Frontend (requires Node `^20.19.0 || ^22.13.0 || >=24.0.0`):**
 ```bash
 cd frontend
 npm ci
@@ -240,7 +258,7 @@ Open `http://localhost:5173` in your browser.
 
 ## 9. Verification & Automated Testing
 
-The backend test suite validates all 26 required V1 security, domain, and integration scenarios:
+The backend test suite validates all 47 automated security, domain, and integration scenarios (26 V1 baseline + 21 workspace/D6/A28):
 
 ```bash
 cd backend
@@ -379,6 +397,10 @@ erDiagram
 ---
 
 ## 12. Scope Boundaries & Future Roadmap
+
+> Workspace boundary (implemented, D1): workspaces group users for access control only.
+> Unscoped (pre-workspace) rows keep V1 semantics; assignment-ownership and role checks
+> remain authoritative (see `docs/SCOPE.md`, `docs/DECISIONS.md`).
 
 ### Explicitly Out of Scope in V1:
 - Appointments, doctor scheduling, and calendar views
