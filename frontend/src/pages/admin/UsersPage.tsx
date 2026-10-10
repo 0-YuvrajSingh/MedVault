@@ -6,7 +6,6 @@ import type { Column } from '../../components/ui/DataTable';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 const PAGE_SIZE = 10;
 
@@ -39,14 +38,6 @@ const UsersPage: React.FC = () => {
     {
       header: 'Status',
       accessor: (u) => u.active ? <Badge variant="success" dot>Active</Badge> : <Badge variant="danger" dot>Inactive</Badge>,
-    },
-    {
-      header: '',
-      accessor: (u) => u.role === 'ROLE_PATIENT' ? (
-        <Link to={`/admin/patients/${u.id}/records`}>
-          <Button variant="ghost" size="sm">View Records</Button>
-        </Link>
-      ) : null,
     },
   ];
 

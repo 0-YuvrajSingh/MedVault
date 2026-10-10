@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../api/admin';
 import { unwrapPage } from '../api/axios';
-import type { UserResponse, AssignmentResponse, AuditLogEntry, PageResponse, MedicalRecord, PlatformAuditLog } from '../types';
+import type { UserResponse, AssignmentResponse, AuditLogEntry, PageResponse, PlatformAuditLog } from '../types';
 
 export function useUsers() {
   return useQuery<UserResponse[]>({
@@ -100,14 +100,6 @@ export function usePlatformAuditLogs(page = 0, size = 20) {
   return useQuery<PageResponse<PlatformAuditLog>>({
     queryKey: ['admin', 'platform-audit', page],
     queryFn: () => adminAPI.getPlatformAuditLogs(page, size).then(r => r.data),
-  });
-}
-
-export function usePatientRecords(patientId: string, page: number) {
-  return useQuery<PageResponse<MedicalRecord>>({
-    queryKey: ['admin', 'patient-records', patientId, page],
-    queryFn: () => adminAPI.getPatientRecords(patientId, page, 10).then(r => r.data),
-    enabled: !!patientId,
   });
 }
 

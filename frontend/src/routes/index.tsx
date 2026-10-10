@@ -18,7 +18,6 @@ const DoctorManagementPage = lazy(() => import('../pages/admin/DoctorManagementP
 const AssignmentsPage = lazy(() => import('../pages/admin/AssignmentsPage'));
 const AuditLogsPage = lazy(() => import('../pages/admin/AuditLogsPage'));
 const SystemHealthPage = lazy(() => import('../pages/admin/SystemHealthPage'));
-const AdminPatientRecordsPage = lazy(() => import('../pages/admin/AdminPatientRecordsPage'));
 
 const DoctorDashboard = lazy(() => import('../pages/doctor/DoctorDashboard'));
 const PatientsPage = lazy(() => import('../pages/doctor/PatientsPage'));
@@ -75,7 +74,6 @@ const router = createBrowserRouter([
         children: [
           { path: '/admin', element: withSuspense(<AdminDashboard />) },
           { path: '/admin/users', element: withSuspense(<UsersPage />) },
-          { path: '/admin/patients/:id/records', element: withSuspense(<AdminPatientRecordsPage />) },
           { path: '/admin/approvals', element: withSuspense(<DoctorManagementPage />) },
           { path: '/admin/assignments', element: withSuspense(<AssignmentsPage />) },
           { path: '/admin/audit-logs', element: withSuspense(<AuditLogsPage />) },

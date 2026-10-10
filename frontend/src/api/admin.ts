@@ -1,5 +1,5 @@
 import api from './axios';
-import type { UserResponse, AssignmentResponse, AuditLogEntry, MedicalRecord, PageResponse, PlatformAuditLog } from '../types';
+import type { UserResponse, AssignmentResponse, AuditLogEntry, PageResponse, PlatformAuditLog } from '../types';
 
 export const adminAPI = {
   // User listings
@@ -25,8 +25,4 @@ export const adminAPI = {
   getPlatformAuditLogs: (page = 0, size = 20) =>
     api.get<PageResponse<PlatformAuditLog>>(`/admin/audit-logs?page=${page}&size=${size}`),
   getAuditLog: (recordId: string) => api.get<AuditLogEntry[]>(`/admin/records/${recordId}/audit`),
-
-  // Patient records (admin visibility)
-  getPatientRecords: (patientId: string, page = 0, size = 10) =>
-    api.get<PageResponse<MedicalRecord>>(`/admin/patients/${patientId}/records?page=${page}&size=${size}`),
 };
