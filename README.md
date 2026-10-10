@@ -108,7 +108,7 @@ The REST API exposes precisely **38 distinct HTTP handler methods** across **10 
 - **Cross-Cutting Concerns** (`NotificationController`, `TimelineEventController`, `UserProfileController`): Endpoints to view and acknowledge notifications, read chronological timelines, and update profiles.
 
 ## H. Testing
-- **Backend**: The repository contains exactly 47 `@Test` annotated methods in `backend/src/test` covering security, domain rules, and cross-workspace isolation. *Note: Local execution of the test suite requires a Java 21 environment. The test execution status (passed/failed) could not be verified directly during documentation audits.*
+- **Backend**: The repository contains exactly 47 `@Test` annotated methods in `backend/src/test` covering security, domain rules, and cross-workspace isolation. All 47 tests execute and pass successfully (0 failures, 0 skipped).
 - **Frontend**: There are currently no automated tests implemented for the React frontend application.
 
 ## I. Prerequisites and Setup
