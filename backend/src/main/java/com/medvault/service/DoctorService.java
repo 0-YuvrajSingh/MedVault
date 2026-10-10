@@ -26,27 +26,33 @@ public class DoctorService {
     private final AuditService auditService;
     private final NotificationService notificationService;
     private final TimelineEventService timelineEventService;
+    private final WorkspaceAccessService workspaceAccessService;
 
     public DoctorService(MedicalRecordRepository medicalRecordRepository,
                          UserRepository userRepository,
                          PatientDoctorAssignmentRepository assignmentRepository,
                          AuditService auditService,
                          NotificationService notificationService,
-                         TimelineEventService timelineEventService) {
+                         TimelineEventService timelineEventService,
+                         WorkspaceAccessService workspaceAccessService) {
         this.medicalRecordRepository = medicalRecordRepository;
         this.userRepository = userRepository;
         this.assignmentRepository = assignmentRepository;
         this.auditService = auditService;
         this.notificationService = notificationService;
         this.timelineEventService = timelineEventService;
+        this.workspaceAccessService = workspaceAccessService;
     }
 
     @Transactional(readOnly = true)
     public List<User> getAssignedPatients(UUID doctorId) {
         userRepository.findById(doctorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
-        // Uses fetch join — no N+1
+        // Uses fetch join — no N+1. Workspace-scoped assignments are hidden from
+        // doctors who are not active members of the assignment's workspace.
         return assignmentRepository.findAllActiveByDoctorId(doctorId).stream()
+                .filter(a -> a.getWorkspace() == null
+                        || workspaceAccessService.isActiveMember(a.getWorkspace().getId(), doctorId))
                 .map(PatientDoctorAssignment::getPatient)
                 .collect(Collectors.toList());
     }
@@ -57,6 +63,10 @@ public class DoctorService {
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
         User patient = userRepository.findById(patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
+
+        // Workspace gate first (non-members get 404), then the assignment check (403).
+        assignmentRepository.findByPatientIdAndIsActiveTrue(patientId)
+                .ifPresent(a -> workspaceAccessService.requireMemberOf(a.getWorkspace(), doctorId));
 
         verifyAssignment(patient, doctor);
 
@@ -71,6 +81,14 @@ public class DoctorService {
         User patient = userRepository.findById(patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
 
+        // Workspace gate first (non-members get 404), then the assignment check (403).
+        Workspace workspace = assignmentRepository.findByPatientIdAndIsActiveTrue(patientId)
+                .map(a -> {
+                    workspaceAccessService.requireMemberOf(a.getWorkspace(), doctorId);
+                    return a.getWorkspace();
+                })
+                .orElse(null);
+
         verifyAssignment(patient, doctor);
 
         MedicalRecord record = MedicalRecord.builder()
@@ -80,6 +98,7 @@ public class DoctorService {
                 .prescription(request.getPrescription())
                 .notes(request.getNotes())
                 .recordDate(request.getRecordDate() != null ? request.getRecordDate() : java.time.LocalDate.now())
+                .workspace(workspace)
                 .build();
 
         MedicalRecord savedRecord = medicalRecordRepository.save(record);

@@ -107,13 +107,4 @@ public class AdminController {
             @PageableDefault(size = 20, sort = "performedAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(adminService.getRecordAuditLog(recordId, pageable));
     }
-
-    // ─── Patient records (admin visibility) ─────────────────────────────────
-
-    @GetMapping("/patients/{patientId}/records")
-    public ResponseEntity<Page<MedicalRecordResponse>> getPatientRecords(
-            @PathVariable UUID patientId,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(adminService.getPatientRecords(patientId, pageable));
-    }
 }

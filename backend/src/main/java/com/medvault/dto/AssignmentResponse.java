@@ -15,4 +15,5 @@ public class AssignmentResponse {
     private String doctorName;
     private LocalDateTime assignedAt;
     private boolean isActive;
+    private UUID workspaceId;
 }

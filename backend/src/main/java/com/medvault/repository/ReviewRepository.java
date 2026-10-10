@@ -23,4 +23,22 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
     Optional<Review> findByPatientIdAndDoctorId(UUID patientId, UUID doctorId);
 
     boolean existsByPatientIdAndDoctorId(UUID patientId, UUID doctorId);
+
+    /**
+     * Reviews visible to a doctor: those whose reviewer has no workspace-scoped active
+     * assignment outside the doctor's memberships. Count query matches so pagination
+     * totals never reveal hidden rows.
+     */
+    @Query(value = "SELECT r FROM Review r WHERE r.doctorId = :doctorId"
+            + " AND NOT EXISTS (SELECT a FROM PatientDoctorAssignment a WHERE a.patient.id = r.patientId"
+            + " AND a.isActive = true AND a.workspace IS NOT NULL AND a.workspace.id NOT IN"
+            + " (SELECT m.workspace.id FROM WorkspaceMembership m"
+            + " WHERE m.user.id = :doctorId AND m.isActive = true))"
+            + " ORDER BY r.createdAt DESC",
+            countQuery = "SELECT COUNT(r) FROM Review r WHERE r.doctorId = :doctorId"
+            + " AND NOT EXISTS (SELECT a FROM PatientDoctorAssignment a WHERE a.patient.id = r.patientId"
+            + " AND a.isActive = true AND a.workspace IS NOT NULL AND a.workspace.id NOT IN"
+            + " (SELECT m.workspace.id FROM WorkspaceMembership m"
+            + " WHERE m.user.id = :doctorId AND m.isActive = true))")
+    Page<Review> findVisibleByDoctorId(@Param("doctorId") UUID doctorId, Pageable pageable);
 }

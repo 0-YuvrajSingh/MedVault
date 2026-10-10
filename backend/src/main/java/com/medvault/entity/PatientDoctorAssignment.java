@@ -35,4 +35,13 @@ public class PatientDoctorAssignment {
     @Builder.Default
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
+
+    /**
+     * Definite workspace this assignment belongs to. Nullable: pre-workspace (V1) rows
+     * carry null and keep their V1 access semantics (unscoped). New assignments may
+     * reference a workspace; clinical records created under them inherit it.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workspace_id")
+    private Workspace workspace;
 }

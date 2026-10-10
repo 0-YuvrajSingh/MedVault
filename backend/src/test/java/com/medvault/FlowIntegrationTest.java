@@ -68,6 +68,12 @@ public class FlowIntegrationTest {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private WorkspaceRepository workspaceRepository;
+
+    @Autowired
+    private WorkspaceMembershipRepository membershipRepository;
+
     private User admin;
 
     @BeforeEach
@@ -84,6 +90,17 @@ public class FlowIntegrationTest {
 
     private String getAdminToken() {
         return jwtUtil.generateToken(admin);
+    }
+
+    /** D6: new assignments require a workspace. Creates one directly (admin API equivalent). */
+    private Workspace newWorkspace(String name) {
+        return workspaceRepository.save(Workspace.builder().name(name).createdBy(admin.getId()).build());
+    }
+
+    private void addWorkspaceMember(UUID workspaceId, User user) {
+        Workspace workspace = workspaceRepository.findById(workspaceId).orElseThrow();
+        membershipRepository.save(WorkspaceMembership.builder()
+                .workspace(workspace).user(user).isActive(true).build());
     }
 
     // 1. Patient registration works and returns a usable token
@@ -326,9 +343,12 @@ public class FlowIntegrationTest {
 
         String adminToken = getAdminToken();
 
+        Workspace workspace = newWorkspace("FlowDup");
+
         AssignDoctorRequest req1 = new AssignDoctorRequest();
         req1.setPatientId(patient.getId());
         req1.setDoctorId(doc1.getId());
+        req1.setWorkspaceId(workspace.getId());
 
         mockMvc.perform(post("/api/admin/assignments")
                         .header("Authorization", "Bearer " + adminToken)
@@ -340,6 +360,7 @@ public class FlowIntegrationTest {
         AssignDoctorRequest req2 = new AssignDoctorRequest();
         req2.setPatientId(patient.getId());
         req2.setDoctorId(doc2.getId());
+        req2.setWorkspaceId(workspace.getId());
 
         mockMvc.perform(post("/api/admin/assignments")
                         .header("Authorization", "Bearer " + adminToken)
@@ -360,10 +381,16 @@ public class FlowIntegrationTest {
 
         String adminToken = getAdminToken();
 
+        // D6: assignments are workspace-scoped; readers must be members.
+        Workspace workspace = newWorkspace("FlowReassign");
+        addWorkspaceMember(workspace.getId(), oldDoc);
+        addWorkspaceMember(workspace.getId(), newDoc);
+
         // Initial assignment
         AssignDoctorRequest assignReq = new AssignDoctorRequest();
         assignReq.setPatientId(patient.getId());
         assignReq.setDoctorId(oldDoc.getId());
+        assignReq.setWorkspaceId(workspace.getId());
 
         String assignRes = mockMvc.perform(post("/api/admin/assignments")
                         .header("Authorization", "Bearer " + adminToken)

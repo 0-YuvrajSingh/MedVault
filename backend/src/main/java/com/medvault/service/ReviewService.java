@@ -26,25 +26,34 @@ public class ReviewService {
     private final PatientDoctorAssignmentRepository assignmentRepository;
     private final AuditService auditService;
     private final TimelineEventService timelineEventService;
+    private final WorkspaceAccessService workspaceAccessService;
 
     public ReviewService(ReviewRepository reviewRepository,
                          UserRepository userRepository,
                          PatientDoctorAssignmentRepository assignmentRepository,
                          AuditService auditService,
-                         TimelineEventService timelineEventService) {
+                         TimelineEventService timelineEventService,
+                         WorkspaceAccessService workspaceAccessService) {
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
         this.assignmentRepository = assignmentRepository;
         this.auditService = auditService;
         this.timelineEventService = timelineEventService;
+        this.workspaceAccessService = workspaceAccessService;
     }
 
     @Transactional(readOnly = true)
     public List<ReviewResponse> getReviewsByDoctor(UUID doctorId) {
         List<Review> reviews = reviewRepository.findByDoctorIdOrderByCreatedAtDesc(doctorId);
 
+        // Workspace isolation: hide reviews whose patient sits in a workspace-scoped
+        // assignment the reading doctor is not a member of.
+        List<Review> visible = reviews.stream()
+                .filter(r -> isReviewVisibleToDoctor(r, doctorId))
+                .collect(Collectors.toList());
+
         // Avoid N+1: collect all distinct patient IDs and load in a single query
-        List<UUID> patientIds = reviews.stream()
+        List<UUID> patientIds = visible.stream()
                 .map(Review::getPatientId)
                 .distinct()
                 .collect(Collectors.toList());
@@ -53,14 +62,16 @@ public class ReviewService {
         java.util.Map<UUID, String> patientNames = userRepository.findAllById(patientIds).stream()
                 .collect(Collectors.toMap(User::getId, User::getFullName));
 
-        return reviews.stream()
+        return visible.stream()
                 .map(r -> toResponse(r, patientNames.getOrDefault(r.getPatientId(), "Unknown")))
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public Page<ReviewResponse> getReviewsByDoctor(UUID doctorId, Pageable pageable) {
-        Page<Review> page = reviewRepository.findByDoctorIdOrderByCreatedAtDesc(doctorId, pageable);
+        // Visibility enforced in the query (with matching count) so pagination totals
+        // never reveal hidden workspace-scoped rows.
+        Page<Review> page = reviewRepository.findVisibleByDoctorId(doctorId, pageable);
 
         // Avoid N+1: collect all distinct patient IDs on this page and load in a single query
         List<UUID> patientIds = page.getContent().stream()
@@ -75,6 +86,21 @@ public class ReviewService {
     }
 
     /**
+     * A review is visible to a doctor when the reviewer's active assignment is unscoped
+     * (V1) or the doctor is an active member of its workspace. Reviews without any
+     * active assignment stay visible (V1 semantics preserved).
+     */
+    private boolean isReviewVisibleToDoctor(Review review, UUID doctorId) {
+        Optional<PatientDoctorAssignment> assignmentOpt =
+                assignmentRepository.findByPatientIdAndIsActiveTrue(review.getPatientId());
+        if (assignmentOpt.isEmpty() || assignmentOpt.get().getWorkspace() == null) {
+            return true;
+        }
+        return workspaceAccessService.isActiveMember(
+                assignmentOpt.get().getWorkspace().getId(), doctorId);
+    }
+
+    /**
      * Creates or updates (upsert) a review from a patient for their currently assigned doctor.
      * The patient is not allowed to specify the doctorId — it is derived from their active assignment.
      */
@@ -86,6 +112,9 @@ public class ReviewService {
         // Derive the doctor from the active assignment — patient cannot inject arbitrary doctorId
         PatientDoctorAssignment assignment = assignmentRepository.findByPatientIdAndIsActiveTrue(patientId)
                 .orElseThrow(() -> new AccessDeniedException("You must have an assigned doctor to submit a review"));
+
+        // Workspace gate (non-members get 404); the assignment requirement above keeps its 403.
+        workspaceAccessService.requireMemberOf(assignment.getWorkspace(), patientId);
 
         User doctor = assignment.getDoctor();
 

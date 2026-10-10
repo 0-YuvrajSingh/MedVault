@@ -22,16 +22,21 @@ public class PatientService {
 
     private final MedicalRecordRepository medicalRecordRepository;
     private final PatientDoctorAssignmentRepository assignmentRepository;
+    private final WorkspaceAccessService workspaceAccessService;
 
     public PatientService(MedicalRecordRepository medicalRecordRepository,
-                          PatientDoctorAssignmentRepository assignmentRepository) {
+                          PatientDoctorAssignmentRepository assignmentRepository,
+                          WorkspaceAccessService workspaceAccessService) {
         this.medicalRecordRepository = medicalRecordRepository;
         this.assignmentRepository = assignmentRepository;
+        this.workspaceAccessService = workspaceAccessService;
     }
 
     @Transactional(readOnly = true)
     public Page<MedicalRecordResponse> getRecords(UUID patientId, Pageable pageable) {
-        return medicalRecordRepository.findByPatientIdOrderByCreatedAtDesc(patientId, pageable)
+        // Visibility enforced in the query (with matching count) so pagination totals
+        // never reveal hidden workspace-scoped rows.
+        return medicalRecordRepository.findVisibleByPatientId(patientId, patientId, pageable)
                 .map(this::mapToResponse);
     }
 
@@ -39,6 +44,9 @@ public class PatientService {
     public MedicalRecordResponse getRecord(UUID recordId, UUID requesterId) {
         MedicalRecord record = medicalRecordRepository.findById(recordId)
                 .orElseThrow(() -> new ResourceNotFoundException("Record not found"));
+
+        // Workspace gate first (non-members get 404), then the ownership check (403).
+        workspaceAccessService.requireMemberOf(record.getWorkspace(), requesterId);
 
         if (!record.getPatient().getId().equals(requesterId)) {
             throw new AccessDeniedException("You do not have permission to view this record");
@@ -58,6 +66,14 @@ public class PatientService {
         }
 
         PatientDoctorAssignment assignment = assignmentOpt.get();
+        // A patient who is not an active member of the assignment's workspace
+        // sees no doctor (association hidden, consistent with the 404 rule).
+        if (assignment.getWorkspace() != null
+                && !workspaceAccessService.isActiveMember(
+                        assignment.getWorkspace().getId(), patientId)) {
+            return null;
+        }
+
         User doctor = assignment.getDoctor();
         return new DoctorResponse(doctor.getId(), doctor.getFullName(), doctor.getEmail(), assignment.getAssignedAt());
     }

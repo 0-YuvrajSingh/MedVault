@@ -25,25 +25,25 @@ public class AdminService {
     private final UserRepository userRepository;
     private final PatientDoctorAssignmentRepository assignmentRepository;
     private final AuditLogRepository auditLogRepository;
-    private final MedicalRecordRepository medicalRecordRepository;
     private final AuditService auditService;
     private final NotificationService notificationService;
     private final TimelineEventService timelineEventService;
+    private final WorkspaceRepository workspaceRepository;
 
     public AdminService(UserRepository userRepository,
                         PatientDoctorAssignmentRepository assignmentRepository,
                         AuditLogRepository auditLogRepository,
-                        MedicalRecordRepository medicalRecordRepository,
                         AuditService auditService,
                         NotificationService notificationService,
-                        TimelineEventService timelineEventService) {
+                        TimelineEventService timelineEventService,
+                        WorkspaceRepository workspaceRepository) {
         this.userRepository = userRepository;
         this.assignmentRepository = assignmentRepository;
         this.auditLogRepository = auditLogRepository;
-        this.medicalRecordRepository = medicalRecordRepository;
         this.auditService = auditService;
         this.notificationService = notificationService;
         this.timelineEventService = timelineEventService;
+        this.workspaceRepository = workspaceRepository;
     }
 
     // ─── User listings ───────────────────────────────────────────────────────
@@ -146,16 +146,26 @@ public class AdminService {
             throw new ConflictException("Patient already has an active doctor assignment. Use reassign to change it.");
         }
 
+        Workspace workspace;
+        if (request.getWorkspaceId() == null) {
+            throw new IllegalArgumentException("Workspace ID must not be null");
+        }
+        workspace = workspaceRepository.findById(request.getWorkspaceId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Workspace not found: " + request.getWorkspaceId()));
+
         PatientDoctorAssignment assignment = PatientDoctorAssignment.builder()
                 .patient(patient)
                 .doctor(doctor)
                 .isActive(true)
+                .workspace(workspace)
                 .build();
         assignmentRepository.save(assignment);
 
         // Audit
         auditService.logPlatformEvent(adminId, "PATIENT_ASSIGNED", "Assignment", assignment.getId(),
-                "Patient " + patient.getEmail() + " assigned to Dr. " + doctor.getEmail());
+                "Patient " + patient.getEmail() + " assigned to Dr. " + doctor.getEmail()
+                        + (workspace != null ? " in workspace " + workspace.getName() : ""));
 
         // Notifications
         notificationService.createNotification(doctor.getId(),
@@ -183,6 +193,10 @@ public class AdminService {
         if (!oldAssignment.isActive()) {
             throw new IllegalArgumentException("Assignment is not active");
         }
+        if (oldAssignment.getWorkspace() == null) {
+            throw new ConflictException("Legacy assignment has no workspace: "
+                    + "reassignment is blocked until a safe workspace transition is defined");
+        }
 
         User newDoctor = userRepository.findById(newDoctorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + newDoctorId));
@@ -203,11 +217,12 @@ public class AdminService {
         oldAssignment.setActive(false);
         assignmentRepository.save(oldAssignment);
 
-        // Create new active assignment
+        // Create new active assignment (inherits the workspace, if any)
         PatientDoctorAssignment newAssignment = PatientDoctorAssignment.builder()
                 .patient(patient)
                 .doctor(newDoctor)
                 .isActive(true)
+                .workspace(oldAssignment.getWorkspace())
                 .build();
         assignmentRepository.save(newAssignment);
 
@@ -302,6 +317,9 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public Page<com.medvault.dto.AuditLogResponse> getRecordAuditLog(UUID recordId, Pageable pageable) {
+        // Least privilege: admins see audit metadata (who, what action, which record,
+        // when) but never the clinical snapshot. The stored detailSnapshot may embed
+        // diagnosis/prescription text, so it is deliberately withheld here.
         return auditLogRepository.findByRecordIdOrderByPerformedAtDesc(recordId, pageable)
                 .map(log -> new com.medvault.dto.AuditLogResponse(
                         log.getId(),
@@ -309,14 +327,8 @@ public class AdminService {
                         log.getAction(),
                         log.getPerformedBy().getFullName(),
                         log.getPerformedAt(),
-                        log.getDetailSnapshot()
+                        null
                 ));
-    }
-
-    @Transactional(readOnly = true)
-    public Page<com.medvault.dto.MedicalRecordResponse> getPatientRecords(UUID patientId, Pageable pageable) {
-        return medicalRecordRepository.findByPatientIdOrderByCreatedAtDesc(patientId, pageable)
-                .map(this::mapToMedicalRecordResponse);
     }
 
     // ─── Mappers ──────────────────────────────────────────────────────────────
@@ -329,15 +341,8 @@ public class AdminService {
         return new AssignmentResponse(
                 a.getId(), a.getPatient().getId(), a.getPatient().getFullName(),
                 a.getDoctor().getId(), a.getDoctor().getFullName(),
-                a.getAssignedAt(), a.isActive()
-        );
-    }
-
-    private com.medvault.dto.MedicalRecordResponse mapToMedicalRecordResponse(com.medvault.entity.MedicalRecord record) {
-        return new com.medvault.dto.MedicalRecordResponse(
-                record.getId(), record.getPatient().getId(), record.getDoctor().getFullName(),
-                record.getDiagnosis(), record.getPrescription(), record.getNotes(),
-                record.getRecordDate(), record.getCreatedAt()
+                a.getAssignedAt(), a.isActive(),
+                a.getWorkspace() != null ? a.getWorkspace().getId() : null
         );
     }
 }

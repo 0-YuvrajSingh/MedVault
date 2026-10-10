@@ -42,6 +42,15 @@ public class MedicalRecord {
     @Column(name = "record_date", nullable = false)
     private LocalDate recordDate;
 
+    /**
+     * Definite workspace this record belongs to, inherited from the active assignment
+     * at creation time. Nullable: records created under unscoped assignments keep V1
+     * semantics. Never relied upon for ownership — patient/doctor checks still apply.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workspace_id")
+    private Workspace workspace;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
